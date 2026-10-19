@@ -158,6 +158,7 @@ td p{margin:2px 0 0;font-size:13px;color:var(--muted)}
   .sheet{padding:12px}
   .two{grid-template-columns:1fr}
   .addrow{flex-direction:column}
+  .head-acts{flex-wrap:wrap}
   .head-acts{width:100%}.head-acts .btn{flex:1}
   .dd{flex:1}.dd .btn{width:100%}
 }
@@ -170,6 +171,9 @@ tr.due td:first-child{box-shadow:inset 3px 0 0 var(--pend)}
 .when{font-size:13px;font-weight:700;color:var(--pend);white-space:nowrap}
 .when.soon{color:var(--muted);font-weight:600}
 .count{display:inline-block;font-size:13px;font-weight:700;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:0 8px;margin-left:6px;vertical-align:2px}
+.pick.dv li{display:flex;align-items:center;gap:10px}
+.pick.dv label{flex:1}
+.pick.dv select{width:auto;min-width:112px;padding:5px 8px;font-size:13px}
 .rev{display:flex;gap:6px;align-items:center}
 .rev select{width:auto;min-width:118px;padding:5px 8px}
 .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
@@ -440,6 +444,7 @@ function render(){
       <button role="menuitem" onclick="dImportar()"><strong>Importar desde Excel</strong><small>Carga masiva de personal y equipos</small></button>
      </div></div>
     <button class="btn" onclick="dCambio()">Cambio de responsable</button>
+    <button class="btn" onclick="dDevolver()">Devolver activos</button>
    </div></div>
   ${pn&&V.tab!=='rev'?`<div class="alert"><span><strong>${plural(pn,'activo cumplió','activos cumplieron')} año</strong> y ${pn===1?'necesita':'necesitan'} revisión de estado.</span><button class="btn sm" onclick="V.tab='rev';render()">Ir a Revisión</button></div>`:''}
   <div class="stats">
@@ -470,7 +475,7 @@ function filasPe(){
   $('filasPe').innerHTML=ps.length?ps.map(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
    <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${plural(m.length,'equipo','equipos')}</p></div></div></td>
    <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
-   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`}).join('')
+   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`}).join('')
   :'<tr><td colspan="3"><p class="empty">No hay personal que coincida con la búsqueda.</p></td></tr>';
 }
 
@@ -691,6 +696,45 @@ function gCambio(){
   d=>{if(d.t==='p')abrirActa(d.id,m,f);else render()});
 }
 
+/* ---------- Devolver activos (por ejemplo, cuando alguien renuncia) ---------- */
+function dDevolver(pid){
+  const con=[...S.personas].filter(p=>S.equipos.some(x=>x.asig===p.id)).sort(porNombre);
+  if(!con.length)return toast('Nadie tiene equipos asignados en este momento.');
+  if(!pid||!con.some(p=>p.id===pid))pid=con[0].id;
+  if(!S.ubic.length)return toast('Primero agrega una ubicación en la pestaña Ubicaciones.');
+  abrir(`<header><div><h2>Devolver activos</h2><p>Los equipos pasan a una ubicación y se genera el acta de devolución.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <div class="step"><i>1</i> Colaborador que devuelve</div>
+   <select id="dv-p" onchange="dvEquipos()">${con.map(p=>`<option value="${p.id}"${p.id===pid?' selected':''}>${esc(p.nombre)} · ${esc(p.ced)}</option>`).join('')}</select>
+   <div class="step"><i>2</i> Equipos que devuelve y su condición</div>
+   <ul class="pick dv" id="dv-eq"></ul>
+   <div class="step"><i>3</i> Dónde quedan</div>
+   <div class="two">${fl('Ubicación',`<select id="dv-u">${S.ubic.map(u=>`<option${u.nombre==='Bodega'?' selected':''}>${esc(u.nombre)}</option>`).join('')}</select>`)}${fl('Fecha',`<input id="dv-f" type="date" value="${hoy()}">`)}</div>
+  </div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gDevolver()">Guardar y generar acta</button></footer>`);
+  dvEquipos();
+}
+function dvEquipos(){
+  const pid=+$('dv-p').value,m=S.equipos.filter(x=>x.asig===pid);
+  $('dv-eq').innerHTML=m.map(x=>`<li><label><input type="checkbox" class="d-chk" value="${esc(x.cod)}" checked><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>${esc(x.cat)} · Serie ${esc(x.serie)}</small></span></label>
+   <select class="dv-c" data-cod="${esc(x.cod)}" aria-label="Condición de ${esc(x.cod)}">${opts(CONDICIONES,x.cond)}</select></li>`).join('');
+  $('err').textContent='';
+}
+function gDevolver(){
+  const pid=+$('dv-p').value,p=P(pid),m=marcados(),u=$('dv-u').value,f=$('dv-f').value,er=$('err');
+  if(!m.length)return er.textContent='Marca al menos un equipo.';
+  if(!f)return er.textContent='Selecciona la fecha.';
+  const cond={};document.querySelectorAll('.dv-c').forEach(s=>cond[s.dataset.cod]=s.value);
+  cerrar();
+  act(async()=>{
+    for(const cod of m){
+      const x=E(cod);
+      await setItem('equipos',x.sid,{ResponsableId:0,Ubicacion:u,Condicion:cond[cod]||x.cond});
+      await addItem('historial',{Title:cod,Fecha:wd(f),De:p.nombre,A:'Devuelto a '+u,Registro:yo()});
+    }
+  },`${p.nombre} devolvió ${plural(m.length,'equipo','equipos')} a ${u}`,()=>abrirActa(pid,m,f,'dev'));
+}
+
 /* ---------- Importar desde Excel ---------- */
 function dImportar(){
   V.imp=null;
@@ -756,63 +800,75 @@ async function importar(){
   I.corriendo=false;if(!ok)$('i-f').disabled=false;
 }
 
-/* ---------- Acta ---------- */
-function abrirActa(pid,sel,f){V.view='acta';V.acta={pid,sel:sel||null,f:f||hoy()};render();scrollTo(0,0)}
+/* ---------- Acta (entrega o devolución) ---------- */
+const LEGAL_DEV=[
+ 'El colaborador hace devolución a la empresa '+EMPRESA+' de los equipos detallados en este documento, los cuales le fueron entregados para uso exclusivamente laboral.',
+ 'La empresa recibe los equipos en la condición indicada en la columna Condición. En caso de detectarse posteriormente algún daño no indicado en este documento, que se demuestre fue ocasionado por negligencia o con conocimiento de causa, se procederá según lo autorizado por el colaborador en el acta de entrega del equipo.',
+ 'Con la firma de este documento, ambas partes dan fe de la devolución de los equipos aquí detallados.'
+];
+function abrirActa(pid,sel,f,tipo){V.view='acta';V.acta={pid,sel:sel||null,f:f||hoy(),tipo:tipo||'ent'};render();scrollTo(0,0)}
 function vActa(){
-  const a=V.acta,p=P(a.pid),mis=S.equipos.filter(x=>x.asig===a.pid);
+  const a=V.acta,p=P(a.pid),dev=a.tipo==='dev';
+  const mis=dev?S.equipos.filter(x=>a.sel.includes(x.cod)):S.equipos.filter(x=>x.asig===a.pid);
   if(!p){V.view='list';return ''}
+  const sinEquipos=dev&&!S.equipos.some(x=>x.asig===a.pid);
   return `<div class="back"><button class="lnk" onclick="V.view='list';render()">← Volver</button></div>
-  <h1>Acta de entrega</h1>
+  <h1>${dev?'Acta de devolución':'Acta de entrega'}</h1>
   <div class="acta">
    <div class="box">
     <h2>${esc(p.nombre)}</h2><p class="small muted" style="margin:0 0 16px">Cédula ${esc(p.ced)}</p>
     ${fl('Fecha del acta',`<input type="date" id="a-f" value="${a.f}" oninput="prev()">`)}
-    ${fl('Entregado por',`<input id="a-por" value="${esc(yo())}" oninput="prev()">`)}
+    ${fl(dev?'Recibido por':'Entregado por',`<input id="a-por" value="${esc(yo())}" oninput="prev()">`)}
     <span class="small" style="font-weight:600">Equipos incluidos</span>
     <ul class="pick">${mis.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${esc(x.cod)}"${!a.sel||a.sel.includes(x.cod)?' checked':''} onchange="prev()"><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>Serie ${esc(x.serie)}</small></span></label></li>`).join('')}</ul>
     <div class="err" id="a-err"></div>
     <button class="btn primary wide" onclick="pdf()">Descargar PDF para firmar</button>
     <p class="small muted" style="margin:10px 0 0">Se descarga en tamaño carta, listo para imprimir y firmar.</p>
+    ${sinEquipos?`<div class="info" style="margin:16px 0 0">${esc(p.nombre)} ya no tiene equipos a su nombre. Si ya no labora en la empresa, puedes eliminarlo desde la pestaña Personal.</div>`:''}
    </div>
    <div class="sheet"><div class="paper" id="paper"></div></div>
   </div>`;
 }
-function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{p:P(V.acta.pid),f:$('a-f').value,por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
+function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{dev:V.acta.tipo==='dev',p:P(V.acta.pid),f:$('a-f').value,por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
+const textoActa=d=>d.dev
+  ?{tit:'Acta de devolución de equipo',a:'Se recibe de ',b:' los siguientes equipos:',legal:LEGAL_DEV,izq:['Entregado por: '+d.p.nombre,'Cédula: '+d.p.ced],der:['Recibido por: '+d.por,'']}
+  :{tit:'Acta de entrega de equipo',a:'Se le hace entrega a ',b:' los siguientes equipos:',legal:LEGAL,izq:['Entregado por: '+d.por,''],der:['Recibido por: '+d.p.nombre,'Cédula: '+d.p.ced]};
 function prev(){
-  if(!$('paper'))return;const d=datos();$('a-err').textContent='';
-  $('paper').innerHTML=`<div class="phead"><div class="plogo"><img src="${AURA_LOGO}" alt=""><span>${EMPRESA_LOGO}</span></div><h3>Acta de entrega de equipo</h3><div></div></div>
+  if(!$('paper'))return;const d=datos(),t=textoActa(d);$('a-err').textContent='';
+  const firma=l=>`<div>${esc(l[0])}${l[1]?`<small>${esc(l[1])}</small>`:''}</div>`;
+  $('paper').innerHTML=`<div class="phead"><div class="plogo"><img src="${AURA_LOGO}" alt=""><span>${EMPRESA_LOGO}</span></div><h3>${t.tit}</h3><div></div></div>
   <div class="fecha">Fecha: ${fActa(d.f)}</div>
-  <p>Se le hace entrega a <span class="ln">${esc(d.p.nombre)}</span> cédula <span class="ln">${esc(d.p.ced)}</span> los siguientes equipos:</p>
+  <p>${t.a}<span class="ln">${esc(d.p.nombre)}</span> cédula <span class="ln">${esc(d.p.ced)}</span>${t.b}</p>
   <table><thead><tr><th>Código</th><th>Equipo</th><th>Categoría</th><th>Serie</th><th>Condición</th><th>Observaciones</th></tr></thead>
   <tbody>${d.eqs.length?d.eqs.map(x=>`<tr><td>${esc(x.cod)}</td><td>${esc(x.eq)}</td><td>${esc(x.cat)}</td><td>${esc(x.serie)}</td><td>${esc(x.cond)}</td><td>${esc(x.obs)}</td></tr>`).join(''):'<tr><td colspan="6" style="color:#888">Selecciona al menos un equipo</td></tr>'}</tbody></table>
-  ${LEGAL.map(t=>`<p>${esc(t)}</p>`).join('')}
-  <div class="firmas"><div>Entregado por: ${esc(d.por)}</div><div>Recibido por: ${esc(d.p.nombre)}<small>Cédula: ${esc(d.p.ced)}</small></div></div>`;
+  ${t.legal.map(x=>`<p>${esc(x)}</p>`).join('')}
+  <div class="firmas">${firma(t.izq)}${firma(t.der)}</div>`;
 }
 function pdf(){
-  const d=datos(),er=$('a-err');
+  const d=datos(),er=$('a-err'),t=textoActa(d);
   if(!d.eqs.length)return er.textContent='Selecciona al menos un equipo para el acta.';
-  if(!d.por)return er.textContent='Indica quién entrega el equipo.';
+  if(!d.por)return er.textContent=d.dev?'Indica quién recibe el equipo.':'Indica quién entrega el equipo.';
   if(!window.jspdf)return er.textContent='No se pudo cargar el generador de PDF. Revisa la conexión a internet.';
   const doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=22,W=171.9,R=L+W;
   doc.addImage(AURA_LOGO,'PNG',L+5,12,16,16.6);
   doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(13,97,116);doc.text(EMPRESA_LOGO,L+13,32,{align:'center'});doc.setTextColor(0);
-  doc.setFontSize(15);doc.text('Acta de entrega de equipo',107.95,23,{align:'center'});
+  doc.setFontSize(15);doc.text(t.tit,107.95,23,{align:'center'});
   let y=42;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text('Fecha: '+fActa(d.f),R,y,{align:'right'});y+=10;
-  const t1='Se le hace entrega a ',t2=' cédula ',t3=' los siguientes equipos:';
-  let x=L;const seg=(t,b)=>{doc.setFont('helvetica',b?'bold':'normal');doc.text(t,x,y);const w=doc.getTextWidth(t);if(b)doc.line(x,y+1,x+w,y+1);x+=w};
-  if(doc.getTextWidth(t1+d.p.nombre+t2+d.p.ced+t3)<W){seg(t1);seg(d.p.nombre,1);seg(t2);seg(d.p.ced,1);seg(t3);y+=9}
-  else{const l=doc.splitTextToSize(t1+d.p.nombre+','+t2+d.p.ced+','+t3,W);doc.text(l,L,y);y+=l.length*5+4}
+  let x=L;const seg=(s,b)=>{doc.setFont('helvetica',b?'bold':'normal');doc.text(s,x,y);const w=doc.getTextWidth(s);if(b)doc.line(x,y+1,x+w,y+1);x+=w};
+  if(doc.getTextWidth(t.a+d.p.nombre+' cédula '+d.p.ced+t.b)<W){seg(t.a);seg(d.p.nombre,1);seg(' cédula ');seg(d.p.ced,1);seg(t.b);y+=9}
+  else{const l=doc.splitTextToSize(t.a+d.p.nombre+', cédula '+d.p.ced+','+t.b,W);doc.text(l,L,y);y+=l.length*5+4}
   const cw=[17,32,27,33,21,41.9];
   const fila=(c,h)=>{doc.setFont('helvetica',h?'bold':'normal');doc.setFontSize(9);const ls=c.map((v,i)=>doc.splitTextToSize(String(v||''),cw[i]-3));const hh=Math.max(...ls.map(l=>l.length))*4+3.5;
     if(y+hh>262){doc.addPage();y=25}let xx=L;
     ls.forEach((l,i)=>{if(h){doc.setFillColor(232,232,232);doc.rect(xx,y,cw[i],hh,'FD')}else doc.rect(xx,y,cw[i],hh);doc.text(l,xx+1.5,y+4.7);xx+=cw[i]});y+=hh};
   doc.setLineWidth(.2);fila(['Código','Equipo','Categoría','Serie','Condición','Observaciones'],1);d.eqs.forEach(q=>fila([q.cod,q.eq,q.cat,q.serie,q.cond,q.obs]));y+=9;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);
-  LEGAL.forEach(t=>{const l=doc.splitTextToSize(t,W);if(y+l.length*4.4>262){doc.addPage();y=25}doc.text(l,L,y,{align:'justify',maxWidth:W});y+=l.length*4.4+3.5});
+  t.legal.forEach(s=>{const l=doc.splitTextToSize(s,W);if(y+l.length*4.4>262){doc.addPage();y=25}doc.text(l,L,y,{align:'justify',maxWidth:W});y+=l.length*4.4+3.5});
   y+=26;if(y>245){doc.addPage();y=50}
   doc.line(L,y,L+72,y);doc.line(R-72,y,R,y);doc.setFontSize(10);
-  doc.text('Entregado por: '+d.por,L,y+5);doc.text('Recibido por: '+d.p.nombre,R-72,y+5);doc.setTextColor(80);doc.text('Cédula: '+d.p.ced,R-72,y+10);
-  const fn='Acta_'+d.p.nombre.replace(/\s+/g,'_')+'_'+d.f+'.pdf';
+  doc.text(t.izq[0],L,y+5);doc.text(t.der[0],R-72,y+5);doc.setTextColor(80);
+  if(t.izq[1])doc.text(t.izq[1],L,y+10);if(t.der[1])doc.text(t.der[1],R-72,y+10);
+  const fn=(d.dev?'Devolucion_':'Acta_')+d.p.nombre.replace(/\s+/g,'_')+'_'+d.f+'.pdf';
   try{doc.save(fn);toast('PDF descargado: '+fn)}catch(e){er.textContent='No se pudo descargar el PDF.'}
 }
 
