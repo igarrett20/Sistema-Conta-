@@ -171,6 +171,11 @@ tr.due td:first-child{box-shadow:inset 3px 0 0 var(--pend)}
 .when{font-size:13px;font-weight:700;color:var(--pend);white-space:nowrap}
 .when.soon{color:var(--muted);font-weight:600}
 .count{display:inline-block;font-size:13px;font-weight:700;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:0 8px;margin-left:6px;vertical-align:2px}
+.dt{position:relative;display:flex;align-items:center}
+.dt input[type=text]{padding-right:38px}
+.dt-b{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;padding:5px;border-radius:6px;display:grid;place-items:center}
+.dt-b:hover{color:var(--brand);background:var(--brand-soft)}
+.dt-n{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
 .pick.dv li{display:flex;align-items:center;gap:10px}
 .pick.dv label{flex:1}
 .pick.dv select{width:auto;min-width:112px;padding:5px 8px;font-size:13px}
@@ -550,6 +555,15 @@ function dBorrarUb(id){
   confirmar('Eliminar ubicación',`¿Eliminar la ubicación <strong>${esc(u.nombre)}</strong>? No tiene equipos asignados.`,'Eliminar ubicación',()=>act(()=>delItem('ubicaciones',id),'Ubicación '+u.nombre+' eliminada'));
 }
 
+/* ---------- Campos de fecha en formato dd/mm/aaaa (sin depender del idioma del navegador) ---------- */
+const aDMY=k=>{if(!k)return'';const[y,m,d]=k.split('-');return d+'/'+m+'/'+y};
+function fv(id){const el=$(id);if(!el)return '';const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(el.value.trim());if(!m)return '';const k=m[3]+'-'+m[2]+'-'+m[1],d=new Date(k+'T12:00:00');return !isNaN(d)&&kOf(d)===k?k:''}
+function mascara(el){let v=el.value.replace(/\D/g,'').slice(0,8);if(v.length>4)v=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);else if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);el.value=v}
+function calendario(id){const n=$(id+'-n');n.value=fv(id)||hoy();try{n.showPicker()}catch(e){n.focus();n.click()}}
+function desdeCal(id,k){if(!k)return;const el=$(id);el.value=aDMY(k);el.dispatchEvent(new Event('input',{bubbles:true}))}
+const ICO_CAL='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>';
+function dateField(id,k,extra){return `<span class="dt"><input id="${id}" type="text" inputmode="numeric" autocomplete="off" placeholder="dd/mm/aaaa" maxlength="10" value="${aDMY(k)}" oninput="mascara(this)${extra?';'+extra:''}"><button type="button" class="dt-b" aria-label="Abrir calendario" onclick="calendario('${id}')">${ICO_CAL}</button><input type="date" class="dt-n" id="${id}-n" tabindex="-1" aria-hidden="true" onchange="desdeCal('${id}',this.value)"></span>`}
+
 /* ---------- Drawer ---------- */
 function abrir(h){const d=$('drawer');d.innerHTML=h;d.classList.add('open');d.setAttribute('aria-hidden','false');$('scrim').classList.add('open')}
 function cerrar(){if(V.imp?.corriendo)return;$('drawer').classList.remove('open');$('drawer').setAttribute('aria-hidden','true');$('scrim').classList.remove('open')}
@@ -579,7 +593,7 @@ function dPersona(){
    ${fl('Nombre completo','<input id="p-n" placeholder="Nombre y dos apellidos">')}
    ${fl('Cédula','<input id="p-c" placeholder="1-1234-5678">')}
    <div class="step">Entregar equipo ahora <span class="muted">(opcional)</span></div>
-   ${dis.length?`<ul class="pick">${dis.map(x=>chk(x,false)).join('')}</ul>${fl('Fecha de entrega',`<input id="p-f" type="date" value="${hoy()}">`)}`:'<p class="small muted">No hay equipos en ubicaciones. Puedes asignarle equipo después con Cambio de responsable.</p>'}
+   ${dis.length?`<ul class="pick">${dis.map(x=>chk(x,false)).join('')}</ul>${fl('Fecha de entrega',dateField('p-f',hoy()))}`:'<p class="small muted">No hay equipos en ubicaciones. Puedes asignarle equipo después con Cambio de responsable.</p>'}
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gPersona()">Guardar</button></footer>`);
   setTimeout(()=>$('p-n')?.focus(),200);
@@ -587,7 +601,7 @@ function dPersona(){
 function gPersona(){
   const n=$('p-n').value.trim().replace(/\s+/g,' '),c=$('p-c').value.trim(),m=marcados();
   const v=validarPersona(n,c);if(v)return $('err').textContent=v;
-  const f=$('p-f')?$('p-f').value:hoy();if(m.length&&!f)return $('err').textContent='Selecciona la fecha de entrega.';
+  const f=$('p-f')?fv('p-f'):hoy();if(m.length&&!f)return $('err').textContent='Escribe una fecha de entrega válida (dd/mm/aaaa).';
   cerrar();
   act(async()=>{const id=await nuevaPersona(n,c);S.personas.push({id,nombre:n,ced:c});if(m.length)await mover(m,{t:'p',id},f);return id},
     m.length?`${n} registrado con ${plural(m.length,'equipo','equipos')}`:`${n} registrado`,
@@ -609,18 +623,18 @@ function dAgregar(){
    <div class="two">${fl('Código','<input id="n-cod" placeholder="AI0110">')}${fl('Serie','<input id="n-serie" placeholder="Vacío si no tiene">')}</div>
    ${fl('Equipo','<input id="n-eq" placeholder="Computador Portátil">')}
    <div class="two">${fl('Categoría',`<select id="n-cat">${opts(CATEGORIAS)}</select>`)}${fl('Estado',`<select id="n-cond">${opts(CONDICIONES,'Nueva')}</select>`)}</div>
-   <div class="two">${fl('Fecha de compra',`<input id="n-fadq" type="date" value="${hoy()}">`)}${fl('Responsable o ubicación',`<select id="n-dest">${selResp('u:Bodega')}</select>`)}</div>
+   <div class="two">${fl('Fecha de compra',dateField('n-fadq',hoy()))}${fl('Responsable o ubicación',`<select id="n-dest">${selResp('u:Bodega')}</select>`)}</div>
    ${fl('Observaciones','<input id="n-obs" placeholder="Incluye cargador">')}
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gAgregar()">Guardar equipo</button></footer>`);
   setTimeout(()=>$('n-cod')?.focus(),200);
 }
 function gAgregar(){
-  const v=id=>$(id).value.trim(),cod=v('n-cod').toUpperCase(),eq=v('n-eq'),serie=v('n-serie')||'N/A',fadq=v('n-fadq'),dest=v('n-dest');
+  const v=id=>$(id).value.trim(),cod=v('n-cod').toUpperCase(),eq=v('n-eq'),serie=v('n-serie')||'N/A',fadq=fv('n-fadq'),dest=v('n-dest');
   if(!cod||!eq)return $('err').textContent='Completa código y equipo.';
   if(!/^[A-Z0-9-]+$/.test(cod))return $('err').textContent='El código solo puede tener letras, números y guiones.';
   if(E(cod))return $('err').textContent='Ya existe un equipo con el código '+cod+'.';
-  if(!fadq)return $('err').textContent='Indica la fecha de compra.';
+  if(!fadq)return $('err').textContent='Escribe una fecha de compra válida (dd/mm/aaaa).';
   if(!dest)return $('err').textContent='Elige un responsable o una ubicación.';
   const pid=dest.startsWith('p:')?+dest.slice(2):null,ub=dest.startsWith('u:')?dest.slice(2):'',t=hoy();
   cerrar();
@@ -659,7 +673,7 @@ function dCambio(origen,cod,destino){
    <div class="step"><i>3</i> Nuevo responsable</div>
    <div class="seg" role="radiogroup"><button role="radio" id="m-e" aria-checked="true" onclick="cbModo('exist')">Personal registrado</button><button role="radio" id="m-n" aria-checked="false" onclick="cbModo('nueva')">Persona nueva</button><button role="radio" id="m-u" aria-checked="false" onclick="cbModo('ubic')">Ubicación</button></div>
    <div id="c-dest"></div>
-   ${fl('Fecha','<input id="c-f" type="date" value="'+hoy()+'">')}
+   ${fl('Fecha',dateField('c-f',hoy()))}
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" id="c-ok" onclick="gCambio()">Guardar y generar acta</button></footer>`);
   cbEquipos();cbDestino();
@@ -681,9 +695,9 @@ function cbDestino(){
     $('c-dest').innerHTML=us.length?fl('Ubicación',`<select id="c-u">${us.map(u=>`<option${u.nombre==='Bodega'?' selected':''}>${esc(u.nombre)}</option>`).join('')}</select>`)+'<div class="info">Los equipos pasan a esa ubicación. No se genera acta.</div>':'<p class="small muted">No hay otra ubicación. Agrégala en la pestaña Ubicaciones.</p>'}
 }
 function gCambio(){
-  const m=marcados(),f=$('c-f').value,er=$('err'),modo=V.cb.modo;
+  const m=marcados(),f=fv('c-f'),er=$('err'),modo=V.cb.modo;
   if(!m.length)return er.textContent='Marca al menos un equipo.';
-  if(!f)return er.textContent='Selecciona la fecha.';
+  if(!f)return er.textContent='Escribe una fecha válida (dd/mm/aaaa).';
   let dest=null,n='',c='';
   if(modo==='exist'){const pid=$('c-p')?+$('c-p').value:null;if(!P(pid))return er.textContent='Selecciona a la nueva persona.';dest={t:'p',id:pid}}
   else if(modo==='nueva'){n=$('c-n').value.trim().replace(/\s+/g,' ');c=$('c-c').value.trim();const v=validarPersona(n,c);if(v)return er.textContent=v}
@@ -709,7 +723,7 @@ function dDevolver(pid){
    <div class="step"><i>2</i> Equipos que devuelve y su condición</div>
    <ul class="pick dv" id="dv-eq"></ul>
    <div class="step"><i>3</i> Dónde quedan</div>
-   <div class="two">${fl('Ubicación',`<select id="dv-u">${S.ubic.map(u=>`<option${u.nombre==='Bodega'?' selected':''}>${esc(u.nombre)}</option>`).join('')}</select>`)}${fl('Fecha',`<input id="dv-f" type="date" value="${hoy()}">`)}</div>
+   <div class="two">${fl('Ubicación',`<select id="dv-u">${S.ubic.map(u=>`<option${u.nombre==='Bodega'?' selected':''}>${esc(u.nombre)}</option>`).join('')}</select>`)}${fl('Fecha',dateField('dv-f',hoy()))}</div>
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gDevolver()">Guardar y generar acta</button></footer>`);
   dvEquipos();
@@ -721,9 +735,9 @@ function dvEquipos(){
   $('err').textContent='';
 }
 function gDevolver(){
-  const pid=+$('dv-p').value,p=P(pid),m=marcados(),u=$('dv-u').value,f=$('dv-f').value,er=$('err');
+  const pid=+$('dv-p').value,p=P(pid),m=marcados(),u=$('dv-u').value,f=fv('dv-f'),er=$('err');
   if(!m.length)return er.textContent='Marca al menos un equipo.';
-  if(!f)return er.textContent='Selecciona la fecha.';
+  if(!f)return er.textContent='Escribe una fecha válida (dd/mm/aaaa).';
   const cond={};document.querySelectorAll('.dv-c').forEach(s=>cond[s.dataset.cod]=s.value);
   cerrar();
   act(async()=>{
@@ -817,7 +831,7 @@ function vActa(){
   <div class="acta">
    <div class="box">
     <h2>${esc(p.nombre)}</h2><p class="small muted" style="margin:0 0 16px">Cédula ${esc(p.ced)}</p>
-    ${fl('Fecha del acta',`<input type="date" id="a-f" value="${a.f}" oninput="prev()">`)}
+    ${fl('Fecha del acta',dateField('a-f',a.f,'prev()'))}
     ${fl(dev?'Recibido por':'Entregado por',`<input id="a-por" value="${esc(yo())}" oninput="prev()">`)}
     <span class="small" style="font-weight:600">Equipos incluidos</span>
     <ul class="pick">${mis.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${esc(x.cod)}"${!a.sel||a.sel.includes(x.cod)?' checked':''} onchange="prev()"><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>Serie ${esc(x.serie)}</small></span></label></li>`).join('')}</ul>
@@ -829,7 +843,7 @@ function vActa(){
    <div class="sheet"><div class="paper" id="paper"></div></div>
   </div>`;
 }
-function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{dev:V.acta.tipo==='dev',p:P(V.acta.pid),f:$('a-f').value,por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
+function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{dev:V.acta.tipo==='dev',p:P(V.acta.pid),f:fv('a-f'),por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
 const textoActa=d=>d.dev
   ?{tit:'Acta de devolución de equipo',a:'Se recibe de ',b:' los siguientes equipos:',legal:LEGAL_DEV,izq:['Entregado por: '+d.p.nombre,'Cédula: '+d.p.ced],der:['Recibido por: '+d.por,'']}
   :{tit:'Acta de entrega de equipo',a:'Se le hace entrega a ',b:' los siguientes equipos:',legal:LEGAL,izq:['Entregado por: '+d.por,''],der:['Recibido por: '+d.p.nombre,'Cédula: '+d.p.ced]};
