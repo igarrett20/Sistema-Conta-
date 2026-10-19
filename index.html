@@ -204,6 +204,7 @@ const LEGAL=[
  'Lo anterior, según el artículo 72 inciso d) "Usar los útiles y herramientas suministradas por el patrono, para objeto distinto de aquél a que están normalmente destinados..." y el artículo 81 inciso d) "...cuando cause intencionalmente un daño material a las máquinas, herramientas..."'
 ];
 const SCOPES=['User.Read','Sites.ReadWrite.All'];
+const MANAGE=['Sites.Manage.All'];   // solo se pide la primera vez, para crear las listas
 
 /* Columnas de cada lista (la página las crea sola la primera vez si no existen) */
 const SCHEMA={
@@ -250,16 +251,16 @@ async function initAuth(){
 }
 const login=()=>G.pca.loginRedirect({scopes:SCOPES,prompt:'select_account'});
 const logout=()=>G.pca.logoutRedirect({account:G.account,postLogoutRedirectUri:location.origin+location.pathname});
-async function token(){
-  try{return (await G.pca.acquireTokenSilent({scopes:SCOPES,account:G.account})).accessToken}
-  catch(e){await G.pca.acquireTokenRedirect({scopes:SCOPES,account:G.account});throw new Error('redirect')}
+async function token(scopes=SCOPES){
+  try{return (await G.pca.acquireTokenSilent({scopes,account:G.account})).accessToken}
+  catch(e){await G.pca.acquireTokenRedirect({scopes,account:G.account});throw new Error('redirect')}
 }
 
 /* ---------- Microsoft Graph ---------- */
 class GraphError extends Error{constructor(status,msg){super(msg);this.status=status}}
-async function gx(method,path,body){
+async function gx(method,path,body,scopes){
   const url=path.startsWith('http')?path:'https://graph.microsoft.com/v1.0'+path;
-  const r=await fetch(url,{method,headers:{Authorization:'Bearer '+await token(),'Content-Type':'application/json',Prefer:'HonorNonIndexedQueriesWarningMayFailRandomly'},body:body?JSON.stringify(body):undefined});
+  const r=await fetch(url,{method,headers:{Authorization:'Bearer '+await token(scopes),'Content-Type':'application/json',Prefer:'HonorNonIndexedQueriesWarningMayFailRandomly'},body:body?JSON.stringify(body):undefined});
   if(r.status===204)return null;
   const j=await r.json().catch(()=>null);
   if(!r.ok)throw new GraphError(r.status,j?.error?.message||r.statusText);
@@ -281,8 +282,8 @@ async function connect(){
   for(const [key,name] of Object.entries(CONFIG.lists)){
     let f=ls.find(l=>lc(l.displayName)===lc(name)||lc(l.name)===lc(name));
     if(!f){
-      try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}})}
-      catch(e){if(e.status===403)throw new GraphError(403,`Falta la lista "${name}" y tu cuenta no puede crearla. Entra primero con la cuenta dueña del sitio.`);throw e}
+      try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}},MANAGE)}
+      catch(e){if(e.status===403)throw new GraphError(403,`Falta la lista "${name}" y tu cuenta no puede crearla. Entra primero con la cuenta dueña del sitio. (${e.message})`);throw e}
     }
     G.listIds[key]=f.id;
   }
@@ -326,7 +327,7 @@ async function boot(){
   try{await connect();showUser();await loadAll()}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
-      ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero este sistema es solo para contaduría. Si deberías tener acceso, pide que te den permiso en las listas de activos en SharePoint.</p>'
+      ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero este sistema es solo para contaduría. Si deberías tener acceso, pide que te den permiso en las listas de activos en SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
       :`<h1>No se pudieron cargar los datos</h1><p>${esc(e.message)}</p><button class="btn" onclick="location.reload()">Intentar de nuevo</button>`);return}
   render();
 }
