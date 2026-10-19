@@ -82,7 +82,7 @@ td p{margin:2px 0 0;font-size:13px;color:var(--muted)}
 .pill.Nueva{background:var(--ok-soft);color:var(--ok)}
 .pill.Buena{background:var(--brand-soft);color:var(--brand)}
 .pill.Usada{background:var(--pend-soft);color:var(--pend)}
-.pill.Dañada{background:var(--danger-soft);color:var(--danger)}
+.pill.Danada{background:var(--danger-soft);color:var(--danger)}
 .kind{display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;border-radius:5px;padding:1px 6px;background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
 
 .f{display:grid;gap:5px;margin-bottom:14px}
@@ -157,9 +157,32 @@ td p{margin:2px 0 0;font-size:13px;color:var(--muted)}
   .paper{padding:28px 22px;min-height:0}
   .sheet{padding:12px}
   .two{grid-template-columns:1fr}
+  .addrow{flex-direction:column}
   .head-acts{width:100%}.head-acts .btn{flex:1}
   .dd{flex:1}.dd .btn{width:100%}
 }
+.pill.Sinrev{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 6px;border-radius:10px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;margin-left:7px;vertical-align:1px}
+.alert{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--pend-soft);color:#6E4608;border:1px solid #EBD3A1;border-radius:10px;padding:10px 14px;margin-bottom:20px;font-size:14px}
+.stat.warn strong{color:var(--pend)}
+tr.due td{background:#FFFBF2}
+tr.due td:first-child{box-shadow:inset 3px 0 0 var(--pend)}
+.when{font-size:13px;font-weight:700;color:var(--pend);white-space:nowrap}
+.when.soon{color:var(--muted);font-weight:600}
+.count{display:inline-block;font-size:13px;font-weight:700;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:0 8px;margin-left:6px;vertical-align:2px}
+.rev{display:flex;gap:6px;align-items:center}
+.rev select{width:auto;min-width:118px;padding:5px 8px}
+.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.danger:hover{background:#951C24}
+.addrow{display:flex;gap:8px;max-width:520px;margin-bottom:18px}
+.bar-p{height:6px;background:#fff;border-radius:3px;margin:8px 0 6px;overflow:hidden}
+.bar-p span{display:block;height:100%;background:var(--brand);transition:width .2s}
+.phead{display:grid;grid-template-columns:96px 1fr 96px;align-items:center;margin-bottom:16px}
+.phead h3{margin:0}
+.plogo{display:flex;flex-direction:column;align-items:center;gap:3px}
+.plogo img{width:52px;height:auto;display:block}
+.plogo span{font-size:7.5px;font-weight:700;letter-spacing:.04em;color:#0D6174;white-space:nowrap}
+optgroup{font-weight:700}
 .gate{max-width:560px;margin:60px auto;text-align:center}
 .gate h1{margin-bottom:10px}
 .gate p{color:var(--muted);margin:0 0 20px}
@@ -183,6 +206,7 @@ body.busy .btn,body.busy .lnk{pointer-events:none;opacity:.6}
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* =====================================================================
    CONFIGURACIÓN — lo único que normalmente hay que tocar
@@ -191,32 +215,39 @@ const CONFIG={
   clientId:'f0e84e7f-82f3-4f42-9ebb-4e95e1fca868',   // Application (client) ID (la misma app de vacaciones)
   tenantId:'6d19a314-7bcf-411f-b9fd-8f6bc92c1e7b',   // Directory (tenant) ID
   siteHost:'aurainnovacionessa.sharepoint.com',
-  sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde solo entra contaduría
-  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial'}
+  sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
+  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones'},
+  diasAviso:30                                       // días antes del aniversario en que aparece en Revisión
 };
 const EMPRESA='Aura Innovaciones SA';
-const CATEGORIAS=['Equipo cómputo','Mobiliario','Telecomunicaciones','Otro'];
-const CONDICIONES=['Nueva','Buena','Usada','Dañada'];
+const EMPRESA_LOGO='AURA INNOVACIONES S.A';
+const CATEGORIAS=['Equipo de Cómputo','Equipo Oficina','Mobiliario y Equipo'];
+const CONDICIONES=['Sin revisar','Nueva','Buena','Usada','Dañada'];
+const UBICACIONES_INICIALES=['Bodega','Sala Servidores'];
 const LEGAL=[
  'El equipo que aquí se entrega pertenece a la empresa '+EMPRESA+', por lo que la utilización de este equipo será exclusivamente para fines laborales, en caso de terminar el contrato laboral o daño del bien, me comprometo a devolverlo inmediatamente.',
  'En caso de equipo de cómputo, me comprometo a utilizarlo únicamente para desarrollo de mis funciones, si necesitase algún programa, sistema o mantenimiento, se realizará con el técnico o personal que la empresa asigne.',
  'Autorizo a la empresa a deducir de mi salario o prestaciones cualquier daño ocasionado por mi persona donde se demuestre negligencia o daño con conocimiento de causa.',
  'Lo anterior, según el artículo 72 inciso d) "Usar los útiles y herramientas suministradas por el patrono, para objeto distinto de aquél a que están normalmente destinados..." y el artículo 81 inciso d) "...cuando cause intencionalmente un daño material a las máquinas, herramientas..."'
 ];
+const AURA_LOGO='data:image/png;base64,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';
 const SCOPES=['User.Read','Sites.ReadWrite.All'];
-const MANAGE=['Sites.Manage.All'];   // solo se pide la primera vez, para crear las listas
+const MANAGE=['Sites.Manage.All'];   // solo se usa para crear listas o columnas que falten
+const SP_MANAGE=()=>[`https://${CONFIG.siteHost}/AllSites.Manage`];   // para poner las listas nuevas en el menú del sitio
 
-/* Columnas de cada lista (la página las crea sola la primera vez si no existen) */
+/* Columnas de cada lista (la página crea solas las listas y columnas que falten) */
 const SCHEMA={
   personal:[{name:'Cedula',text:{}}],
-  equipos:[{name:'Equipo',text:{}},{name:'Categoria',text:{}},{name:'Serie',text:{}},{name:'Condicion',text:{}},{name:'Observaciones',text:{}},{name:'ResponsableId',number:{}}],
-  historial:[{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'De',text:{}},{name:'A',text:{}},{name:'Registro',text:{}}]
+  equipos:[{name:'Equipo',text:{}},{name:'Categoria',text:{}},{name:'Serie',text:{}},{name:'Condicion',text:{}},{name:'Observaciones',text:{}},{name:'ResponsableId',number:{}},
+           {name:'Ubicacion',text:{}},{name:'FechaAdquisicion',dateTime:{format:'dateOnly'}},{name:'ProximaRevision',dateTime:{format:'dateOnly'}},{name:'UltimaRevision',dateTime:{format:'dateOnly'}}],
+  historial:[{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'De',text:{}},{name:'A',text:{}},{name:'Registro',text:{}}],
+  ubicaciones:[]
 };
 
 /* ---------- Estado ---------- */
-let S={personas:[],equipos:[],hist:[]};
-const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null};
-const G={pca:null,account:null,me:null,siteId:null,listIds:{}};
+let S={personas:[],equipos:[],hist:[],ubic:[]};
+const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null,imp:null};
+const G={pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
 let busy=false;
 
 /* ---------- Helpers ---------- */
@@ -224,9 +255,11 @@ const $=id=>document.getElementById(id);
 const P=id=>S.personas.find(p=>p.id===id);
 const E=cod=>S.equipos.find(x=>x.cod===cod);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const js=s=>esc(JSON.stringify(String(s)));
 const lc=s=>String(s||'').trim().toLowerCase();
 const pad=n=>String(n).padStart(2,'0');
-const hoy=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const kOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hoy=()=>kOf(new Date());
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fActa=k=>{if(!k)return'';const[y,m,d]=k.split('-');return parseInt(d)+' '+MESES[m-1]+' '+y};
 const fCorta=k=>{if(!k)return'';const[y,m,d]=k.split('-');return parseInt(d)+' '+MESES[m-1].slice(0,3).toLowerCase()+' '+y};
@@ -234,10 +267,26 @@ const opts=(a,v)=>a.map(o=>`<option${o===v?' selected':''}>${esc(o)}</option>`).
 const ini=n=>n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const yo=()=>G.me?.displayName||G.me?.mail||'';
 const porNombre=(a,b)=>a.nombre.localeCompare(b.nombre);
-function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),3000)}
+const plural=(n,a,b)=>n+' '+(n===1?a:b);
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),3200)}
 /* Fechas: se leen sin correrse de día y se escriben a mediodía UTC */
 const rd=v=>{if(!v)return '';if(/^\d{4}-\d{2}-\d{2}$/.test(v))return v;const d=new Date(Date.parse(v)+6*3600e3);return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}`};
 const wd=k=>k?k+'T12:00:00Z':null;
+const bis=y=>y%4===0&&(y%100!==0||y%400===0);
+function addY(k,n){let[y,m,d]=k.split('-').map(Number);y+=n;if(m===2&&d===29&&!bis(y))d=28;return y+'-'+pad(m)+'-'+pad(d)}
+const addD=(k,n)=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()+n);return kOf(d)};
+const dias=k=>Math.round((Date.parse(k+'T12:00:00')-Date.parse(hoy()+'T12:00:00'))/864e5);
+/* Revisión anual: si ya pasó su primer año y nunca se revisó, queda pendiente desde el último aniversario */
+function proxInicial(fadq){if(!fadq)return '';const t=hoy(),a=addY(fadq,1);if(a>t)return a;let k=addY(fadq,+t.slice(0,4)-+fadq.slice(0,4));if(k>t)k=addY(k,-1);return k}
+function proxSiguiente(prox){let k=addY(prox||hoy(),1);const t=hoy();while(k<=t)k=addY(k,1);return k}
+function anios(fadq){if(!fadq)return '';const t=hoy();let n=+t.slice(0,4)-+fadq.slice(0,4);if(t.slice(5)<fadq.slice(5))n--;return n<1?'menos de 1 año':plural(n,'año','años')}
+const cls=c=>({'Sin revisar':'Sinrev','Dañada':'Danada'}[c]||c);
+const pill=c=>`<span class="pill ${cls(c)}">${esc(c)}</span>`;
+/* Dónde está un equipo: persona, ubicación o sin asignar */
+const donde=x=>x.asig?P(x.asig)?.nombre||'':x.ubic||'Sin asignar';
+const origenDe=x=>x.asig?'p:'+x.asig:x.ubic?'u:'+x.ubic:'n:';
+const enOrigen=o=>{const[t,v]=[o.slice(0,1),o.slice(2)];return S.equipos.filter(x=>t==='p'?x.asig===+v:t==='u'?!x.asig&&x.ubic===v:!x.asig&&!x.ubic)};
+const pendientes=()=>S.equipos.filter(x=>x.prox&&x.prox<=hoy());
 
 /* ---------- Inicio de sesión (Microsoft) ---------- */
 async function initAuth(){
@@ -266,32 +315,75 @@ async function gx(method,path,body,scopes){
   if(!r.ok)throw new GraphError(r.status,j?.error?.message||r.statusText);
   return j;
 }
+const LP=k=>`/sites/${G.siteId}/lists/${G.listIds[k]}`;
 async function allItems(list){
-  let url=`/sites/${G.siteId}/lists/${G.listIds[list]}/items?$expand=fields&$top=999`,out=[];
+  let url=`${LP(list)}/items?$expand=fields&$top=999`,out=[];
   while(url){const j=await gx('GET',url);out=out.concat(j.value);url=j['@odata.nextLink']||null}
   return out;
 }
-const addItem=(list,fields)=>gx('POST',`/sites/${G.siteId}/lists/${G.listIds[list]}/items`,{fields});
-const setItem=(list,id,fields)=>gx('PATCH',`/sites/${G.siteId}/lists/${G.listIds[list]}/items/${id}/fields`,fields);
+const addItem=(list,fields)=>gx('POST',`${LP(list)}/items`,{fields});
+const setItem=(list,id,fields)=>gx('PATCH',`${LP(list)}/items/${id}/fields`,fields);
+const delItem=(list,id)=>gx('DELETE',`${LP(list)}/items/${id}`);
+/* Varias escrituras juntas (de 20 en 20), reintentando si SharePoint pide esperar */
+async function batch(reqs,onProg){
+  const out=new Array(reqs.length);
+  for(let i=0;i<reqs.length;i+=20){
+    let chunk=reqs.slice(i,i+20).map((r,j)=>({id:String(i+j),method:r.method,url:r.url,headers:{'Content-Type':'application/json'},body:r.body}));
+    for(let t=0;chunk.length&&t<6;t++){
+      const j=await gx('POST','/$batch',{requests:chunk});let retry=[],wait=0;
+      for(const r of j.responses){if(r.status===429||r.status>=500){retry.push(chunk.find(c=>c.id===r.id));wait=Math.max(wait,+(r.headers?.['Retry-After']||3))}else out[+r.id]=r}
+      chunk=retry;if(chunk.length)await new Promise(s=>setTimeout(s,wait*1000));
+    }
+    chunk.forEach(c=>out[+c.id]={status:429,body:{error:{message:'SharePoint pidió esperar demasiadas veces'}}});
+    if(onProg)onProg(Math.min(i+20,reqs.length),reqs.length);
+  }
+  return out;
+}
 
 async function connect(){
   G.me=await gx('GET','/me?$select=displayName,mail,userPrincipalName');
   const site=await gx('GET',`/sites/${CONFIG.siteHost}:${CONFIG.sitePath}?$select=id`);
   G.siteId=site.id;
   const ls=(await gx('GET',`/sites/${G.siteId}/lists?$select=id,displayName,name&$top=200`)).value;
+  const busca=name=>ls.find(l=>lc(l.displayName)===lc(name)||lc(l.name)===lc(name));
+  /* Si falta alguna lista, primero se piden los permisos (puede recargar la página) y después se crea */
+  let spTok=null;
+  if(Object.values(CONFIG.lists).some(n=>!busca(n))){await token(MANAGE);spTok=await spToken()}
   for(const [key,name] of Object.entries(CONFIG.lists)){
-    let f=ls.find(l=>lc(l.displayName)===lc(name)||lc(l.name)===lc(name));
+    let f=busca(name),nueva=false;
     if(!f){
-      try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}},MANAGE)}
+      try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}},MANAGE);nueva=true}
       catch(e){if(e.status===403)throw new GraphError(403,`Falta la lista "${name}" y tu cuenta no puede crearla. Entra primero con la cuenta dueña del sitio. (${e.message})`);throw e}
     }
     G.listIds[key]=f.id;
+    if(nueva)await alMenu(f.id,name,spTok);
+    if(nueva&&key==='ubicaciones')for(const u of UBICACIONES_INICIALES)await addItem('ubicaciones',{Title:u});
+    if(!nueva&&SCHEMA[key].length){
+      const cols=new Set((await gx('GET',`${LP(key)}/columns?$select=name&$top=200`)).value.map(c=>c.name));
+      for(const c of SCHEMA[key].filter(c=>!cols.has(c.name))){
+        try{await gx('POST',`${LP(key)}/columns`,c,MANAGE)}
+        catch(e){if(e.status===403)throw new GraphError(403,`Falta la columna "${c.name}" en "${name}" y tu cuenta no puede crearla. Entra primero con la cuenta dueña del sitio. (${e.message})`);throw e}
+      }
+    }
   }
 }
+/* Pone una lista en el menú de la izquierda del sitio (Quick Launch), con la API de SharePoint */
+async function spToken(){try{return (await G.pca.acquireTokenSilent({scopes:SP_MANAGE(),account:G.account})).accessToken}catch(e){console.warn('Sin permiso AllSites.Manage',e);return null}}
+async function alMenu(id,name,tk){
+  const aviso=()=>G.avisos.push(`La lista ${name} se creó, pero no se pudo poner en el menú del sitio. Agrégala desde List settings.`);
+  if(!tk)return aviso();
+  const url=`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web/lists(guid'${id}')`;
+  const go=(ct,body)=>fetch(url,{method:'POST',headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata','Content-Type':ct,'X-HTTP-Method':'MERGE','IF-MATCH':'*'},body:JSON.stringify(body)}).then(r=>r.ok).catch(()=>false);
+  if(await go('application/json;odata=nometadata',{OnQuickLaunch:true}))return;
+  if(await go('application/json;odata=verbose',{__metadata:{type:'SP.List'},OnQuickLaunch:true}))return;
+  aviso();
+}
 async function loadAll(){
-  const [pe,eq,hi]=await Promise.all(['personal','equipos','historial'].map(allItems));
+  const [pe,eq,hi,ub]=await Promise.all(['personal','equipos','historial','ubicaciones'].map(allItems));
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
-  S.equipos=eq.map(i=>{const f=i.fields;return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'Otro',serie:f.Serie||'',cond:f.Condicion||'Buena',obs:f.Observaciones||'',asig:f.ResponsableId?+f.ResponsableId:null}})
+  S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
+  S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
+    asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),fadq,prox:rd(f.ProximaRevision)||proxInicial(fadq),ult:rd(f.UltimaRevision)}})
     .filter(x=>x.cod).sort((a,b)=>a.cod.localeCompare(b.cod));
   S.equipos.forEach(x=>{if(x.asig&&!P(x.asig))x.asig=null});
   S.hist=hi.map(i=>{const f=i.fields;return{f:rd(f.Fecha),cod:f.Title||'',de:f.De||null,a:f.A||'',por:f.Registro||i.createdBy?.user?.displayName||'',t:Date.parse(i.createdDateTime)||0}})
@@ -301,16 +393,17 @@ async function loadAll(){
 async function act(fn,okMsg,after){
   if(busy)return false;busy=true;document.body.classList.add('busy');
   try{const r=await fn();await loadAll();if(after)after(r);else render();if(okMsg)toast(typeof okMsg==='function'?okMsg(r):okMsg);return true}
-  catch(e){console.error(e);if(e.message!=='redirect')toast(e.status===403?'No tienes permiso para hacer ese cambio en SharePoint.':'No se pudo guardar: '+(e.message||e));return false}
+  catch(e){console.error(e);if(e.message!=='redirect'){toast(e.status===403?'No tienes permiso para hacer ese cambio en SharePoint.':'No se pudo guardar: '+(e.message||e));try{await loadAll();render()}catch(_){}}return false}
   finally{busy=false;document.body.classList.remove('busy')}
 }
 const nuevaPersona=async(nombre,ced)=>+(await addItem('personal',{Title:nombre,Cedula:ced})).id;
-async function mover(cods,pid,f){
-  const p=pid?{id:pid,nombre:P(pid)?.nombre}:null;
+/* Mueve equipos a una persona o a una ubicación. dest: {t:'p',id} | {t:'u',nombre} */
+async function mover(cods,dest,f){
+  const dn=dest.t==='p'?P(dest.id)?.nombre:dest.nombre;
   for(const cod of cods){
-    const x=E(cod),de=P(x.asig);
-    await setItem('equipos',x.sid,{ResponsableId:p?p.id:0});
-    await addItem('historial',{Title:cod,Fecha:wd(f),De:de?.nombre||'',A:p?p.nombre:'Devuelto',Registro:yo()});
+    const x=E(cod);
+    await setItem('equipos',x.sid,{ResponsableId:dest.t==='p'?dest.id:0,Ubicacion:dest.t==='u'?dest.nombre:''});
+    await addItem('historial',{Title:cod,Fecha:wd(f),De:donde(x),A:dn,Registro:yo()});
   }
 }
 
@@ -330,40 +423,44 @@ async function boot(){
       ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero este sistema es solo para contaduría. Si deberías tener acceso, pide que te den permiso en las listas de activos en SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
       :`<h1>No se pudieron cargar los datos</h1><p>${esc(e.message)}</p><button class="btn" onclick="location.reload()">Intentar de nuevo</button>`);return}
   render();
+  if(G.avisos.length)toast(G.avisos.join(' '));
 }
 
 /* ---------- Vista principal ---------- */
 function render(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
-  const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length;
-  const tb=(k,l)=>`<button class="tab" role="tab" aria-selected="${V.tab===k}" onclick="V.tab='${k}';V.q='';render()">${l}</button>`;
+  const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
+  const tb=(k,l,b)=>`<button class="tab" role="tab" aria-selected="${V.tab===k}" onclick="V.tab='${k}';V.q='';render()">${l}${b?`<span class="badge" aria-label="${b} pendientes">${b}</span>`:''}</button>`;
   $('app').innerHTML=`<div class="head"><h1>Activos y equipos</h1>
    <div class="head-acts">
     <div class="dd" id="dd"><button class="btn primary" aria-haspopup="true" aria-expanded="false" onclick="menu(event)">Agregar ▾</button>
      <div class="dd-pop" role="menu">
       <button role="menuitem" onclick="dPersona()"><strong>Personal</strong><small>Registrar a un colaborador y entregarle equipo</small></button>
       <button role="menuitem" onclick="dAgregar()"><strong>Equipo</strong><small>Agregar un activo al inventario</small></button>
+      <button role="menuitem" onclick="dImportar()"><strong>Importar desde Excel</strong><small>Carga masiva de personal y equipos</small></button>
      </div></div>
     <button class="btn" onclick="dCambio()">Cambio de responsable</button>
    </div></div>
+  ${pn&&V.tab!=='rev'?`<div class="alert"><span><strong>${plural(pn,'activo cumplió','activos cumplieron')} año</strong> y ${pn===1?'necesita':'necesitan'} revisión de estado.</span><button class="btn sm" onclick="V.tab='rev';render()">Ir a Revisión</button></div>`:''}
   <div class="stats">
    <div class="stat main"><span>Personal con equipo</span><strong>${S.personas.filter(p=>S.equipos.some(x=>x.asig===p.id)).length}</strong><small>de ${S.personas.length} registrados</small></div>
-   <div class="stat"><span>Equipos asignados</span><strong>${a}</strong><small>de ${t} en inventario</small></div>
-   <div class="stat"><span>Disponibles</span><strong>${t-a}</strong><small>sin responsable</small></div>
-   <div class="stat"><span>Movimientos</span><strong>${S.hist.length}</strong><small>en el historial</small></div>
+   <div class="stat"><span>Equipos con persona</span><strong>${a}</strong><small>de ${t} en inventario</small></div>
+   <div class="stat"><span>En ubicaciones</span><strong>${u}</strong><small>bodega, sala y otros</small></div>
+   <div class="stat${pn?' warn':''}"><span>Revisión pendiente</span><strong>${pn}</strong><small>cumplieron año</small></div>
   </div>
-  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('hi','Historial')}</div>
-  <div id="tabc">${V.tab==='pe'?tPe():V.tab==='eq'?tEq():tHi()}</div>`;
+  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('rev','Revisión',pn)}${tb('ub','Ubicaciones')}${tb('hi','Historial')}</div>
+  <div id="tabc">${{pe:tPe,eq:tEq,rev:tRev,ub:tUb,hi:tHi}[V.tab]()}</div>`;
   if(V.tab==='eq'&&S.equipos.length)filas();
   if(V.tab==='pe'&&S.personas.length)filasPe();
 }
 function menu(e){e.stopPropagation();const d=$('dd'),o=!d.classList.contains('open');d.classList.toggle('open',o);d.querySelector('button').setAttribute('aria-expanded',o)}
 document.addEventListener('click',()=>{const d=$('dd');if(d){d.classList.remove('open');d.querySelector('button').setAttribute('aria-expanded','false')}});
 const vacio=(t,p,b)=>`<div class="emptybox"><h2>${t}</h2><p>${p}</p>${b}</div>`;
+const lugar=n=>`<span class="kind">Ubicación</span> ${esc(n)}`;
 
 /* ---------- Personal ---------- */
 function tPe(){
-  if(!S.personas.length)return vacio('Agrega a tu primer colaborador','Registra nombre y cédula; luego le entregas equipo y sale el acta lista para firmar.','<button class="btn primary" onclick="dPersona()">Agregar personal</button>');
+  if(!S.personas.length)return vacio('Agrega a tu primer colaborador','Registra nombre y cédula uno por uno, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dPersona()">Agregar personal</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
   return `<div class="bar"><input class="search" placeholder="Buscar por nombre, cédula o código de equipo" value="${esc(V.q)}" oninput="V.q=this.value;filasPe()"></div>
   <div class="tbl"><table><thead><tr><th>Colaborador</th><th>Equipos a cargo</th><th></th></tr></thead><tbody id="filasPe"></tbody></table></div>`;
 }
@@ -371,59 +468,113 @@ function filasPe(){
   const q=lc(V.q);
   const ps=[...S.personas].sort(porNombre).filter(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return !q||lc([p.nombre,p.ced,...m.map(x=>x.cod+' '+x.eq)].join(' ')).includes(q)});
   $('filasPe').innerHTML=ps.length?ps.map(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
-   <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${m.length} ${m.length===1?'equipo':'equipos'}</p></div></div></td>
-   <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} <span class="pill ${esc(x.cond)}">${esc(x.cond)}</span></div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
-   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio(${p.id})">Cambiar responsable</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(0,null,${p.id})">Entregar equipo</button>`}</div></td></tr>`}).join('')
+   <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${plural(m.length,'equipo','equipos')}</p></div></div></td>
+   <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
+   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`}).join('')
   :'<tr><td colspan="3"><p class="empty">No hay personal que coincida con la búsqueda.</p></td></tr>';
 }
 
 /* ---------- Equipos ---------- */
 function tEq(){
-  if(!S.equipos.length)return vacio('Agrega el primer equipo','Registra código, serie y condición. Puedes dejarlo disponible o entregarlo de una vez.','<button class="btn primary" onclick="dAgregar()">Agregar equipo</button>');
+  if(!S.equipos.length)return vacio('Agrega el primer equipo','Registra código, serie y fecha de compra, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dAgregar()">Agregar equipo</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
   const cnt=c=>S.equipos.filter(x=>!c||x.cat===c).length;
-  const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat='${c}';render()">${l} <b>${cnt(c)}</b></button>`;
-  return `<div class="bar"><input class="search" placeholder="Buscar por código, serie o persona" value="${esc(V.q)}" oninput="V.q=this.value;filas()"></div>
+  const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat=${js(c)};render()">${esc(l)} <b>${cnt(c)}</b></button>`;
+  return `<div class="bar"><input class="search" placeholder="Buscar por código, serie, persona o ubicación" value="${esc(V.q)}" oninput="V.q=this.value;filas()"></div>
   <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}</div>
-  <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Condición</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>`;
+  <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>`;
 }
 function filas(){
   const q=lc(V.q);
-  const r=S.equipos.filter(x=>{const p=P(x.asig);return(!V.cat||x.cat===V.cat)&&(!q||lc([x.cod,x.eq,x.serie,p?.nombre,p?.ced].join(' ')).includes(q))});
+  const r=S.equipos.filter(x=>(!V.cat||x.cat===V.cat)&&(!q||lc([x.cod,x.eq,x.serie,donde(x),P(x.asig)?.ced].join(' ')).includes(q)));
   $('filas').innerHTML=r.length?r.map(x=>{const p=P(x.asig);return `<tr>
    <td class="code">${esc(x.cod)}</td>
-   <td>${esc(x.eq)}<p>${esc(x.cat)}${x.obs?' · '+esc(x.obs):''}</p></td>
+   <td>${esc(x.eq)}<p>${esc(x.cat)}${x.fadq?' · Compra '+fCorta(x.fadq):''}${x.obs?' · '+esc(x.obs):''}</p></td>
    <td class="ser">${esc(x.serie)}</td>
-   <td><span class="pill ${esc(x.cond)}">${esc(x.cond)}</span></td>
-   <td>${p?`${esc(p.nombre)}<p>Céd. ${esc(p.ced)}</p>`:'<span class="free">Disponible</span>'}</td>
-   <td><div class="acts">${p?`<button class="lnk" onclick="abrirActa(${p.id},['${x.cod}'])">Acta</button>`:''}<button class="lnk" onclick="dCambio(${x.asig||0},'${x.cod}')">${p?'Cambiar responsable':'Asignar'}</button></div></td></tr>`}).join('')
+   <td>${pill(x.cond)}</td>
+   <td>${p?`${esc(p.nombre)}<p>Céd. ${esc(p.ced)}</p>`:x.ubic?lugar(x.ubic):'<span class="free">Sin asignar</span>'}</td>
+   <td><div class="acts">${p?`<button class="lnk" onclick="abrirActa(${p.id},[${js(x.cod)}])">Acta</button>`:''}<button class="lnk" onclick="dCambio(${js(origenDe(x))},${js(x.cod)})">${p?'Cambiar responsable':'Asignar'}</button><button class="lnk red" onclick="dBorrarEquipo(${js(x.cod)})">Eliminar</button></div></td></tr>`}).join('')
   :'<tr><td colspan="6"><p class="empty">No hay equipos que coincidan con la búsqueda.</p></td></tr>';
+}
+
+/* ---------- Revisión anual ---------- */
+function tRev(){
+  const t=hoy(),lim=addD(t,CONFIG.diasAviso);
+  const pend=pendientes().sort((a,b)=>a.prox.localeCompare(b.prox)||a.cod.localeCompare(b.cod));
+  const prox=S.equipos.filter(x=>x.prox>t&&x.prox<=lim).sort((a,b)=>a.prox.localeCompare(b.prox));
+  const sig=S.equipos.filter(x=>x.prox>lim).sort((a,b)=>a.prox.localeCompare(b.prox)).slice(0,5);
+  const fila=(x,due)=>{const d=dias(x.prox);return `<tr class="${due?'due':''}">
+   <td class="code">${esc(x.cod)}</td>
+   <td>${esc(x.eq)}<p>${esc(x.cat)} · Serie ${esc(x.serie)}</p></td>
+   <td>${x.asig?esc(donde(x)):x.ubic?lugar(x.ubic):'<span class="free">Sin asignar</span>'}</td>
+   <td>${fCorta(x.fadq)}<p>${anios(x.fadq)}</p></td>
+   <td><span class="when${due?'':' soon'}">${due?(d===0?'Cumple año hoy':'Cumplió año el '+fCorta(x.prox)):'Cumple año en '+plural(d,'día','días')}</span>${x.ult?`<p>Última revisión ${fCorta(x.ult)}</p>`:''}</td>
+   <td><div class="rev"><select id="rv-${x.sid}" aria-label="Estado de ${esc(x.cod)}">${opts(CONDICIONES,x.cond)}</select><button class="btn sm primary" onclick="guardarRev(${x.sid})">Guardar</button></div></td></tr>`};
+  const tabla=(rows,due)=>`<div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Responsable</th><th>Compra</th><th>Aniversario</th><th>Estado</th></tr></thead><tbody>${rows.map(x=>fila(x,due)).join('')}</tbody></table></div>`;
+  return `<p class="small muted" style="margin:-6px 0 18px">Cada activo se revisa una vez al año, en el aniversario de su fecha de compra. Al guardar el estado, la siguiente revisión pasa al próximo aniversario.</p>
+  <h2>Pendientes de revisión <span class="count">${pend.length}</span></h2>
+  ${pend.length?tabla(pend,true):'<p class="empty">No hay activos pendientes. Todo al día.</p>'}
+  <h2 style="margin-top:30px">Cumplen año en los próximos ${CONFIG.diasAviso} días <span class="count">${prox.length}</span></h2>
+  ${prox.length?tabla(prox,false):'<p class="empty">Ningún activo cumple año en los próximos '+CONFIG.diasAviso+' días.</p>'}
+  ${sig.length?`<h2 style="margin-top:30px">Siguientes</h2><div class="tbl"><table><tbody>${sig.map(x=>`<tr><td class="code">${esc(x.cod)}</td><td>${esc(x.eq)}</td><td>${x.asig?esc(donde(x)):lugar(x.ubic||'Sin asignar')}</td><td class="muted">Cumple año el ${fCorta(x.prox)}</td></tr>`).join('')}</tbody></table></div>`:''}`;
+}
+function guardarRev(sid){
+  const x=S.equipos.find(q=>q.sid===sid),est=$('rv-'+sid).value,next=proxSiguiente(x.prox),t=hoy();
+  act(async()=>{
+    await setItem('equipos',sid,{Condicion:est,UltimaRevision:wd(t),ProximaRevision:wd(next)});
+    await addItem('historial',{Title:x.cod,Fecha:wd(t),De:'',A:'Revisión: '+est,Registro:yo()});
+  },`${x.cod} revisado como ${est}. Próxima revisión: ${fCorta(next)}`);
+}
+
+/* ---------- Ubicaciones ---------- */
+function tUb(){
+  return `<div class="addrow"><input id="u-n" placeholder="Nueva ubicación, por ejemplo Recepción" onkeydown="if(event.key==='Enter')agregarUb()"><button class="btn primary" onclick="agregarUb()">Agregar ubicación</button></div>
+  ${S.ubic.length?`<div class="tbl"><table><thead><tr><th>Ubicación</th><th>Equipos</th><th></th></tr></thead><tbody>${S.ubic.map(u=>{const m=S.equipos.filter(x=>!x.asig&&x.ubic===u.nombre);return `<tr>
+   <td><strong>${esc(u.nombre)}</strong></td>
+   <td>${m.length?`${plural(m.length,'equipo','equipos')}<p>${m.slice(0,8).map(x=>esc(x.cod)).join(', ')}${m.length>8?'…':''}</p>`:'<span class="free">Sin equipos</span>'}</td>
+   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio(${js('u:'+u.nombre)})">Mover equipos</button>`:`<button class="lnk red" onclick="dBorrarUb(${u.id})">Eliminar</button>`}</div></td></tr>`}).join('')}</tbody></table></div>`:'<p class="empty">No hay ubicaciones registradas.</p>'}`;
+}
+function agregarUb(){
+  const n=$('u-n').value.trim().replace(/\s+/g,' ');
+  if(!n)return toast('Escribe el nombre de la ubicación.');
+  if(S.ubic.some(u=>lc(u.nombre)===lc(n)))return toast('Esa ubicación ya existe.');
+  act(()=>addItem('ubicaciones',{Title:n}),'Ubicación '+n+' agregada');
+}
+function dBorrarUb(id){
+  const u=S.ubic.find(q=>q.id===id);
+  if(S.equipos.some(x=>!x.asig&&x.ubic===u.nombre))return toast('Esa ubicación todavía tiene equipos. Muévelos primero.');
+  confirmar('Eliminar ubicación',`¿Eliminar la ubicación <strong>${esc(u.nombre)}</strong>? No tiene equipos asignados.`,'Eliminar ubicación',()=>act(()=>delItem('ubicaciones',id),'Ubicación '+u.nombre+' eliminada'));
 }
 
 /* ---------- Drawer ---------- */
 function abrir(h){const d=$('drawer');d.innerHTML=h;d.classList.add('open');d.setAttribute('aria-hidden','false');$('scrim').classList.add('open')}
-function cerrar(){$('drawer').classList.remove('open');$('drawer').setAttribute('aria-hidden','true');$('scrim').classList.remove('open')}
+function cerrar(){if(V.imp?.corriendo)return;$('drawer').classList.remove('open');$('drawer').setAttribute('aria-hidden','true');$('scrim').classList.remove('open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar()});
 const fl=(l,h)=>`<label class="f"><span>${l}</span>${h}</label>`;
-const chk=(x,on)=>`<li><label><input type="checkbox" class="d-chk" value="${x.cod}"${on?' checked':''}><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>${esc(x.cat)} · Serie ${esc(x.serie)}</small></span></label></li>`;
+const chk=(x,on)=>`<li><label><input type="checkbox" class="d-chk" value="${esc(x.cod)}"${on?' checked':''}><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>${esc(x.cat)} · Serie ${esc(x.serie)}${!x.asig?' · '+esc(x.ubic||'Sin asignar'):''}</small></span></label></li>`;
 const marcados=()=>[...document.querySelectorAll('.d-chk:checked')].map(i=>i.value);
-const disponibles=()=>S.equipos.filter(x=>!x.asig);
+const libres=()=>S.equipos.filter(x=>!x.asig);
 function validarPersona(n,c){
   if(!n||!c)return 'Ingresa el nombre completo y la cédula.';
   if(!/^\d-\d{4}-\d{4}$/.test(c))return 'La cédula debe tener el formato 1-1234-5678.';
   const p=S.personas.find(q=>q.ced===c);if(p)return 'Esa cédula ya está registrada a nombre de '+p.nombre+'.';
   return '';
 }
-const plural=(n,a,b)=>n+' '+(n===1?a:b);
+function confirmar(titulo,texto,boton,fn){
+  abrir(`<header><div><h2>${titulo}</h2></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><p style="margin:0">${texto}</p><p class="small muted">Si fue un error, se puede recuperar desde la papelera de reciclaje del sitio de SharePoint durante 93 días.</p><div id="c-extra"></div></div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn danger" id="c-go">${boton}</button></footer>`);
+  $('c-go').onclick=()=>{cerrar();fn()};
+}
 
 /* Agregar personal */
 function dPersona(){
-  const dis=disponibles();
+  const dis=libres();
   abrir(`<header><div><h2>Agregar personal</h2><p>Registra al colaborador y, si quieres, entrégale equipo de una vez.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
    ${fl('Nombre completo','<input id="p-n" placeholder="Nombre y dos apellidos">')}
    ${fl('Cédula','<input id="p-c" placeholder="1-1234-5678">')}
    <div class="step">Entregar equipo ahora <span class="muted">(opcional)</span></div>
-   ${dis.length?`<ul class="pick">${dis.map(x=>chk(x,false)).join('')}</ul>${fl('Fecha de entrega',`<input id="p-f" type="date" value="${hoy()}">`)}`:'<p class="small muted">No hay equipos disponibles. Puedes asignarle equipo después con Cambio de responsable.</p>'}
+   ${dis.length?`<ul class="pick">${dis.map(x=>chk(x,false)).join('')}</ul>${fl('Fecha de entrega',`<input id="p-f" type="date" value="${hoy()}">`)}`:'<p class="small muted">No hay equipos en ubicaciones. Puedes asignarle equipo después con Cambio de responsable.</p>'}
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gPersona()">Guardar</button></footer>`);
   setTimeout(()=>$('p-n')?.focus(),200);
@@ -433,54 +584,75 @@ function gPersona(){
   const v=validarPersona(n,c);if(v)return $('err').textContent=v;
   const f=$('p-f')?$('p-f').value:hoy();if(m.length&&!f)return $('err').textContent='Selecciona la fecha de entrega.';
   cerrar();
-  act(async()=>{const id=await nuevaPersona(n,c);S.personas.push({id,nombre:n,ced:c});if(m.length)await mover(m,id,f);return id},
+  act(async()=>{const id=await nuevaPersona(n,c);S.personas.push({id,nombre:n,ced:c});if(m.length)await mover(m,{t:'p',id},f);return id},
     m.length?`${n} registrado con ${plural(m.length,'equipo','equipos')}`:`${n} registrado`,
     id=>{if(m.length)abrirActa(id,m,f);else{V.tab='pe';render()}});
 }
+function dBorrarPersona(id){
+  const p=P(id),m=S.equipos.filter(x=>x.asig===id);
+  if(m.length)return toast(`${p.nombre} tiene ${plural(m.length,'equipo','equipos')}. Pásalos a otra persona o a una ubicación primero.`);
+  confirmar('Eliminar colaborador',`¿Eliminar a <strong>${esc(p.nombre)}</strong> (céd. ${esc(p.ced)})? No tiene equipos a su nombre. Su historial de movimientos se conserva.`,'Eliminar colaborador',
+    ()=>act(()=>delItem('personal',id),p.nombre+' eliminado'));
+}
 
 /* Agregar equipo */
+function selResp(sel){return `<optgroup label="Ubicaciones">${S.ubic.map(u=>`<option value="${esc('u:'+u.nombre)}"${'u:'+u.nombre===sel?' selected':''}>${esc(u.nombre)}</option>`).join('')}</optgroup>
+  <optgroup label="Personal">${[...S.personas].sort(porNombre).map(p=>`<option value="p:${p.id}"${'p:'+p.id===sel?' selected':''}>${esc(p.nombre)}</option>`).join('')}</optgroup>`}
 function dAgregar(){
   abrir(`<header><div><h2>Agregar equipo</h2><p>Queda registrado en el inventario.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
-   <div class="two">${fl('Código','<input id="n-cod" placeholder="AI0140">')}${fl('Serie','<input id="n-serie" placeholder="COXQWT2">')}</div>
-   ${fl('Equipo','<input id="n-eq" placeholder="Computador portátil">')}
-   <div class="two">${fl('Categoría',`<select id="n-cat">${opts(CATEGORIAS)}</select>`)}${fl('Condición',`<select id="n-cond">${opts(CONDICIONES)}</select>`)}</div>
+   <div class="two">${fl('Código','<input id="n-cod" placeholder="AI0110">')}${fl('Serie','<input id="n-serie" placeholder="Vacío si no tiene">')}</div>
+   ${fl('Equipo','<input id="n-eq" placeholder="Computador Portátil">')}
+   <div class="two">${fl('Categoría',`<select id="n-cat">${opts(CATEGORIAS)}</select>`)}${fl('Estado',`<select id="n-cond">${opts(CONDICIONES,'Nueva')}</select>`)}</div>
+   <div class="two">${fl('Fecha de compra',`<input id="n-fadq" type="date" value="${hoy()}">`)}${fl('Responsable o ubicación',`<select id="n-dest">${selResp('u:Bodega')}</select>`)}</div>
    ${fl('Observaciones','<input id="n-obs" placeholder="Incluye cargador">')}
-   ${fl('Responsable',`<select id="n-asig"><option value="">Dejar disponible</option>${[...S.personas].sort(porNombre).map(p=>`<option value="${p.id}">${esc(p.nombre)}</option>`).join('')}</select>`)}
-   ${fl('Fecha de entrega',`<input id="n-f" type="date" value="${hoy()}">`)}
   </div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gAgregar()">Guardar equipo</button></footer>`);
   setTimeout(()=>$('n-cod')?.focus(),200);
 }
 function gAgregar(){
-  const v=id=>$(id).value.trim(),cod=v('n-cod').toUpperCase(),eq=v('n-eq'),serie=v('n-serie'),f=v('n-f')||hoy();
-  if(!cod||!eq||!serie)return $('err').textContent='Completa código, serie y equipo.';
+  const v=id=>$(id).value.trim(),cod=v('n-cod').toUpperCase(),eq=v('n-eq'),serie=v('n-serie')||'N/A',fadq=v('n-fadq'),dest=v('n-dest');
+  if(!cod||!eq)return $('err').textContent='Completa código y equipo.';
   if(!/^[A-Z0-9-]+$/.test(cod))return $('err').textContent='El código solo puede tener letras, números y guiones.';
   if(E(cod))return $('err').textContent='Ya existe un equipo con el código '+cod+'.';
-  const asig=v('n-asig')?+v('n-asig'):null,an=asig?P(asig).nombre:'';
+  if(!fadq)return $('err').textContent='Indica la fecha de compra.';
+  if(!dest)return $('err').textContent='Elige un responsable o una ubicación.';
+  const pid=dest.startsWith('p:')?+dest.slice(2):null,ub=dest.startsWith('u:')?dest.slice(2):'',t=hoy();
   cerrar();
   act(async()=>{
-    await addItem('equipos',{Title:cod,Equipo:eq,Categoria:v('n-cat'),Serie:serie,Condicion:v('n-cond'),Observaciones:v('n-obs'),ResponsableId:asig||0});
-    await addItem('historial',{Title:cod,Fecha:wd(f),De:'',A:asig?an:'Disponible',Registro:yo()});
-  },'Equipo '+cod+' agregado',()=>{if(asig)abrirActa(asig,[cod],f);else{V.tab='eq';render()}});
+    await addItem('equipos',{Title:cod,Equipo:eq,Categoria:v('n-cat'),Serie:serie,Condicion:v('n-cond'),Observaciones:v('n-obs'),ResponsableId:pid||0,Ubicacion:ub,FechaAdquisicion:wd(fadq),ProximaRevision:wd(proxInicial(fadq))});
+    await addItem('historial',{Title:cod,Fecha:wd(t),De:'',A:pid?P(pid).nombre:ub,Registro:yo()});
+  },'Equipo '+cod+' agregado',()=>{if(pid)abrirActa(pid,[cod],t);else{V.tab='eq';render()}});
+}
+function dBorrarEquipo(cod){
+  const x=E(cod);
+  confirmar('Eliminar activo',`¿Eliminar <strong>${esc(x.cod)}</strong> · ${esc(x.eq)} (serie ${esc(x.serie)})? Está con <strong>${esc(donde(x))}</strong>.`,'Eliminar activo',
+    ()=>act(async()=>{await delItem('equipos',x.sid);await addItem('historial',{Title:cod,Fecha:wd(hoy()),De:donde(x),A:'Eliminado'+(motivo?': '+motivo:''),Registro:yo()})},'Activo '+cod+' eliminado'));
+  $('c-extra').innerHTML=fl('Motivo (opcional)','<input id="c-mot" placeholder="Dado de baja, vendido, extraviado…">');
+  let motivo='';$('c-mot').oninput=e=>motivo=e.target.value.trim();
 }
 
-/* Cambio de responsable: origen -> equipos -> nueva persona */
+/* Cambio de responsable: origen -> equipos -> destino (persona o ubicación) */
+function origenes(){
+  const o=[...S.personas].filter(p=>S.equipos.some(x=>x.asig===p.id)).sort(porNombre).map(p=>({v:'p:'+p.id,l:p.nombre,g:'Personal'}));
+  S.ubic.filter(u=>S.equipos.some(x=>!x.asig&&x.ubic===u.nombre)).forEach(u=>o.push({v:'u:'+u.nombre,l:u.nombre,g:'Ubicaciones'}));
+  if(S.equipos.some(x=>!x.asig&&!x.ubic))o.push({v:'n:',l:'Sin asignar',g:'Ubicaciones'});
+  return o;
+}
 function dCambio(origen,cod,destino){
-  const con=[...S.personas].filter(p=>S.equipos.some(x=>x.asig===p.id)).sort(porNombre);
-  if(origen===undefined)origen=con.length?con[0].id:0;
+  const os=origenes();
+  if(!os.length)return toast('Todavía no hay equipos registrados.');
+  if(!origen||!os.some(o=>o.v===origen))origen=(os.find(o=>o.v==='u:Bodega')||os.find(o=>o.g==='Ubicaciones')||os[0]).v;
   V.cb={origen,cod:cod||null,modo:'exist',destino:destino||null};
-  abrir(`<header><div><h2>Cambio de responsable</h2><p>Elige quién tiene el equipo, qué equipos pasan y a quién.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  const grp=g=>{const l=os.filter(o=>o.g===g);return l.length?`<optgroup label="${g}">${l.map(o=>`<option value="${esc(o.v)}"${o.v===origen?' selected':''}>${esc(o.l)}</option>`).join('')}</optgroup>`:''};
+  abrir(`<header><div><h2>Cambio de responsable</h2><p>Elige dónde está el equipo, qué equipos pasan y a quién o a dónde.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
    <div class="step"><i>1</i> Equipo de</div>
-   <select id="c-o" onchange="V.cb.origen=+this.value;V.cb.cod=null;cbEquipos();cbDestino()">
-    ${con.map(p=>`<option value="${p.id}"${p.id===origen?' selected':''}>${esc(p.nombre)}</option>`).join('')}
-    <option value="0"${origen===0?' selected':''}>Equipos disponibles (sin responsable)</option>
-   </select>
+   <select id="c-o" onchange="V.cb.origen=this.value;V.cb.cod=null;cbEquipos();cbDestino()">${grp('Personal')}${grp('Ubicaciones')}</select>
    <div class="step"><i>2</i> Equipos que pasan <button class="lnk" style="margin-left:auto" onclick="todos()">Marcar todos</button></div>
    <ul class="pick" id="c-eq"></ul>
    <div class="step"><i>3</i> Nuevo responsable</div>
-   <div class="seg" role="radiogroup"><button role="radio" id="m-e" aria-checked="true" onclick="cbModo('exist')">Personal registrado</button><button role="radio" id="m-n" aria-checked="false" onclick="cbModo('nueva')">Persona nueva</button><button role="radio" id="m-d" aria-checked="false" onclick="cbModo('dev')">Devolver</button></div>
+   <div class="seg" role="radiogroup"><button role="radio" id="m-e" aria-checked="true" onclick="cbModo('exist')">Personal registrado</button><button role="radio" id="m-n" aria-checked="false" onclick="cbModo('nueva')">Persona nueva</button><button role="radio" id="m-u" aria-checked="false" onclick="cbModo('ubic')">Ubicación</button></div>
    <div id="c-dest"></div>
    ${fl('Fecha','<input id="c-f" type="date" value="'+hoy()+'">')}
   </div>
@@ -488,34 +660,100 @@ function dCambio(origen,cod,destino){
   cbEquipos();cbDestino();
 }
 function cbEquipos(){
-  const o=V.cb.origen,lista=o?S.equipos.filter(x=>x.asig===o):disponibles();
-  $('c-eq').innerHTML=lista.length?lista.map(x=>chk(x,V.cb.cod?x.cod===V.cb.cod:o!==0&&lista.length===1)).join(''):'<li><p class="small muted" style="margin:8px 0">No hay equipos en esta selección.</p></li>';
+  const lista=enOrigen(V.cb.origen),pers=V.cb.origen.startsWith('p:');
+  $('c-eq').innerHTML=lista.length?lista.map(x=>chk(x,V.cb.cod?x.cod===V.cb.cod:pers&&lista.length===1)).join(''):'<li><p class="small muted" style="margin:8px 0">No hay equipos en esta selección.</p></li>';
   $('err').textContent='';
 }
 function todos(){document.querySelectorAll('.d-chk').forEach(i=>i.checked=true)}
-function cbModo(m){V.cb.modo=m;['e','n','d'].forEach(k=>$('m-'+k).setAttribute('aria-checked',{e:'exist',n:'nueva',d:'dev'}[k]===m));cbDestino()}
+function cbModo(m){V.cb.modo=m;[['e','exist'],['n','nueva'],['u','ubic']].forEach(([k,v])=>$('m-'+k).setAttribute('aria-checked',v===m));cbDestino()}
 function cbDestino(){
   const m=V.cb.modo,o=V.cb.origen;$('err').textContent='';
-  $('m-d').hidden=o===0;if(o===0&&m==='dev'){cbModo('exist');return}
-  $('c-ok').textContent=m==='dev'?'Guardar devolución':'Guardar y generar acta';
-  if(m==='exist'){const ps=[...S.personas].filter(p=>p.id!==o).sort(porNombre);
+  $('c-ok').textContent=m==='ubic'?'Guardar':'Guardar y generar acta';
+  if(m==='exist'){const ps=[...S.personas].filter(p=>'p:'+p.id!==o).sort(porNombre);
     $('c-dest').innerHTML=ps.length?fl('Persona',`<select id="c-p">${ps.map(p=>`<option value="${p.id}"${p.id===V.cb.destino?' selected':''}>${esc(p.nombre)} · ${esc(p.ced)}</option>`).join('')}</select>`):'<p class="small muted">No hay otro personal registrado. Usa Persona nueva.</p>'}
   else if(m==='nueva')$('c-dest').innerHTML=`<div class="two">${fl('Nombre completo','<input id="c-n" placeholder="Nombre y dos apellidos">')}${fl('Cédula','<input id="c-c" placeholder="1-1234-5678">')}</div>`;
-  else $('c-dest').innerHTML='<div class="info">Los equipos marcados quedan disponibles en el inventario, sin responsable.</div>';
+  else{const us=S.ubic.filter(u=>'u:'+u.nombre!==o);
+    $('c-dest').innerHTML=us.length?fl('Ubicación',`<select id="c-u">${us.map(u=>`<option${u.nombre==='Bodega'?' selected':''}>${esc(u.nombre)}</option>`).join('')}</select>`)+'<div class="info">Los equipos pasan a esa ubicación. No se genera acta.</div>':'<p class="small muted">No hay otra ubicación. Agrégala en la pestaña Ubicaciones.</p>'}
 }
 function gCambio(){
   const m=marcados(),f=$('c-f').value,er=$('err'),modo=V.cb.modo;
   if(!m.length)return er.textContent='Marca al menos un equipo.';
   if(!f)return er.textContent='Selecciona la fecha.';
-  let pid=null,n='',c='';
-  if(modo==='exist'){pid=$('c-p')?+$('c-p').value:null;if(!P(pid))return er.textContent='Selecciona a la nueva persona.'}
+  let dest=null,n='',c='';
+  if(modo==='exist'){const pid=$('c-p')?+$('c-p').value:null;if(!P(pid))return er.textContent='Selecciona a la nueva persona.';dest={t:'p',id:pid}}
   else if(modo==='nueva'){n=$('c-n').value.trim().replace(/\s+/g,' ');c=$('c-c').value.trim();const v=validarPersona(n,c);if(v)return er.textContent=v}
+  else{const u=$('c-u')?.value;if(!u)return er.textContent='Selecciona la ubicación.';dest={t:'u',nombre:u}}
   cerrar();
   act(async()=>{
-    if(modo==='nueva'){pid=await nuevaPersona(n,c);S.personas.push({id:pid,nombre:n,ced:c})}
-    await mover(m,pid,f);return pid;
-  },()=>pid?`${plural(m.length,'equipo pasó','equipos pasaron')} a ${P(pid)?.nombre||n}`:plural(m.length,'equipo devuelto','equipos devueltos'),
-  ()=>{if(pid)abrirActa(pid,m,f);else render()});
+    if(modo==='nueva'){const id=await nuevaPersona(n,c);S.personas.push({id,nombre:n,ced:c});dest={t:'p',id}}
+    await mover(m,dest,f);return dest;
+  },d=>`${plural(m.length,'equipo pasó','equipos pasaron')} a ${d.t==='p'?P(d.id)?.nombre||n:d.nombre}`,
+  d=>{if(d.t==='p')abrirActa(d.id,m,f);else render()});
+}
+
+/* ---------- Importar desde Excel ---------- */
+function dImportar(){
+  V.imp=null;
+  abrir(`<header><div><h2>Importar desde Excel</h2><p>Carga personal y equipos de una vez.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <p class="small" style="margin-top:0">El archivo necesita dos hojas:</p>
+   <ul class="small muted" style="padding-left:18px;margin:0 0 14px"><li><strong>Personal</strong>: Nombre, Cedula</li><li><strong>Equipos</strong>: Placa, Serie, Equipo, Categoria, Cedula, Ubicacion, FechaAdquisicion</li></ul>
+   <p class="small muted">Lo que ya exista (misma cédula o misma placa) se salta, así que puedes importar el mismo archivo dos veces sin duplicar.</p>
+   ${fl('Archivo','<input type="file" id="i-f" accept=".xlsx,.xls" onchange="leerExcel(this.files[0])">')}
+   <div id="i-res"></div>
+  </div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" id="i-go" disabled onclick="importar()">Importar</button></footer>`);
+}
+const txt=v=>String(v??'').trim();
+function fechaXL(v){if(Object.prototype.toString.call(v)==='[object Date]'&&!isNaN(v))return kOf(new Date(v.getTime()+12*3600e3));const s=txt(v);let m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);if(m)return m[3]+'-'+pad(m[2])+'-'+pad(m[1]);m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s);return m?m[0]:''}
+function hoja(wb,n){const k=wb.SheetNames.find(s=>lc(s)===lc(n));return k?XLSX.utils.sheet_to_json(wb.Sheets[k],{defval:''}).map(r=>{const o={};for(const c in r)o[lc(c).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'')]=r[c];return o}):null}
+async function leerExcel(file){
+  const er=$('err');er.textContent='';$('i-res').innerHTML='';$('i-go').disabled=true;V.imp=null;
+  if(!file)return;if(!window.XLSX)return er.textContent='No se pudo cargar el lector de Excel. Revisa la conexión a internet.';
+  let wb;try{wb=XLSX.read(await file.arrayBuffer(),{cellDates:true})}catch(e){return er.textContent='No se pudo leer el archivo: '+e.message}
+  const hp=hoja(wb,'Personal'),he=hoja(wb,'Equipos');
+  if(!hp||!he)return er.textContent='El archivo necesita las hojas "Personal" y "Equipos".';
+  const errores=[],cedOk=new Set(S.personas.map(p=>p.ced)),pers=[],equi=[],ubs=new Map();
+  hp.forEach((r,i)=>{const n=txt(r.nombre).replace(/\s+/g,' '),c=txt(r.cedula);if(!n&&!c)return;
+    if(!n||!/^\d-\d{4}-\d{4}$/.test(c)){errores.push(`Personal fila ${i+2}: nombre o cédula inválidos (${esc(n||'?')} · ${esc(c||'?')})`);return}
+    if(cedOk.has(c))return;cedOk.add(c);pers.push({nombre:n,ced:c})});
+  const placas=new Set(S.equipos.map(x=>x.cod)),yaUb=new Set(S.ubic.map(u=>lc(u.nombre)));let saltados=0;
+  he.forEach((r,i)=>{const cod=txt(r.placa).toUpperCase();if(!cod)return;
+    if(placas.has(cod)){saltados++;return}
+    const c=txt(r.cedula),u=txt(r.ubicacion),f=fechaXL(r.fechaadquisicion),eq=txt(r.equipo||r.elemento);
+    if(!/^[A-Z0-9-]+$/.test(cod)){errores.push(`Equipos fila ${i+2}: placa inválida (${esc(cod)})`);return}
+    if(!eq){errores.push(`Equipos fila ${i+2} (${esc(cod)}): falta el nombre del equipo`);return}
+    if(c&&!cedOk.has(c)){errores.push(`Equipos fila ${i+2} (${esc(cod)}): la cédula ${esc(c)} no está en Personal`);return}
+    if(!c&&!u){errores.push(`Equipos fila ${i+2} (${esc(cod)}): no tiene cédula ni ubicación`);return}
+    if(!c&&u&&!yaUb.has(lc(u))&&!ubs.has(lc(u)))ubs.set(lc(u),u);
+    placas.add(cod);
+    equi.push({cod,serie:txt(r.serie)||'N/A',eq,cat:txt(r.categoria),ced:c,ubic:c?'':(S.ubic.find(x=>lc(x.nombre)===lc(u))?.nombre||ubs.get(lc(u))||u),fadq:f,cond:txt(r.condicion||r.estado)||'Sin revisar'});
+  });
+  V.imp={pers,equi,ubs:[...ubs.values()]};
+  const sinF=equi.filter(x=>!x.fadq).length;
+  $('i-res').innerHTML=`<div class="info"><strong>Listo para importar:</strong><br>${plural(pers.length,'colaborador nuevo','colaboradores nuevos')} · ${plural(equi.length,'equipo nuevo','equipos nuevos')}${V.imp.ubs.length?` · ${plural(V.imp.ubs.length,'ubicación nueva','ubicaciones nuevas')} (${V.imp.ubs.map(esc).join(', ')})`:''}${saltados?`<br>${plural(saltados,'equipo ya existía','equipos ya existían')} y se ${saltados===1?'salta':'saltan'}.`:''}${sinF?`<br>${plural(sinF,'equipo no tiene','equipos no tienen')} fecha de compra y no ${sinF===1?'entrará':'entrarán'} en Revisión.`:''}</div>
+   ${errores.length?`<div class="err" style="display:block">${plural(errores.length,'fila no se va a importar','filas no se van a importar')}:<br>${errores.slice(0,15).join('<br>')}${errores.length>15?'<br>…':''}</div>`:''}`;
+  $('i-go').disabled=!(pers.length||equi.length||V.imp.ubs.length);
+}
+async function importar(){
+  const I=V.imp;if(!I||busy)return;I.corriendo=true;$('i-go').disabled=true;$('i-f').disabled=true;
+  const res=$('i-res'),prog=(t,a,b)=>res.innerHTML=`<div class="info"><strong>${t}</strong> ${a} de ${b}<div class="bar-p"><span style="width:${b?Math.round(a/b*100):100}%"></span></div><span class="small muted">No cierres esta página.</span></div>`;
+  let fallos=[];
+  const ok=await act(async()=>{
+    const it=k=>`${LP(k)}/items`;
+    if(I.ubs.length){const r=await batch(I.ubs.map(u=>({method:'POST',url:it('ubicaciones'),body:{fields:{Title:u}}})),(a,b)=>prog('Guardando ubicaciones…',a,b));r.forEach((x,i)=>x.status>=300&&fallos.push('Ubicación '+I.ubs[i]))}
+    const ids=new Map(S.personas.map(p=>[p.ced,p.id]));
+    if(I.pers.length){const r=await batch(I.pers.map(p=>({method:'POST',url:it('personal'),body:{fields:{Title:p.nombre,Cedula:p.ced}}})),(a,b)=>prog('Guardando personal…',a,b));
+      r.forEach((x,i)=>x.status<300?ids.set(I.pers[i].ced,+x.body.id):fallos.push('Persona '+I.pers[i].nombre))}
+    const eqs=I.equi.filter(x=>!x.ced||ids.has(x.ced));
+    I.equi.filter(x=>x.ced&&!ids.has(x.ced)).forEach(x=>fallos.push('Equipo '+x.cod+' (no se guardó su responsable)'));
+    if(eqs.length){const r=await batch(eqs.map(x=>({method:'POST',url:it('equipos'),body:{fields:{Title:x.cod,Equipo:x.eq,Categoria:x.cat,Serie:x.serie,Condicion:x.cond,Observaciones:'',ResponsableId:x.ced?ids.get(x.ced):0,Ubicacion:x.ubic,FechaAdquisicion:wd(x.fadq),ProximaRevision:wd(proxInicial(x.fadq))}}})),(a,b)=>prog('Guardando equipos…',a,b));
+      r.forEach((x,i)=>x.status>=300&&fallos.push('Equipo '+eqs[i].cod))}
+    prog('Actualizando…',1,1);
+  },null,()=>{I.corriendo=false;
+    if(fallos.length){res.innerHTML=`<div class="err" style="display:block">Se importó todo menos ${plural(fallos.length,'registro','registros')}:<br>${fallos.slice(0,15).map(esc).join('<br>')}<br>Puedes volver a importar el mismo archivo: lo que ya entró se salta.</div>`;render()}
+    else{cerrar();V.tab='pe';render();toast(`Importación lista: ${plural(I.pers.length,'colaborador','colaboradores')} y ${plural(I.equi.length,'equipo','equipos')}`)}});
+  I.corriendo=false;if(!ok)$('i-f').disabled=false;
 }
 
 /* ---------- Acta ---------- */
@@ -523,7 +761,7 @@ function abrirActa(pid,sel,f){V.view='acta';V.acta={pid,sel:sel||null,f:f||hoy()
 function vActa(){
   const a=V.acta,p=P(a.pid),mis=S.equipos.filter(x=>x.asig===a.pid);
   if(!p){V.view='list';return ''}
-  return `<div class="back"><button class="lnk" onclick="V.view='list';render()">← Volver a ${V.tab==='pe'?'personal':V.tab==='eq'?'equipos':'historial'}</button></div>
+  return `<div class="back"><button class="lnk" onclick="V.view='list';render()">← Volver</button></div>
   <h1>Acta de entrega</h1>
   <div class="acta">
    <div class="box">
@@ -531,7 +769,7 @@ function vActa(){
     ${fl('Fecha del acta',`<input type="date" id="a-f" value="${a.f}" oninput="prev()">`)}
     ${fl('Entregado por',`<input id="a-por" value="${esc(yo())}" oninput="prev()">`)}
     <span class="small" style="font-weight:600">Equipos incluidos</span>
-    <ul class="pick">${mis.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${x.cod}"${!a.sel||a.sel.includes(x.cod)?' checked':''} onchange="prev()"><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>Serie ${esc(x.serie)}</small></span></label></li>`).join('')}</ul>
+    <ul class="pick">${mis.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${esc(x.cod)}"${!a.sel||a.sel.includes(x.cod)?' checked':''} onchange="prev()"><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>Serie ${esc(x.serie)}</small></span></label></li>`).join('')}</ul>
     <div class="err" id="a-err"></div>
     <button class="btn primary wide" onclick="pdf()">Descargar PDF para firmar</button>
     <p class="small muted" style="margin:10px 0 0">Se descarga en tamaño carta, listo para imprimir y firmar.</p>
@@ -542,7 +780,7 @@ function vActa(){
 function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{p:P(V.acta.pid),f:$('a-f').value,por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
 function prev(){
   if(!$('paper'))return;const d=datos();$('a-err').textContent='';
-  $('paper').innerHTML=`<h3>Acta de entrega de equipo</h3>
+  $('paper').innerHTML=`<div class="phead"><div class="plogo"><img src="${AURA_LOGO}" alt=""><span>${EMPRESA_LOGO}</span></div><h3>Acta de entrega de equipo</h3><div></div></div>
   <div class="fecha">Fecha: ${fActa(d.f)}</div>
   <p>Se le hace entrega a <span class="ln">${esc(d.p.nombre)}</span> cédula <span class="ln">${esc(d.p.ced)}</span> los siguientes equipos:</p>
   <table><thead><tr><th>Código</th><th>Equipo</th><th>Categoría</th><th>Serie</th><th>Condición</th><th>Observaciones</th></tr></thead>
@@ -555,14 +793,16 @@ function pdf(){
   if(!d.eqs.length)return er.textContent='Selecciona al menos un equipo para el acta.';
   if(!d.por)return er.textContent='Indica quién entrega el equipo.';
   if(!window.jspdf)return er.textContent='No se pudo cargar el generador de PDF. Revisa la conexión a internet.';
-  const doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=22,W=171.9,R=L+W;let y=28;
-  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('Acta de entrega de equipo',107.95,y,{align:'center'});y+=12;
-  doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text('Fecha: '+fActa(d.f),R,y,{align:'right'});y+=10;
+  const doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=22,W=171.9,R=L+W;
+  doc.addImage(AURA_LOGO,'PNG',L+5,12,16,16.6);
+  doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(13,97,116);doc.text(EMPRESA_LOGO,L+13,32,{align:'center'});doc.setTextColor(0);
+  doc.setFontSize(15);doc.text('Acta de entrega de equipo',107.95,23,{align:'center'});
+  let y=42;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text('Fecha: '+fActa(d.f),R,y,{align:'right'});y+=10;
   const t1='Se le hace entrega a ',t2=' cédula ',t3=' los siguientes equipos:';
   let x=L;const seg=(t,b)=>{doc.setFont('helvetica',b?'bold':'normal');doc.text(t,x,y);const w=doc.getTextWidth(t);if(b)doc.line(x,y+1,x+w,y+1);x+=w};
   if(doc.getTextWidth(t1+d.p.nombre+t2+d.p.ced+t3)<W){seg(t1);seg(d.p.nombre,1);seg(t2);seg(d.p.ced,1);seg(t3);y+=9}
   else{const l=doc.splitTextToSize(t1+d.p.nombre+','+t2+d.p.ced+','+t3,W);doc.text(l,L,y);y+=l.length*5+4}
-  const cw=[19,33,29,28,21,41.9];
+  const cw=[17,32,27,33,21,41.9];
   const fila=(c,h)=>{doc.setFont('helvetica',h?'bold':'normal');doc.setFontSize(9);const ls=c.map((v,i)=>doc.splitTextToSize(String(v||''),cw[i]-3));const hh=Math.max(...ls.map(l=>l.length))*4+3.5;
     if(y+hh>262){doc.addPage();y=25}let xx=L;
     ls.forEach((l,i)=>{if(h){doc.setFillColor(232,232,232);doc.rect(xx,y,cw[i],hh,'FD')}else doc.rect(xx,y,cw[i],hh);doc.text(l,xx+1.5,y+4.7);xx+=cw[i]});y+=hh};
@@ -578,13 +818,15 @@ function pdf(){
 
 /* ---------- Historial ---------- */
 function tHi(){
-  if(!S.hist.length)return vacio('Todavía no hay movimientos','Cada entrega, cambio de responsable o devolución queda registrada aquí.','');
+  if(!S.hist.length)return vacio('Todavía no hay movimientos','Cada entrega, cambio, revisión o eliminación queda registrada aquí.','');
+  const mov=h=>{if(h.a.startsWith('Revisión: '))return `<span class="kind">Revisión</span> ${pill(h.a.slice(10))}`;
+    if(h.a.startsWith('Eliminado'))return `${h.de?esc(h.de)+' → ':''}<span class="pill Danada">${esc(h.a)}</span>`;
+    return `${h.de?esc(h.de)+' → ':'<span class="kind">Nuevo</span> '}${h.a==='Devuelto'?'<span class="pill Usada">Devuelto</span>':esc(h.a)}`};
   return `<div class="tbl"><table><thead><tr><th>Fecha</th><th>Equipo</th><th>Movimiento</th><th>Registró</th></tr></thead><tbody>
-  ${S.hist.map(h=>{const x=E(h.cod);return `<tr><td style="white-space:nowrap">${fCorta(h.f)}</td>
+  ${S.hist.slice(0,400).map(h=>{const x=E(h.cod);return `<tr><td style="white-space:nowrap">${fCorta(h.f)}</td>
    <td><span class="code">${esc(h.cod)}</span><p>${x?esc(x.eq):''}</p></td>
-   <td>${h.de?esc(h.de)+' → ':'<span class="kind">Nuevo</span> '}${h.a==='Devuelto'?'<span class="pill Usada">Devuelto</span>':esc(h.a)}</td>
-   <td class="muted">${esc(h.por)}</td></tr>`}).join('')}
-  </tbody></table></div>`;
+   <td>${mov(h)}</td><td class="muted">${esc(h.por)}</td></tr>`}).join('')}
+  </tbody></table></div>${S.hist.length>400?'<p class="small muted">Se muestran los 400 movimientos más recientes.</p>':''}`;
 }
 
 boot();
