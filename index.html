@@ -1239,11 +1239,15 @@ function guardarBoleta(){
   },b=>`Boleta ${EMPRESAS[b.emp].corto} N° ${b.num} guardada`,b=>{B.ultima=b;B.nb=nbInicial({emp:b.emp});renderB();scrollTo(0,0);pdfBoleta(b)});
 }
 
+/* Barra con degradado (de izquierda a derecha), igual que en la vista previa: se dibuja con franjas muy finas */
+const hexRgb=h=>{const n=parseInt(h.slice(1),16);return[n>>16&255,n>>8&255,n&255]};
+function barraDegradado(doc,c1,c2,x,y,w,h){const a=hexRgb(c1),b=hexRgb(c2),n=160,sw=w/n;
+  for(let i=0;i<n;i++){const t=i/(n-1);doc.setFillColor(...a.map((v,k)=>Math.round(v+(b[k]-v)*t)));doc.rect(x+i*sw,y,sw+.15,h,'F')}}
 /* ---------- PDF de la boleta ---------- */
 function pdfBoleta(b){
   if(!b)return;if(!window.jspdf)return toast('No se pudo cargar el generador de PDF.');
   const E=empDe(b),[r,g,bl]=E.rgb,doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=18,W=179.9,R=L+W,[ml,mv]=filaMedio(b),multi=b.lineas.length>1;
-  doc.setFillColor(r,g,bl);doc.rect(0,0,215.9,4,'F');
+  barraDegradado(doc,E.c1,E.c2,0,0,215.9,4);
   let y=20;doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(27,42,51);doc.text(String(E.nombre||''),L,y);y+=7;
   doc.setFontSize(8.5);const filas=[['Cédula jurídica',E.cedula],['Teléfono',E.tel+(E.fax?' · Fax '+E.fax:'')],['Correo',E.correo]].concat(E.apartado?[['Apartado',E.apartado]]:[]).concat([['Dirección',E.dir]]);
   filas.forEach(([k,v])=>{doc.setFont('helvetica','bold');doc.setTextColor(85,99,108);doc.text(k,L,y);doc.setFont('helvetica','normal');doc.setTextColor(27,42,51);doc.text(String(v||''),L+28,y);y+=4.8});
