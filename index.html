@@ -291,6 +291,26 @@ body.busy .btn,body.busy .lnk{pointer-events:none;opacity:.6}
 .tip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;padding:6px 9px;border-radius:7px;z-index:60;opacity:0;transition:opacity .12s;white-space:nowrap}
 @media (max-width:960px){.nb,.charts{grid-template-columns:1fr}.sticky{position:static}}
 @media (max-width:640px){.bboxes,.bdates,.emp{grid-template-columns:1fr}.boleta .in{padding:18px}.bh{flex-direction:column-reverse}.bn{text-align:left}.bn img{margin:0 0 10px}}
+.pago{position:relative}
+.pago.multi{border:1px solid var(--line);border-radius:12px;padding:12px 14px 2px;margin-bottom:12px;background:#fff}
+.pago.nuevo{animation:popIn .35s cubic-bezier(.2,.8,.2,1) both}
+@keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
+.pago-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.pago-n{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--brand);background:var(--brand-soft);border-radius:999px;padding:2px 10px}
+.addpago{appearance:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:1.5px dashed var(--line-strong);background:#fff;border-radius:10px;padding:9px;color:var(--brand);font-weight:600;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s}
+.addpago span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-size:16px;line-height:1;transition:transform .2s}
+.addpago:hover{border-color:var(--brand);background:var(--brand-soft)}
+.addpago:hover span{transform:rotate(90deg)}
+.total-b{margin-top:12px;border-radius:10px;background:var(--brand-soft);padding:10px 12px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.total-b span{font-size:13px;font-weight:600}
+.total-b strong{font-size:18px;color:var(--brand)}
+.total-b .letras{flex-basis:100%;margin:0}
+.bdet{margin-bottom:30px}
+.bdet h5{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--c1)}
+.bdet table{width:100%;border-collapse:collapse;font-size:10.5px}
+.bdet th{background:#F3F6F7;color:#55636C;font-size:9px;text-transform:uppercase;letter-spacing:.05em;padding:5px 6px;border:0;white-space:nowrap}
+.bdet td{padding:5px 6px;border-bottom:1px solid #E2E7EA;vertical-align:top}
+.bdet tr.tt td{background:var(--c1);color:#fff;font-weight:700;border:0}
 .empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;align-items:start}
 .erow{display:grid;gap:6px;margin-bottom:6px;align-items:center}
 .erow.cu{grid-template-columns:76px 118px 1fr 30px}
@@ -358,7 +378,7 @@ const SCHEMA={
   ubicaciones:[],
   bpagos:[{name:'Numero',number:{}},{name:'Empresa',text:{}},{name:'FechaSolicitud',dateTime:{format:'dateOnly'}},{name:'FechaPago',dateTime:{format:'dateOnly'}},{name:'Beneficiario',text:{}},{name:'CuentaBeneficiario',text:{}},
           {name:'Movimiento',text:{}},{name:'CuentaDebito',text:{}},{name:'Banco',text:{}},{name:'Moneda',text:{}},{name:'Monto',number:{}},{name:'Concepto',text:{allowMultipleLines:true,textType:'plain'}},
-          {name:'HechoPor',text:{}},{name:'Autoriza',text:{}},{name:'EmpresaDatos',text:{allowMultipleLines:true,textType:'plain'}}],
+          {name:'HechoPor',text:{}},{name:'Autoriza',text:{}},{name:'EmpresaDatos',text:{allowMultipleLines:true,textType:'plain'}},{name:'Pagos',text:{allowMultipleLines:true,textType:'plain'}}],
   bbenef:[{name:'Cuenta',text:{}}],
   baut:[],
   bemp:[{name:'Nombre',text:{}},{name:'Cedula',text:{}},{name:'Telefono',text:{}},{name:'Fax',text:{}},{name:'Apartado',text:{}},{name:'Correo',text:{}},{name:'Direccion',text:{}},{name:'CampoEmpresa',text:{}},
@@ -519,7 +539,9 @@ async function loadAll(){
     S.empData[k]={sid:+i.id,nombre:f.Nombre||'',cedula:f.Cedula||'',tel:f.Telefono||'',fax:f.Fax||'',apartado:f.Apartado||'',correo:f.Correo||'',dir:f.Direccion||'',campo:f.CampoEmpresa||'',
       cuentas:J(f.Cuentas,EMPRESAS[k].base.cuentas),tarjetas:J(f.Tarjetas,[])}});
   S.pagos=bp.map(i=>{const f=i.fields;return{id:+i.id,num:+f.Numero||0,emp:lc(f.Empresa),fsol:rd(f.FechaSolicitud),fpago:rd(f.FechaPago),benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',mov:f.Movimiento||'Transferencia',
-    cta:f.CuentaDebito||'',banco:f.Banco||'',mon:MON[f.Moneda]?f.Moneda:'CRC',monto:+f.Monto||0,concepto:f.Concepto||'',hecho:f.HechoPor||'',aut:f.Autoriza||'',snap:J(f.EmpresaDatos,null)}}).filter(b=>EMPRESAS[b.emp]);
+    cta:f.CuentaDebito||'',banco:f.Banco||'',mon:MON[f.Moneda]?f.Moneda:'CRC',monto:+f.Monto||0,concepto:f.Concepto||'',hecho:f.HechoPor||'',aut:f.Autoriza||'',snap:J(f.EmpresaDatos,null),
+    lineas:(J(f.Pagos,null)||[{benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',monto:+f.Monto||0,concepto:f.Concepto||''}]).map(l=>({benef:l.benef||'',cuentaB:l.cuentaB||'',monto:+l.monto||0,concepto:l.concepto||''}))}}).filter(b=>EMPRESAS[b.emp]);
+  S.pagos.forEach(b=>{b.benef=b.lineas[0].benef;b.cuentaB=b.lineas[0].cuentaB});
 }
 /* Guarda en SharePoint, recarga y vuelve a pintar */
 async function act(fn,okMsg,after){
@@ -1082,100 +1104,118 @@ function renderB(){
   if(B.tab==='ben')filasBen();
 }
 
-/* ---------- Nueva boleta ---------- */
+/* ---------- Nueva boleta (puede llevar varios pagos) ---------- */
+const lineaVacia=()=>({benef:'',cuentaB:'',monto:'',concepto:''});
 function nbInicial(base){const e=base?.emp&&EMPRESAS[base.emp]?base.emp:'aura',E=EMP(e);
-  return{emp:e,fsol:hoy(),fpago:hoy(),benef:base?.benef||'',cuentaB:base?.cuentaB||'',mov:base?.mov||'Transferencia',
+  return{emp:e,fsol:hoy(),fpago:hoy(),mov:base?.mov||'Transferencia',
     cta:(E.cuentas.find(c=>c.iban===base?.cta)||E.cuentas[0])?.iban||'',tar:(E.tarjetas.find(t=>base?.cta?.endsWith(t.ult))||E.tarjetas[0])?.ult||'',
-    monto:base?fmtM(base.monto):'',concepto:base?.concepto||'',aut:base?.aut&&S.aut.some(a=>a.nombre===base.aut)?base.aut:S.aut[0]?.nombre||''}}
+    lineas:base?.lineas?.length?base.lineas.map(l=>({benef:l.benef,cuentaB:l.cuentaB,monto:fmtM(l.monto),concepto:l.concepto})):[lineaVacia()],
+    aut:base?.aut&&S.aut.some(a=>a.nombre===base.aut)?base.aut:S.aut[0]?.nombre||''}}
 function medio(n){const E=EMP(n.emp);return n.mov==='Tarjeta de crédito'?E.tarjetas.find(t=>t.ult===n.tar)||E.tarjetas[0]||null:E.cuentas.find(c=>c.iban===n.cta)||E.cuentas[0]||null}
+function htmlLinea(l,i,n,md){const tj=n.mov==='Tarjeta de crédito',bo=S.benef.find(b=>b.nombre===l.benef),varias=n.lineas.length>1;
+  return `<div class="pago${varias?' multi':''}" id="pg-${i}">
+   ${varias?`<div class="pago-h"><span class="pago-n">Pago ${i+1}</span><button class="x" aria-label="Quitar pago ${i+1}" onclick="quitarLinea(${i})">×</button></div>`:''}
+   <label class="f"><span>Beneficiario</span><div class="combo" id="cb-${i}"><input id="b-ben-${i}" autocomplete="off" placeholder="Busca por nombre o cuenta" value="${esc(l.benef)}" oninput="comboFiltro(${i})" onfocus="comboFiltro(${i})" onkeydown="comboTecla(event,${i})"><div class="combo-list" id="cb-l-${i}" role="listbox"></div></div></label>
+   <div class="f"><span>Cuenta</span><div class="ro mono" id="b-cta-b-${i}">${l.cuentaB?esc(l.cuentaB):'<span class="muted">Se llena al elegir el beneficiario</span>'}</div>
+    ${bo&&!bo.cuenta&&!tj?`<div class="warn-s">Este beneficiario no tiene cuenta registrada. <button class="lnk" onclick="dBenef(${bo.id},null,${i})">Agregar cuenta</button></div>`:''}</div>
+   <div class="f"><span>Monto</span><div class="money"><span>${md?MON[md.mon].s:''}</span><input id="b-m-${i}" inputmode="decimal" placeholder="0.00" value="${esc(l.monto)}" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');nbSet()" onblur="if(parseM(this.value))this.value=fmtM(parseM(this.value));nbSet()"></div>${varias?'':'<div class="letras" id="b-lt"></div>'}</div>
+   ${fl('Concepto',`<textarea id="b-c-${i}" rows="2" maxlength="250" placeholder="Internet agosto" oninput="nbSet()">${esc(l.concepto)}</textarea>`)}
+  </div>`}
 function tNueva(){
-  if(!B.nb)B.nb=nbInicial();const n=B.nb,E=EMP(n.emp),tj=n.mov==='Tarjeta de crédito',md=medio(n);
-  const bo=S.benef.find(b=>b.nombre===n.benef);
-  const u=B.ultima;
-  return `${u?`<div class="info" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Se guardó la boleta <strong>${EMPRESAS[u.emp].corto} N° ${u.num}</strong> a ${esc(u.benef)}.</span><button class="btn sm" onclick="pdfBoleta(S.pagos.find(x=>x.id===${u.id})||B.ultima)">Descargar PDF otra vez</button></div>`:''}
+  if(!B.nb)B.nb=nbInicial();const n=B.nb,E=EMP(n.emp),tj=n.mov==='Tarjeta de crédito',md=medio(n),u=B.ultima;
+  return `${u?`<div class="info" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span>Se guardó la boleta <strong>${EMPRESAS[u.emp].corto} N° ${u.num}</strong>${u.lineas.length>1?' con '+u.lineas.length+' pagos':' a '+esc(u.benef)}.</span><button class="btn sm" onclick="pdfBoleta(S.pagos.find(x=>x.id===${u.id})||B.ultima)">Descargar PDF otra vez</button></div>`:''}
   <div class="nb"><div class="box">
    <div class="sec">Empresa</div>
    <div class="emp">${EMP_IDS.map(id=>{const x=EMPRESAS[id];return `<button aria-pressed="${n.emp===id}" onclick="setEmp('${id}')"><img src="${x.logo}" alt=""><span><strong>${x.largo}</strong><small>Boleta N° ${sigNum(id)}</small></span></button>`}).join('')}</div>
    <div class="two">${fl('Fecha de solicitud',dateField('b-fs',n.fsol,'nbSet()'))}${fl('Fecha de pago',dateField('b-fp',n.fpago,'nbSet()'))}</div>
-   <div class="sec">Datos beneficiario</div>
-   <label class="f"><span>Beneficiario</span><div class="combo" id="cb"><input id="b-ben" autocomplete="off" placeholder="Busca por nombre o cuenta" value="${esc(n.benef)}" oninput="comboFiltro()" onfocus="comboFiltro()" onkeydown="comboTecla(event)"><div class="combo-list" id="cb-l" role="listbox"></div></div></label>
-   <div class="f"><span>Cuenta</span><div class="ro mono" id="b-cta-b">${n.cuentaB?esc(n.cuentaB):'<span class="muted">Se llena al elegir el beneficiario</span>'}</div>
-    ${bo&&!bo.cuenta&&!tj?`<div class="warn-s">Este beneficiario no tiene cuenta registrada. <button class="lnk" onclick="dBenef(${bo.id})">Agregar cuenta</button></div>`:''}</div>
    <div class="sec">Datos empresa</div>
    <div class="f"><span>Movimiento</span><div class="seg" role="radiogroup" style="margin:0">${MOVIMIENTOS.map(m=>`<button role="radio" aria-checked="${n.mov===m}" onclick="B.nb.mov='${m}';renderB()">${m}</button>`).join('')}</div></div>
    ${tj?(E.tarjetas.length?fl('Tarjeta',`<select id="b-tar" onchange="B.nb.tar=this.value;renderB()">${E.tarjetas.map(t=>`<option value="${t.ult}"${md&&t.ult===md.ult?' selected':''}>${esc(tarjetaTxt(t))}</option>`).join('')}</select>`)
-      :`<div class="warn-s" style="margin-bottom:14px">${E.largo} no tiene tarjetas registradas. <button class="lnk" onclick="B.tab='emp';B.ed='${n.emp}';renderB()">Agregar tarjeta en Empresas</button></div>`)
+      :`<div class="warn-s" style="margin-bottom:14px">${E.largo} no tiene tarjetas registradas. <button class="lnk" onclick="B.tab='emp';renderB()">Agregar tarjeta en Empresas</button></div>`)
      :fl('Cuenta débito',`<select id="b-cta" onchange="B.nb.cta=this.value;renderB()">${E.cuentas.map(c=>`<option value="${esc(c.iban)}"${md&&c.iban===md.iban?' selected':''}>${esc(cuentaTxt(c))}</option>`).join('')}</select>`)}
    ${md?`<div class="two"><div class="f"><span>Banco</span><div class="ro">${esc(md.banco)}</div></div><div class="f"><span>Moneda</span><div class="ro">${MON[md.mon].s} ${MON[md.mon].n}</div></div></div>`:''}
-   <div class="f"><span>Monto</span><div class="money"><span>${md?MON[md.mon].s:''}</span><input id="b-m" inputmode="decimal" placeholder="0.00" value="${esc(n.monto)}" oninput="this.value=this.value.replace(/[^0-9.,]/g,'');nbSet()" onblur="if(parseM(this.value))this.value=fmtM(parseM(this.value));nbSet()"></div><div class="letras" id="b-lt"></div></div>
-   ${fl('Concepto',`<textarea id="b-c" rows="2" maxlength="250" placeholder="Internet agosto" oninput="nbSet()">${esc(n.concepto)}</textarea>`)}
-   <div class="two"><div class="f"><span>Hecho por</span><div class="ro">${esc(yo())}</div></div>${fl('Autoriza',S.aut.length?`<select id="b-a" onchange="nbSet()">${S.aut.map(a=>`<option${a.nombre===n.aut?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>`:'<div class="ro"><button class="lnk" onclick="B.tab=\'aut\';renderB()">Agregar quién autoriza</button></div>')}</div>
+   <div class="sec">${n.lineas.length>1?'Pagos ('+n.lineas.length+')':'Datos beneficiario'}</div>
+   ${n.lineas.map((l,i)=>htmlLinea(l,i,n,md)).join('')}
+   <button type="button" class="addpago" onclick="agregarLinea()"><span aria-hidden="true">+</span> Agregar otro pago</button>
+   ${n.lineas.length>1?`<div class="total-b"><span>Total de la boleta</span><strong id="b-tot"></strong><div class="letras" id="b-lt"></div></div>`:''}
+   <div class="two" style="margin-top:14px"><div class="f"><span>Hecho por</span><div class="ro">${esc(yo())}</div></div>${fl('Autoriza',S.aut.length?`<select id="b-a" onchange="nbSet()">${S.aut.map(a=>`<option${a.nombre===n.aut?' selected':''}>${esc(a.nombre)}</option>`).join('')}</select>`:'<div class="ro"><button class="lnk" onclick="B.tab=\'aut\';renderB()">Agregar quién autoriza</button></div>')}</div>
    <div class="err" id="b-err"></div>
    <div style="display:flex;gap:8px;margin-top:4px"><button class="btn" onclick="B.nb=nbInicial({emp:B.nb.emp});B.ultima=null;renderB()">Limpiar</button><button class="btn primary" style="flex:1" onclick="guardarBoleta()">Guardar y descargar PDF</button></div>
   </div>
   <div class="sticky"><div class="sheet"><div id="b-prev"></div></div></div></div>`;
 }
-function setEmp(e){const n=B.nb,old=medio(n);n.emp=e;const E=EMP(e);
+function agregarLinea(){nbSet();B.nb.lineas.push(lineaVacia());renderB();const i=B.nb.lineas.length-1;$('pg-'+i)?.classList.add('nuevo');setTimeout(()=>$('b-ben-'+i)?.focus(),60)}
+function quitarLinea(i){nbSet();B.nb.lineas.splice(i,1);if(!B.nb.lineas.length)B.nb.lineas.push(lineaVacia());renderB()}
+function setEmp(e){nbSet();const n=B.nb,old=medio(n);n.emp=e;const E=EMP(e);
   n.cta=(E.cuentas.find(c=>old&&c.mon===old.mon)||E.cuentas[0])?.iban||'';n.tar=(E.tarjetas.find(t=>old&&t.mon===old.mon)||E.tarjetas[0])?.ult||'';renderB()}
-function nbSet(){const n=B.nb;n.fsol=fv('b-fs');n.fpago=fv('b-fp');n.monto=$('b-m').value;n.concepto=$('b-c').value;n.aut=$('b-a')?.value||'';prevB()}
-function comboFiltro(){
-  const q=lc($('b-ben').value),qs=sinEsp(q),l=S.benef.filter(b=>!q||lc(b.nombre).includes(q)||(qs.length>2&&sinEsp(b.cuenta).includes(qs))).sort(porNombre).slice(0,50);
-  $('cb-l').innerHTML=l.map((b,i)=>`<button type="button" role="option" data-id="${b.id}" class="${i===0?'hl':''}" onmousedown="event.preventDefault();elegirBen(${b.id})">${esc(b.nombre)}<small>${b.cuenta?esc(b.cuenta):'Sin cuenta registrada'}</small></button>`).join('')+`<button type="button" class="new" onmousedown="event.preventDefault();dBenef(null,$('b-ben').value)">+ Agregar beneficiario nuevo</button>`;
-  $('cb').classList.add('open');
-  if(B.nb.benef&&$('b-ben').value!==B.nb.benef){B.nb.benef='';B.nb.cuentaB='';$('b-cta-b').innerHTML='<span class="muted">Se llena al elegir el beneficiario</span>';prevB()}
+function nbSet(){const n=B.nb;if(!$('b-fs'))return;n.fsol=fv('b-fs');n.fpago=fv('b-fp');n.aut=$('b-a')?.value||'';
+  n.lineas.forEach((l,i)=>{if($('b-m-'+i)){l.monto=$('b-m-'+i).value;l.concepto=$('b-c-'+i).value}});prevB()}
+function comboFiltro(i){
+  const q=lc($('b-ben-'+i).value),qs=sinEsp(q),l=S.benef.filter(b=>!q||lc(b.nombre).includes(q)||(qs.length>2&&sinEsp(b.cuenta).includes(qs))).sort(porNombre).slice(0,50);
+  $('cb-l-'+i).innerHTML=l.map((b,k)=>`<button type="button" role="option" data-id="${b.id}" class="${k===0?'hl':''}" onmousedown="event.preventDefault();elegirBen(${b.id},${i})">${esc(b.nombre)}<small>${b.cuenta?esc(b.cuenta):'Sin cuenta registrada'}</small></button>`).join('')+`<button type="button" class="new" onmousedown="event.preventDefault();dBenef(null,$('b-ben-${i}').value,${i})">+ Agregar beneficiario nuevo</button>`;
+  document.querySelectorAll('.combo.open').forEach(c=>c.id!=='cb-'+i&&c.classList.remove('open'));$('cb-'+i).classList.add('open');
+  const L=B.nb.lineas[i];if(L.benef&&$('b-ben-'+i).value!==L.benef){L.benef='';L.cuentaB='';$('b-cta-b-'+i).innerHTML='<span class="muted">Se llena al elegir el beneficiario</span>';prevB()}
 }
-function comboTecla(e){const bs=[...document.querySelectorAll('#cb-l button[data-id]')];let i=bs.findIndex(b=>b.classList.contains('hl'));
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!bs.length)return;bs[i]?.classList.remove('hl');i=e.key==='ArrowDown'?Math.min(bs.length-1,i+1):Math.max(0,i-1);bs[i].classList.add('hl');bs[i].scrollIntoView({block:'nearest'})}
-  else if(e.key==='Enter'){e.preventDefault();if(bs[i])elegirBen(+bs[i].dataset.id)}
-  else if(e.key==='Escape')$('cb').classList.remove('open')}
-document.addEventListener('click',e=>{const c=$('cb');if(c&&!c.contains(e.target))c.classList.remove('open')});
-function elegirBen(id){const b=S.benef.find(x=>x.id===id);B.nb.benef=b.nombre;B.nb.cuentaB=b.cuenta;renderB()}
+function comboTecla(e,i){const bs=[...document.querySelectorAll(`#cb-l-${i} button[data-id]`)];let k=bs.findIndex(b=>b.classList.contains('hl'));
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!bs.length)return;bs[k]?.classList.remove('hl');k=e.key==='ArrowDown'?Math.min(bs.length-1,k+1):Math.max(0,k-1);bs[k].classList.add('hl');bs[k].scrollIntoView({block:'nearest'})}
+  else if(e.key==='Enter'){e.preventDefault();if(bs[k])elegirBen(+bs[k].dataset.id,i)}
+  else if(e.key==='Escape')$('cb-'+i).classList.remove('open')}
+document.addEventListener('click',e=>{document.querySelectorAll('.combo.open').forEach(c=>{if(!c.contains(e.target))c.classList.remove('open')})});
+function elegirBen(id,i){nbSet();const b=S.benef.find(x=>x.id===id),L=B.nb.lineas[i||0];L.benef=b.nombre;L.cuentaB=b.cuenta;renderB();setTimeout(()=>$('b-m-'+(i||0))?.focus(),30)}
 function datosB(){const n=B.nb,E=EMP(n.emp),md=medio(n),tj=n.mov==='Tarjeta de crédito';
-  return{num:sigNum(n.emp),emp:n.emp,fsol:n.fsol,fpago:n.fpago,benef:n.benef,cuentaB:n.cuentaB,mov:n.mov,
-    cta:md?(tj?'Tarjeta terminada en '+md.ult:md.iban):'',banco:md?.banco||'',mon:md?.mon||'CRC',monto:parseM(n.monto),concepto:n.concepto.trim(),hecho:yo(),aut:n.aut,
+  const lineas=n.lineas.map(l=>({benef:l.benef,cuentaB:l.cuentaB,monto:parseM(l.monto),concepto:String(l.concepto||'').trim()}));
+  const total=Math.round(lineas.reduce((s,l)=>s+l.monto,0)*100)/100;
+  return{num:sigNum(n.emp),emp:n.emp,fsol:n.fsol,fpago:n.fpago,lineas,benef:lineas[0].benef,cuentaB:lineas[0].cuentaB,mov:n.mov,
+    cta:md?(tj?'Tarjeta terminada en '+md.ult:md.iban):'',banco:md?.banco||'',mon:md?.mon||'CRC',monto:total,concepto:lineas.map(l=>l.concepto).filter(Boolean).join(' · '),hecho:yo(),aut:n.aut,
     snap:{nombre:E.nombre,cedula:E.cedula,tel:E.tel,fax:E.fax,correo:E.correo,apartado:E.apartado,dir:E.dir,campo:E.campo}}}
 const empDe=b=>({...EMP(b.emp),...(b.snap||{})});
 const filaMedio=b=>b.mov==='Tarjeta de crédito'?['Tarjeta de crédito',b.cta.replace('Tarjeta terminada en ','Terminada en ')]:['Cuenta débito',b.cta];
-function htmlBoleta(b){const E=empDe(b),[ml,mv]=filaMedio(b);
+function htmlBoleta(b){const E=empDe(b),[ml,mv]=filaMedio(b),multi=b.lineas.length>1,cap=t=>`<small style="display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6B7880">${t}</small>`;
   return `<div class="boleta" style="--c1:${E.c1};--c2:${E.c2}"><div class="tb"></div><div class="in">
    <div class="bh"><div><h4>${esc(E.nombre)}</h4><dl><dt>Cédula jurídica</dt><dd>${esc(E.cedula)}</dd><dt>Teléfono</dt><dd>${esc(E.tel)}${E.fax?' · Fax '+esc(E.fax):''}</dd><dt>Correo</dt><dd>${esc(E.correo)}</dd>${E.apartado?`<dt>Apartado</dt><dd>${esc(E.apartado)}</dd>`:''}<dt>Dirección</dt><dd>${esc(E.dir)}</dd></dl></div>
     <div class="bn"><img src="${E.logo}" alt=""><div class="num"><small>Boleta número</small><b>${b.num}</b></div></div></div>
    <div class="btitle">${TITULO_BOLETA}</div>
    <div class="bdates"><div><small>Fecha de solicitud</small><b>${fLarga(b.fsol)||'—'}</b></div><div><small>Fecha de pago</small><b>${fLarga(b.fpago)||'—'}</b></div></div>
    <div class="bboxes"><div class="bbox"><h5>Datos beneficiario</h5>
-     <div class="r"><small>Beneficiario</small><b>${esc(b.benef)||'—'}</b></div>
-     <div class="r"><small>Cuenta</small><b>${esc(b.cuentaB)||'—'}</b></div>
-     <div class="r amt"><small>Monto</small><b>${fmtC(b.monto,b.mon)}</b><div class="lt">${b.monto?numLetras(b.monto):''}</div></div></div>
+     ${multi?`<div class="r"><small>Beneficiarios</small><b>${b.lineas.length} pagos (ver detalle)</b></div>`
+       :`<div class="r"><small>Beneficiario</small><b>${esc(b.benef)||'—'}</b></div><div class="r"><small>Cuenta</small><b>${esc(b.cuentaB)||'—'}</b></div>`}
+     <div class="r amt"><small>${multi?'Monto total':'Monto'}</small><b>${fmtC(b.monto,b.mon)}</b><div class="lt">${b.monto?numLetras(b.monto):''}</div></div></div>
     <div class="bbox"><h5>Datos empresa</h5>
      <div class="r"><small>Movimiento</small><b>${esc(b.mov)}</b></div>
      <div class="r"><small>${ml}</small><b>${esc(mv)||'—'}</b></div>
      <div class="r"><small>Banco</small><b>${esc(b.banco)}${b.banco?' · ':''}${MON[b.mon]?.n||''}</b></div>
      <div class="r"><small>Empresa</small><b>${esc(E.campo)}</b></div></div></div>
-   <div class="bconc"><small style="display:block;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6B7880">Concepto</small><b>${esc(b.concepto)||'—'}</b></div>
+   ${multi?`<div class="bdet"><h5>Detalle de pagos</h5><table><thead><tr><th>#</th><th>Beneficiario</th><th>Cuenta</th><th>Concepto</th><th style="text-align:right">Monto</th></tr></thead><tbody>
+     ${b.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.benef)||'—'}</td><td>${esc(l.cuentaB)||'—'}</td><td>${esc(l.concepto)||'—'}</td><td style="text-align:right;white-space:nowrap">${fmtC(l.monto,b.mon)}</td></tr>`).join('')}
+     <tr class="tt"><td colspan="4">Total</td><td style="text-align:right;white-space:nowrap">${fmtC(b.monto,b.mon)}</td></tr></tbody></table></div>`
+     :`<div class="bconc">${cap('Concepto')}<b>${esc(b.concepto)||'—'}</b></div>`}
    <div class="bsign"><div><small>Hecho por</small>${esc(b.hecho)}</div><div><small>Autoriza</small>${esc(b.aut)||'—'}</div></div>
   </div></div>`}
-function prevB(){const el=$('b-prev');if(!el)return;const b=datosB();el.innerHTML=htmlBoleta(b);$('b-lt').textContent=b.monto?numLetras(b.monto):''}
+function prevB(){const el=$('b-prev');if(!el)return;const b=datosB();el.innerHTML=htmlBoleta(b);if($('b-lt'))$('b-lt').textContent=b.monto?numLetras(b.monto):'';if($('b-tot'))$('b-tot').textContent=fmtC(b.monto,b.mon)}
 function guardarBoleta(){
-  const b=datosB(),er=$('b-err');er.textContent='';
+  nbSet();const b=datosB(),er=$('b-err');er.textContent='';
   if(!b.fsol||!b.fpago)return er.textContent='Revisa las fechas (dd/mm/aaaa).';
-  if(!b.benef||!S.benef.some(x=>x.nombre===b.benef))return er.textContent='Elige un beneficiario de la lista, o agrégalo como nuevo.';
-  if(b.mov==='Transferencia'&&!b.cuentaB)return er.textContent='El beneficiario no tiene cuenta. Agrégale una para poder hacer la transferencia.';
   if(!b.cta)return er.textContent=b.mov==='Tarjeta de crédito'?'Elige la tarjeta. Si no hay, agrégala en Empresas.':'Elige la cuenta débito.';
-  if(!(b.monto>0))return er.textContent='Ingresa el monto.';
-  if(!b.concepto)return er.textContent='Escribe el concepto.';
+  for(const [i,l] of b.lineas.entries()){const p=b.lineas.length>1?`Pago ${i+1}: `:'';
+    if(!l.benef||!S.benef.some(x=>x.nombre===l.benef))return er.textContent=p+'elige un beneficiario de la lista, o agrégalo como nuevo.';
+    if(b.mov==='Transferencia'&&!l.cuentaB)return er.textContent=p+'el beneficiario no tiene cuenta. Agrégale una para poder hacer la transferencia.';
+    if(!(l.monto>0))return er.textContent=p+'ingresa el monto.';
+    if(!l.concepto)return er.textContent=p+'escribe el concepto.';}
   if(!b.aut)return er.textContent='Elige quién autoriza.';
+  const multi=b.lineas.length>1;
   act(async()=>{
     const ex=await allItems('bpagos');b.num=ex.filter(i=>i.fields.Empresa===b.emp).reduce((m,i)=>Math.max(m,+i.fields.Numero||0),0)+1;
-    const r=await addItem('bpagos',{Title:EMPRESAS[b.emp].corto+' '+b.num,Numero:b.num,Empresa:b.emp,FechaSolicitud:wd(b.fsol),FechaPago:wd(b.fpago),Beneficiario:b.benef,CuentaBeneficiario:b.cuentaB,
-      Movimiento:b.mov,CuentaDebito:b.cta,Banco:b.banco,Moneda:b.mon,Monto:b.monto,Concepto:b.concepto,HechoPor:b.hecho,Autoriza:b.aut,EmpresaDatos:JSON.stringify(b.snap)});
+    const r=await addItem('bpagos',{Title:EMPRESAS[b.emp].corto+' '+b.num,Numero:b.num,Empresa:b.emp,FechaSolicitud:wd(b.fsol),FechaPago:wd(b.fpago),
+      Beneficiario:multi?`${b.benef} y ${b.lineas.length-1} más`:b.benef,CuentaBeneficiario:b.cuentaB,Movimiento:b.mov,CuentaDebito:b.cta,Banco:b.banco,Moneda:b.mon,Monto:b.monto,
+      Concepto:b.concepto.slice(0,2000),HechoPor:b.hecho,Autoriza:b.aut,EmpresaDatos:JSON.stringify(b.snap),Pagos:JSON.stringify(b.lineas)});
     b.id=+r.id;return b;
-  },b=>`Boleta ${EMPRESAS[b.emp].corto} N° ${b.num} guardada`,b=>{B.ultima=b;B.nb=nbInicial({emp:b.emp});renderB();pdfBoleta(b)});
+  },b=>`Boleta ${EMPRESAS[b.emp].corto} N° ${b.num} guardada`,b=>{B.ultima=b;B.nb=nbInicial({emp:b.emp});renderB();scrollTo(0,0);pdfBoleta(b)});
 }
 
 /* ---------- PDF de la boleta ---------- */
 function pdfBoleta(b){
   if(!b)return;if(!window.jspdf)return toast('No se pudo cargar el generador de PDF.');
-  const E=empDe(b),[r,g,bl]=E.rgb,doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=18,W=179.9,R=L+W,[ml,mv]=filaMedio(b);
+  const E=empDe(b),[r,g,bl]=E.rgb,doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=18,W=179.9,R=L+W,[ml,mv]=filaMedio(b),multi=b.lineas.length>1;
   doc.setFillColor(r,g,bl);doc.rect(0,0,215.9,4,'F');
   let y=20;doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(27,42,51);doc.text(String(E.nombre||''),L,y);y+=7;
   doc.setFontSize(8.5);const filas=[['Cédula jurídica',E.cedula],['Teléfono',E.tel+(E.fax?' · Fax '+E.fax:'')],['Correo',E.correo]].concat(E.apartado?[['Apartado',E.apartado]]:[]).concat([['Dirección',E.dir]]);
@@ -1191,19 +1231,37 @@ function pdfBoleta(b){
   cap('Fecha de solicitud',L+4,y+4.5);val(fLarga(b.fsol),L+4,y+9.3,hw-8);cap('Fecha de pago',L+hw+9,y+4.5);val(fLarga(b.fpago),L+hw+9,y+9.3,hw-8);y+=17;
   const top=y,bh=58;doc.setDrawColor(213,221,225);doc.setLineWidth(.3);doc.roundedRect(L,top,hw,bh,2.5,2.5);doc.roundedRect(L+hw+5,top,hw,bh,2.5,2.5);
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(r,g,bl);doc.text('DATOS BENEFICIARIO',L+4,top+6);doc.text('DATOS EMPRESA',L+hw+9,top+6);
-  let a=top+12;cap('Beneficiario',L+4,a);const nl=val(b.benef,L+4,a+4,hw-8);a+=9+(nl-1)*4.2;cap('Cuenta',L+4,a);val(b.cuentaB,L+4,a+4,hw-8);a+=10;
-  cap('Monto',L+4,a);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(r,g,bl);doc.text(fmtC(b.monto,b.mon),L+4,a+6.5);
+  let a=top+12;
+  if(multi){cap('Beneficiarios',L+4,a);val(b.lineas.length+' pagos (ver detalle)',L+4,a+4,hw-8);a+=10}
+  else{cap('Beneficiario',L+4,a);const nl=val(b.benef,L+4,a+4,hw-8);a+=9+(nl-1)*4.2;cap('Cuenta',L+4,a);val(b.cuentaB,L+4,a+4,hw-8);a+=10}
+  cap(multi?'Monto total':'Monto',L+4,a);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(r,g,bl);doc.text(fmtC(b.monto,b.mon),L+4,a+6.5);
   doc.setFontSize(6.5);doc.setTextColor(85,99,108);doc.text(doc.splitTextToSize(numLetras(b.monto),hw-8),L+4,a+10.5);
   let c=top+12;const X=L+hw+9;[['Movimiento',b.mov],[ml,mv],['Banco',(b.banco?b.banco+' · ':'')+(MON[b.mon]?.n||'')],['Empresa',E.campo]].forEach(([k,v])=>{cap(k,X,c);val(v,X,c+4,hw-8);c+=10.5});
-  y=top+bh+5;doc.setDrawColor(213,221,225);const cl=doc.splitTextToSize(String(b.concepto||'—'),W-8),chh=Math.max(16,9+cl.length*4.2);doc.roundedRect(L,y,W,chh,2.5,2.5);cap('Concepto',L+4,y+5);val(b.concepto,L+4,y+10,W-8);
-  y+=chh+24;doc.setDrawColor(27,42,51);doc.setLineWidth(.3);doc.line(L,y,L+75,y);doc.line(R-75,y,R,y);
+  y=top+bh+5;
+  if(multi){
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(r,g,bl);doc.text('DETALLE DE PAGOS',L,y+4);y+=7;
+    const cw=[8,55,49,42.9,25],hd=['#','Beneficiario','Cuenta','Concepto','Monto'];
+    const fila=(cells,tipo)=>{doc.setFont('helvetica',tipo?'bold':'normal');doc.setFontSize(8.3);const ls=cells.map((v,i)=>doc.splitTextToSize(String(v||''),cw[i]-3));const hh=Math.max(...ls.map(l=>l.length))*3.7+3.6;
+      if(y+hh>258){doc.addPage();y=20}
+      if(tipo==='h'){doc.setFillColor(243,246,247);doc.rect(L,y,W,hh,'F')}
+      if(tipo==='t'){doc.setFillColor(r,g,bl);doc.rect(L,y,W,hh,'F');doc.setTextColor(255)}else doc.setTextColor(tipo==='h'?85:27,tipo==='h'?99:42,tipo==='h'?108:51);
+      let xx=L;ls.forEach((l,i)=>{doc.text(l,i===4?xx+cw[i]-1.5:xx+1.5,y+4.4,{align:i===4?'right':'left'});xx+=cw[i]});
+      doc.setDrawColor(226,231,234);doc.line(L,y+hh,R,y+hh);y+=hh};
+    fila(hd,'h');b.lineas.forEach((l,i)=>fila([i+1,l.benef,l.cuentaB||'—',l.concepto,fmtC(l.monto,b.mon)]));fila(['','Total','','',fmtC(b.monto,b.mon)],'t');doc.setTextColor(27,42,51);
+  }else{
+    doc.setDrawColor(213,221,225);const cl=doc.splitTextToSize(String(b.concepto||'—'),W-8),chh=Math.max(16,9+cl.length*4.2);doc.roundedRect(L,y,W,chh,2.5,2.5);cap('Concepto',L+4,y+5);val(b.concepto,L+4,y+10,W-8);y+=chh;
+  }
+  y+=24;if(y>255){doc.addPage();y=40}
+  doc.setDrawColor(27,42,51);doc.setLineWidth(.3);doc.line(L,y,L+75,y);doc.line(R-75,y,R,y);
   cap('Hecho por',L,y+4.5);cap('Autoriza',R-75,y+4.5);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(27,42,51);doc.text(String(b.hecho||''),L,y+9.5);doc.text(String(b.aut||''),R-75,y+9.5);
   const fn=`Boleta_${EMPRESAS[b.emp].corto}_${b.num}.pdf`;try{doc.save(fn)}catch(e){toast('No se pudo descargar el PDF.')}
 }
 
 /* ---------- Historial con filtros y gráficos ---------- */
-function filtradas(){const f=B.hf,q=lc(f.q);return S.pagos.filter(b=>(!f.emp||b.emp===f.emp)&&(!f.mon||b.mon===f.mon)&&(!f.mov||b.mov===f.mov)&&(!f.ben||b.benef===f.ben)&&(!f.desde||b.fpago>=f.desde)&&(!f.hasta||b.fpago<=f.hasta)&&(!q||lc([b.num,b.benef,b.concepto,b.aut,b.cuentaB,b.cta].join(' ')).includes(q)))}
-function tHist(){const f=B.hf,bens=[...new Set(S.pagos.map(b=>b.benef))].sort((a,b)=>a.localeCompare(b));
+function filtradas(){const f=B.hf,q=lc(f.q);return S.pagos.filter(b=>(!f.emp||b.emp===f.emp)&&(!f.mon||b.mon===f.mon)&&(!f.mov||b.mov===f.mov)&&(!f.ben||b.lineas.some(l=>l.benef===f.ben))&&(!f.desde||b.fpago>=f.desde)&&(!f.hasta||b.fpago<=f.hasta)&&(!q||lc([b.num,b.cta,b.aut,...b.lineas.flatMap(l=>[l.benef,l.concepto,l.cuentaB])].join(' ')).includes(q)))}
+/* Si hay filtro de beneficiario, cuenta solo lo que se le pagó a esa persona */
+const montoDe=b=>B.hf.ben?b.lineas.filter(l=>l.benef===B.hf.ben).reduce((s,l)=>s+l.monto,0):b.monto;
+function tHist(){const f=B.hf,bens=[...new Set(S.pagos.flatMap(b=>b.lineas.map(l=>l.benef)))].sort((a,b)=>a.localeCompare(b));
   if(!S.pagos.length)return vacio('Todavía no hay boletas','Cuando guardes la primera boleta, aquí vas a ver el historial con filtros y gráficos.','<button class="btn primary" onclick="B.tab=\'nueva\';renderB()">Crear boleta</button>');
   return `<div class="filters">
    <label>Empresa<select onchange="B.hf.emp=this.value;pintarHist()"><option value="">Todas</option>${EMP_IDS.map(e=>`<option value="${e}"${f.emp===e?' selected':''}>${EMPRESAS[e].corto}</option>`).join('')}</select></label>
@@ -1225,7 +1283,7 @@ function contar(el,to,fmt){const t0=performance.now(),d=700;const st=n=>{const p
 function pintarHist(){
   if(!$('h-t'))return;
   const l=filtradas().sort((a,b)=>b.fpago.localeCompare(a.fpago)||b.num-a.num);
-  const tot=m=>l.filter(b=>b.mon===m).reduce((s,b)=>s+b.monto,0);
+  const tot=m=>l.filter(b=>b.mon===m).reduce((s,b)=>s+montoDe(b),0);
   const bf=B.hf.ben,bo=bf&&S.benef.find(x=>x.nombre===bf);
   $('h-benbox').innerHTML=bf?`<div class="info" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><span>Viendo solo las boletas de <strong>${esc(bf)}</strong>${bo?.cuenta?' · '+esc(bo.cuenta):''}${l.length?' · último pago el '+fCorta(l[0].fpago):''}</span><button class="lnk" onclick="B.hf.ben='';renderB()">Ver todos</button></div>`:'';
   $('h-k').innerHTML=`<div class="kpi main"><span>Boletas</span><strong data-v="${l.length}" data-f="n">0</strong></div>`+Object.entries(MON).filter(([k])=>tot(k)||k!=='EUR').map(([k,m])=>`<div class="kpi"><span>Total en ${m.n.toLowerCase()}</span><strong data-v="${tot(k)}" data-f="${k}">0</strong></div>`).join('');
@@ -1233,7 +1291,7 @@ function pintarHist(){
   const mons=Object.keys(MON).filter(k=>l.some(b=>b.mon===k));if(!mons.includes(B.chMon))B.chMon=mons[0]||'CRC';
   $('h-mm').innerHTML=mons.map(k=>`<button aria-pressed="${B.chMon===k}" onclick="B.chMon='${k}';pintarHist()">${MON[k].s}</button>`).join('');
   const t=new Date(),meses=[...Array(6)].map((_,i)=>{const d=new Date(t.getFullYear(),t.getMonth()-5+i,1);return{k:d.getFullYear()+'-'+pad(d.getMonth()+1),l:MESES[d.getMonth()].slice(0,3)}});
-  const lm=l.filter(b=>b.mon===B.chMon),val=(m,e)=>lm.filter(b=>b.fpago.startsWith(m.k)&&b.emp===e).reduce((s,b)=>s+b.monto,0);
+  const lm=l.filter(b=>b.mon===B.chMon),val=(m,e)=>lm.filter(b=>b.fpago.startsWith(m.k)&&b.emp===e).reduce((s,b)=>s+montoDe(b),0);
   const mx=Math.max(1,...meses.map(m=>val(m,'aura')+val(m,'unicen'))),H=180,Wd=560,bw=46,gap=(Wd-40-bw*6)/6;
   let svg=`<svg viewBox="0 0 ${Wd} ${H+34}" width="100%" role="img" aria-label="Pagos por mes">`;
   [0,.5,1].forEach(p=>{const yy=10+H-H*p;svg+=`<line x1="40" x2="${Wd}" y1="${yy}" y2="${yy}" stroke="#E2E7EA"/><text x="34" y="${yy+4}" text-anchor="end" font-size="10" fill="#66737C">${compact(mx*p,B.chMon)}</text>`});
@@ -1249,14 +1307,14 @@ function pintarHist(){
    <circle class="donut-s" cx="70" cy="70" r="${R0}" fill="none" stroke="${EMPRESAS.aura.c1}" stroke-width="18" stroke-dasharray="0 ${C}" data-d="${C*pa} ${C}" transform="rotate(-90 70 70)"/>
    <text x="70" y="68" text-anchor="middle" font-size="22" font-weight="700" fill="#1B2A33">${l.length}</text><text x="70" y="86" text-anchor="middle" font-size="10" fill="#66737C">boletas</text></svg>
    <div class="legend"><span><i style="background:${EMPRESAS.aura.c1}"></i>Aura · <strong>${ca}</strong></span><span><i style="background:${EMPRESAS.unicen.c1}"></i>Unicen · <strong>${cu}</strong></span></div></div>`;
-  const agg={};lm.forEach(b=>agg[b.benef]=(agg[b.benef]||0)+b.monto);const top=Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,6),tm=Math.max(1,...top.map(x=>x[1]));
+  const agg={};lm.forEach(b=>b.lineas.forEach(x=>agg[x.benef]=(agg[x.benef]||0)+x.monto));const top=Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,6),tm=Math.max(1,...top.map(x=>x[1]));
   $('h-c3p').textContent='Por monto pagado en '+MON[B.chMon].n.toLowerCase()+'. Haz clic en uno para ver solo sus boletas.';
   $('h-c3').innerHTML=top.length?top.map(([n,v],i)=>`<button type="button" class="hbrow" onclick="B.hf.ben=${js(n)};renderB()"><span title="${esc(n)}">${esc(n)}</span>
     <div class="hbt"><div class="hb" style="width:${v/tm*100}%;transition-delay:${i*60}ms"></div></div><span class="amt-c">${fmtC(v,B.chMon)}</span></button>`).join(''):'<p class="empty">Sin pagos en esta moneda.</p>';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{['h-c1','h-c3'].forEach(i=>$(i)?.classList.add('on'));document.querySelectorAll('.donut-s').forEach(c=>c.setAttribute('stroke-dasharray',c.dataset.d))}));
   document.querySelectorAll('#h-c1 [data-tip]').forEach(g=>{g.onmousemove=e=>{const t=$('tip');t.textContent=g.dataset.tip;t.style.left=e.clientX+12+'px';t.style.top=e.clientY-30+'px';t.style.opacity=1};g.onmouseleave=()=>$('tip').style.opacity=0});
   $('h-t').innerHTML=l.length?l.map(b=>{const E=EMPRESAS[b.emp];return `<tr><td class="code">${b.num}</td><td><span class="emp-tag"><i style="background:${E?.c1}"></i>${E?.corto||esc(b.emp)}</span></td><td style="white-space:nowrap">${fCorta(b.fpago)}</td>
-   <td><button class="lnk" style="font-size:14px;text-align:left" onclick="B.hf.ben=${js(b.benef)};renderB()">${esc(b.benef)}</button><p>${esc(b.concepto)}</p></td><td>${esc(b.mov)}${b.mov==='Tarjeta de crédito'?`<p>${esc(b.cta.replace('Tarjeta terminada en ','•••• '))}</p>`:''}</td><td class="amt-c">${fmtC(b.monto,b.mon)}</td>
+   <td><button class="lnk" style="font-size:14px;text-align:left" onclick="B.hf.ben=${js(b.lineas[0].benef)};renderB()">${esc(b.lineas[0].benef)}</button>${b.lineas.length>1?` <span class="kind" title="${esc(b.lineas.slice(1).map(x=>x.benef).join(', '))}">+${b.lineas.length-1} más</span>`:''}<p>${esc(b.lineas.length>1?b.lineas.map(x=>x.concepto).join(' · '):b.concepto)}</p></td><td>${esc(b.mov)}${b.mov==='Tarjeta de crédito'?`<p>${esc(b.cta.replace('Tarjeta terminada en ','•••• '))}</p>`:''}</td><td class="amt-c">${fmtC(montoDe(b),b.mon)}${B.hf.ben&&b.lineas.length>1?`<p>de ${fmtC(b.monto,b.mon)}</p>`:''}</td>
    <td><div class="acts"><button class="lnk" onclick="pdfBoleta(S.pagos.find(x=>x.id===${b.id}))">PDF</button><button class="lnk" onclick="repetir(${b.id})">Repetir</button></div></td></tr>`}).join(''):'<tr><td colspan="7"><p class="empty">No hay boletas con estos filtros.</p></td></tr>';
 }
 function repetir(id){const b=S.pagos.find(x=>x.id===id);B.nb=nbInicial(b);B.ultima=null;B.tab='nueva';renderB();scrollTo(0,0);toast('Datos copiados de la boleta N° '+b.num+'. Revisa fechas y monto.')}
@@ -1268,10 +1326,10 @@ function tBen(){
   <div class="tbl"><table><thead><tr><th>Beneficiario</th><th>Cuenta</th><th>Boletas</th><th></th></tr></thead><tbody id="ben-t"></tbody></table></div>`}
 function filasBen(){if(!$('ben-t'))return;const q=lc(B.bq),qs=sinEsp(q);
   const l=[...S.benef].sort(porNombre).filter(b=>!q||lc(b.nombre).includes(q)||(qs.length>2&&sinEsp(b.cuenta).includes(qs)));
-  $('ben-t').innerHTML=l.length?l.map(b=>{const n=S.pagos.filter(x=>x.benef===b.nombre).length;return `<tr><td><strong>${esc(b.nombre)}</strong></td>
+  $('ben-t').innerHTML=l.length?l.map(b=>{const n=S.pagos.filter(x=>x.lineas.some(l=>l.benef===b.nombre)).length;return `<tr><td><strong>${esc(b.nombre)}</strong></td>
    <td class="ser">${b.cuenta?esc(b.cuenta):'<span class="pill Usada">Sin cuenta</span>'}</td><td>${n?`<button class="lnk" onclick="B.hf={emp:'',mon:'',mov:'',ben:${esc(JSON.stringify(b.nombre))},desde:'',hasta:'',q:''};B.tab='hist';renderB()">${plural(n,'boleta','boletas')}</button>`:'<span class="free">Ninguna</span>'}</td>
    <td><div class="acts"><button class="lnk" onclick="dBenef(${b.id})">${b.cuenta?'Editar':'Agregar cuenta'}</button><button class="lnk red" onclick="borrarBen(${b.id})">Eliminar</button></div></td></tr>`}).join(''):'<tr><td colspan="4"><p class="empty">No hay beneficiarios que coincidan.</p></td></tr>'}
-function dBenef(id,nombre){const b=id?S.benef.find(x=>x.id===id):null;$('cb')?.classList.remove('open');
+function dBenef(id,nombre,linea){B.linea=linea??null;const b=id?S.benef.find(x=>x.id===id):null;document.querySelectorAll('.combo.open').forEach(c=>c.classList.remove('open'));if(B.tab==='nueva')nbSet();
   abrir(`<header><div><h2>${b?'Editar beneficiario':'Agregar beneficiario'}</h2><p>La base es la misma para Aura y Unicen.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>${fl('Nombre','<input id="bn-n" value="'+esc(b?b.nombre:nombre||'')+'" placeholder="Nombre o razón social">')}${fl('Cuenta (IBAN)','<input id="bn-c" value="'+esc(b?.cuenta||'')+'" placeholder="CR00 0000 0000 0000 0000 00">')}
   <p class="small muted">Si se le paga con tarjeta de crédito o no tiene cuenta, puedes dejarla vacía.${b?' Las boletas anteriores conservan el nombre y la cuenta con que se hicieron.':''}</p></div>
@@ -1281,9 +1339,9 @@ function gBenef(id){const n=$('bn-n').value.trim().replace(/\s+/g,' '),c=$('bn-c
   if(c&&!IBAN_RE.test(c))return $('err').textContent='La cuenta debe ser un IBAN de Costa Rica: CR seguido de 20 dígitos.';
   const dn=S.benef.find(x=>x.id!==id&&lc(x.nombre)===lc(n));if(dn)return $('err').textContent='Ya existe un beneficiario con ese nombre.';
   const dc=c&&S.benef.find(x=>x.id!==id&&sinEsp(x.cuenta)===sinEsp(c));if(dc)return $('err').textContent='Esa cuenta ya está registrada a nombre de '+dc.nombre+'.';
-  const viejo=id?S.benef.find(x=>x.id===id)?.nombre:null,enForm=B.tab==='nueva'&&B.nb&&(!B.nb.benef||B.nb.benef===viejo);
+  const viejo=id?S.benef.find(x=>x.id===id)?.nombre:null,L=B.tab==='nueva'&&B.nb&&B.linea!=null?B.nb.lineas[B.linea]:null;
   cerrar();
-  act(()=>id?setItem('bbenef',id,{Title:n,Cuenta:c}):addItem('bbenef',{Title:n,Cuenta:c}),'Beneficiario guardado',()=>{if(enForm){B.nb.benef=n;B.nb.cuentaB=c}render()});
+  act(()=>id?setItem('bbenef',id,{Title:n,Cuenta:c}):addItem('bbenef',{Title:n,Cuenta:c}),'Beneficiario guardado',()=>{if(L){L.benef=n;L.cuentaB=c}if(B.nb&&viejo)B.nb.lineas.forEach(x=>{if(x.benef===viejo){x.benef=n;x.cuentaB=c}});render()});
 }
 function borrarBen(id){const b=S.benef.find(x=>x.id===id);
   confirmar('Eliminar beneficiario',`¿Eliminar a <strong>${esc(b.nombre)}</strong>? Las boletas anteriores conservan su nombre y cuenta.`,'Eliminar',()=>act(()=>delItem('bbenef',id),'Beneficiario eliminado'))}
