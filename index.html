@@ -499,12 +499,15 @@ async function connect(){
   /* Si falta alguna lista, primero se piden los permisos (puede recargar la página) y después se crea */
   let spTok=null;const nuevas=new Set();
   if(Object.values(CONFIG.lists).some(n=>!busca(n))){await token(MANAGE);spTok=await spToken()}
+  /* Cada módulo (Activos y Boletas) se habilita solo si la persona tiene acceso a todas sus listas */
+  G.mods={act:true,bol:true};
   for(const [key,name] of Object.entries(CONFIG.lists)){
+    const mod=modDe(key);if(!G.mods[mod])continue;
     let f=busca(name);
     if(!f){
       paso('Creando la lista '+name+'…');
       try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}},MANAGE);nuevas.add(key)}
-      catch(e){if(e.status===403)throw new GraphError(403,`Falta la lista "${name}" y tu cuenta no puede crearla. Entra primero con la cuenta dueña del sitio. (${e.message})`);throw e}
+      catch(e){if(e.status===403||e.status===401){G.mods[mod]=false;continue}throw e}
     }
     G.listIds[key]=f.id;
     if(nuevas.has(key)){
@@ -514,11 +517,13 @@ async function connect(){
       if(key==='bemp')for(const id of EMP_IDS){const b=EMPRESAS[id].base;await addItem('bemp',{Title:id,Nombre:b.nombre,Cedula:b.cedula,Telefono:b.tel,Fax:b.fax,Apartado:b.apartado,Correo:b.correo,Direccion:b.dir,CampoEmpresa:b.campo,Cuentas:JSON.stringify(b.cuentas),Tarjetas:JSON.stringify(b.tarjetas),UltimoNumero:0})}
     }
   }
+  if(!G.mods.act&&!G.mods.bol)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de Activos ni de Boletas.');
+  if(!G.mods.act)M='bol';if(!G.mods.bol)M='act';
   /* Revisión de columnas: solo cuando cambia la estructura (se recuerda en este navegador) y todas a la vez */
   const marca='columnas:'+G.siteId,ver=SCHEMA_VER;let hecho=false;try{hecho=localStorage.getItem(marca)===ver}catch(e){}
   if(!hecho){
     paso('Revisando la estructura de las listas…');
-    await Promise.all(Object.entries(CONFIG.lists).filter(([k])=>!nuevas.has(k)&&SCHEMA[k].length).map(async([key,name])=>{
+    await Promise.all(Object.entries(CONFIG.lists).filter(([k])=>G.mods[modDe(k)]&&!nuevas.has(k)&&SCHEMA[k].length).map(async([key,name])=>{
       const cols=new Set((await gx('GET',`${LP(key)}/columns?$select=name&$top=200`)).value.map(c=>c.name));
       for(const c of SCHEMA[key].filter(c=>!cols.has(c.name))){
         try{await gx('POST',`${LP(key)}/columns`,c,MANAGE)}
@@ -530,6 +535,8 @@ async function connect(){
   paso('Cargando datos…');
 }
 /* Huella de la estructura de las listas: si cambia, se vuelven a revisar las columnas */
+/* A qué módulo pertenece cada lista */
+const modDe=k=>k.startsWith('b')?'bol':'act';
 const SCHEMA_VER=(()=>{const t=JSON.stringify(SCHEMA)+JSON.stringify(CONFIG.lists);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return String(h)})();
 /* Pantalla de carga con el paso actual */
 function paso(t){const el=$('paso');if(el)el.textContent=t}
@@ -549,7 +556,7 @@ async function alMenu(id,name,tk){
   aviso();
 }
 async function loadAll(){
-  const [pe,eq,hi,ub,bp,bb,ba,be]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp'].map(allItems));
+  const [pe,eq,hi,ub,bp,bb,ba,be]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp'].map(k=>G.mods?.[modDe(k)]===false?[]:allItems(k)));
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
@@ -600,7 +607,7 @@ async function boot(){
   try{await connect();showUser();await loadAll()}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
-      ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero este sistema es solo para contaduría. Si deberías tener acceso, pide que te den permiso en las listas de activos en SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
+      ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero no tiene permiso en este sistema. Si deberías tener acceso, pide que te den permiso en las listas de SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
       :`<h1>No se pudieron cargar los datos</h1><p>${esc(e.message)}</p><button class="btn" onclick="location.reload()">Intentar de nuevo</button>`);return}
   render();
   if(G.avisos.length)toast(G.avisos.join(' '));
@@ -1118,8 +1125,8 @@ const cuentaTxt=c=>`${c.banco} · ${MON[c.mon].s} ${MON[c.mon].n} · ${c.iban}`;
 const tarjetaTxt=t=>`${t.banco} · ${MON[t.mon].s} ${MON[t.mon].n} · •••• ${t.ult}${t.alias?' ('+t.alias+')':''}`;
 
 /* ---------- Encabezado del módulo ---------- */
-function modSwitch(){return `<div class="modsw" role="group" aria-label="Sistema"><button aria-pressed="${M!=='bol'}" onclick="irMod('act')">Activos</button><button aria-pressed="${M==='bol'}" onclick="irMod('bol')">Boletas</button></div>`}
-function irMod(m){if(m===M&&V.view!=='acta')return;M=m;try{localStorage.setItem('modulo',m)}catch(e){}V.view='list';render();scrollTo(0,0)}
+function modSwitch(){if(!G.mods?.act||!G.mods?.bol)return '';return `<div class="modsw" role="group" aria-label="Sistema"><button aria-pressed="${M!=='bol'}" onclick="irMod('act')">Activos</button><button aria-pressed="${M==='bol'}" onclick="irMod('bol')">Boletas</button></div>`}
+function irMod(m){if(G.mods&&!G.mods[m])return;if(m===M&&V.view!=='acta')return;M=m;try{localStorage.setItem('modulo',m)}catch(e){}V.view='list';render();scrollTo(0,0)}
 function renderB(){
   $('app').innerHTML=`<div class="head"><h1>Boletas de pago</h1></div>
   <div class="tabs" role="tablist">${[['nueva','Nueva boleta'],['hist','Historial'],['ben','Beneficiarios'],['aut','Autorizan'],['emp','Empresas']].map(([k,l])=>`<button class="tab" role="tab" aria-selected="${B.tab===k}" onclick="B.tab='${k}';renderB()">${l}</button>`).join('')}</div>
