@@ -385,13 +385,15 @@ const CONFIG={
   tenantId:'6d19a314-7bcf-411f-b9fd-8f6bc92c1e7b',   // Directory (tenant) ID
   siteHost:'aurainnovacionessa.sharepoint.com',
   sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
-  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',
+  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',
          bpagos:'BoletasPagos',bbenef:'BoletasBeneficiarios',baut:'BoletasAutorizan',bemp:'BoletasEmpresas'},
   diasAviso:30                                       // días antes del aniversario en que aparece en Revisión
 };
 const EMPRESA='Aura Innovaciones SA';
 const EMPRESA_LOGO='AURA INNOVACIONES S.A';
-const CATEGORIAS=['Equipo de Cómputo','Equipo Oficina','Mobiliario y Equipo'];
+const CATEGORIAS_INICIALES=['Equipo de Cómputo','Equipo Oficina','Mobiliario y Equipo'];
+/* Las categorías se editan en la pestaña Categorías (lista ActivosCategorias) */
+const cats=()=>S.cats.map(c=>c.nombre);
 const CONDICIONES=['Sin revisar','Nueva','Buena','Usada','Dañada'];
 const UBICACIONES_INICIALES=['Bodega','Sala Servidores'];
 const LEGAL=[
@@ -414,6 +416,7 @@ const SCHEMA={
            {name:'Eliminado',boolean:{}},{name:'EliminadoFecha',dateTime:{format:'dateOnly'}},{name:'EliminadoMotivo',text:{}}],
   historial:[{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'De',text:{}},{name:'A',text:{}},{name:'Registro',text:{}}],
   ubicaciones:[],
+  categorias:[],
   bpagos:[{name:'Numero',number:{}},{name:'Empresa',text:{}},{name:'FechaSolicitud',dateTime:{format:'dateOnly'}},{name:'FechaPago',dateTime:{format:'dateOnly'}},{name:'Beneficiario',text:{}},{name:'CuentaBeneficiario',text:{}},
           {name:'Movimiento',text:{}},{name:'CuentaDebito',text:{}},{name:'Banco',text:{}},{name:'Moneda',text:{}},{name:'Monto',number:{}},{name:'Concepto',text:{allowMultipleLines:true,textType:'plain'}},
           {name:'HechoPor',text:{}},{name:'Autoriza',text:{}},{name:'EmpresaDatos',text:{allowMultipleLines:true,textType:'plain'}},{name:'Pagos',text:{allowMultipleLines:true,textType:'plain'}}],
@@ -425,7 +428,7 @@ const SCHEMA={
 const AUTORIZAN_INICIALES=['Tim Garrett'];
 
 /* ---------- Estado ---------- */
-let S={personas:[],equipos:[],todos:[],fant:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
+let S={cats:[],personas:[],equipos:[],todos:[],fant:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
 const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null,imp:null};
 const G={pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
 let busy=false;
@@ -544,6 +547,7 @@ async function connect(){
     if(nuevas.has(key)){
       await alMenu(f.id,name,spTok);
       if(key==='ubicaciones')for(const u of UBICACIONES_INICIALES)await addItem('ubicaciones',{Title:u});
+      if(key==='categorias')for(const c of CATEGORIAS_INICIALES)await addItem('categorias',{Title:c});
       if(key==='baut')for(const a of AUTORIZAN_INICIALES)await addItem('baut',{Title:a});
       if(key==='bemp')for(const id of EMP_IDS){const b=EMPRESAS[id].base;await addItem('bemp',{Title:id,Nombre:b.nombre,Cedula:b.cedula,Telefono:b.tel,Fax:b.fax,Apartado:b.apartado,Correo:b.correo,Direccion:b.dir,CampoEmpresa:b.campo,Cuentas:JSON.stringify(b.cuentas),Tarjetas:JSON.stringify(b.tarjetas),UltimoNumero:0})}
     }
@@ -587,9 +591,10 @@ async function alMenu(id,name,tk){
   aviso();
 }
 async function loadAll(){
-  const [pe,eq,hi,ub,bp,bb,ba,be]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp'].map(k=>G.mods?.[modDe(k)]===false?[]:allItems(k)));
+  const [pe,eq,hi,ub,bp,bb,ba,be,ca]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp','categorias'].map(k=>G.mods?.[modDe(k)]===false?[]:allItems(k)));
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
+  S.cats=ca.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(c=>c.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
     asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),fadq,prox:rd(f.ProximaRevision)||proxInicial(fadq),ult:rd(f.UltimaRevision),
     del:f.Eliminado===true,delF:rd(f.EliminadoFecha),delM:f.EliminadoMotivo||''}})
@@ -676,8 +681,8 @@ function renderA(){
    <div class="stat"><span>En ubicaciones</span><strong>${u}</strong><small>bodega, sala y otros</small></div>
    <div class="stat${pn?' warn':''}"><span>Revisión pendiente</span><strong>${pn}</strong><small>cumplieron año</small></div>
   </div>
-  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('rev','Revisión',pn)}${tb('ub','Ubicaciones')}${tb('hi','Historial')}</div>
-  <div id="tabc">${{pe:tPe,eq:tEq,rev:tRev,ub:tUb,hi:tHi}[V.tab]()}</div>`;
+  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('rev','Revisión',pn)}${tb('ub','Ubicaciones')}${tb('cat','Categorías')}${tb('hi','Historial')}</div>
+  <div id="tabc">${{pe:tPe,eq:tEq,rev:tRev,ub:tUb,cat:tCat,hi:tHi}[V.tab]()}</div>`;
   if(V.tab==='eq'&&S.equipos.length)filas();
   if(V.tab==='pe'&&S.personas.length)filasPe();
 }
@@ -723,7 +728,7 @@ function tEq(){
   const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat=${js(c)};V.pg=1;render()">${esc(l)} <b>${cnt(c)}</b></button>`;
   return `<div class="bar"><input class="search" placeholder="Buscar por código, serie, persona o ubicación" value="${esc(V.q)}" oninput="V.q=this.value;V.pg=1;filas()">
    <label class="pp">Mostrar<select onchange="V.ps=+this.value;V.pg=1;filas()">${[20,50,0].map(n=>`<option value="${n}"${(V.ps??20)===n?' selected':''}>${n?n+' por página':'Todos'}</option>`).join('')}</select></label></div>
-  <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}</div>
+  <div class="chips">${ch('','Todos')}${cats().map(c=>ch(c,c)).join('')}</div>
   ${nd?`<div class="seg vista" role="radiogroup" aria-label="Mostrar equipos">${[['todos','Todos',S.equipos.length+nd],['activos','Activos',S.equipos.length],['elim','Eliminados',nd]].map(([k,l,n])=>`<button role="radio" aria-checked="${vi===k}" class="${k==='elim'?'v-del':''}" onclick="V.vista='${k}';V.pg=1;render()">${l} <b>${n}</b></button>`).join('')}</div>`:''}
   <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>
   <div class="pager" id="pager"></div>`;
@@ -767,7 +772,7 @@ function dEditarEquipo(cod){
   abrir(`<header><div><h2>Editar equipo</h2><p>${esc(x.cod)} · el código no se puede cambiar.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
    ${fl('Equipo',`<input id="ed-eq" value="${esc(x.eq)}">`)}
-   <div class="two">${fl('Serie',`<input id="ed-serie" value="${esc(x.serie)}" placeholder="Vacío si no tiene">`)}${fl('Categoría',`<select id="ed-cat">${opts(CATEGORIAS.includes(x.cat)?CATEGORIAS:[x.cat,...CATEGORIAS],x.cat)}</select>`)}</div>
+   <div class="two">${fl('Serie',`<input id="ed-serie" value="${esc(x.serie)}" placeholder="Vacío si no tiene">`)}${fl('Categoría',`<select id="ed-cat">${opts(cats().includes(x.cat)||!x.cat?cats():[x.cat,...cats()],x.cat)}</select>`)}</div>
    <div class="two">${fl('Estado',`<select id="ed-cond">${opts(CONDICIONES,x.cond)}</select>`)}${fl('Fecha de compra',dateField('ed-fadq',x.fadq))}</div>
    ${fl('Observaciones',`<input id="ed-obs" value="${esc(x.obs)}">`)}
    <p class="small muted">Si cambias la fecha de compra, la próxima revisión anual se recalcula con la fecha nueva.</p>
@@ -831,6 +836,49 @@ function guardarRev(sid,temprano){
     await setItem('equipos',sid,temprano?{Condicion:est,UltimaRevision:wd(t)}:{Condicion:est,UltimaRevision:wd(t),ProximaRevision:wd(next)});
     await addItem('historial',{Title:x.cod,Fecha:wd(t),De:'',A:'Revisión: '+est,Registro:yo()});
   },`${x.cod} revisado como ${est}.${next?' Próxima revisión: '+fCorta(next):''}`);
+}
+
+/* ---------- Categorías ---------- */
+function tCat(){
+  const n=c=>S.equipos.filter(x=>x.cat===c).length;
+  const otras=[...new Set(S.equipos.map(x=>x.cat).filter(c=>c&&!cats().includes(c)))];
+  return `<div class="addrow"><input id="c-n" placeholder="Nueva categoría, por ejemplo Equipo de Audio" onkeydown="if(event.key==='Enter')agregarCat()"><button class="btn primary" onclick="agregarCat()">Agregar categoría</button></div>
+  ${S.cats.length?`<div class="tbl"><table><thead><tr><th>Categoría</th><th>Equipos</th><th></th></tr></thead><tbody>${S.cats.map(c=>`<tr>
+   <td><strong>${esc(c.nombre)}</strong></td><td>${n(c.nombre)?`<button class="lnk" onclick="V.tab='eq';V.cat=${js(c.nombre)};V.pg=1;render()">${plural(n(c.nombre),'equipo','equipos')}</button>`:'<span class="free">Sin equipos</span>'}</td>
+   <td><div class="acts"><button class="lnk" onclick="dEditarCat(${c.id})">Cambiar nombre</button>${n(c.nombre)?'':`<button class="lnk red" onclick="dBorrarCat(${c.id})">Eliminar</button>`}</div></td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">No hay categorías registradas.</p>'}
+  ${otras.length?`<div class="warn-s" style="margin-top:16px">Hay equipos con categorías que no están en la lista: ${otras.map(o=>`<strong>${esc(o)}</strong> <button class="lnk" onclick="agregarCat(${js(o)})">agregarla</button>`).join(' · ')}</div>`:''}`;
+}
+function agregarCat(nombre){
+  const n=(nombre??$('c-n').value).trim().replace(/\s+/g,' ');
+  if(!n)return toast('Escribe el nombre de la categoría.');
+  if(S.cats.some(c=>lc(c.nombre)===lc(n)))return toast('Esa categoría ya existe.');
+  act(()=>addItem('categorias',{Title:n}),'Categoría '+n+' agregada');
+}
+function dEditarCat(id){
+  const c=S.cats.find(x=>x.id===id),n=S.todos.filter(x=>x.cat===c.nombre).length;
+  abrir(`<header><div><h2>Cambiar nombre</h2><p>Categoría ${esc(c.nombre)}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>${fl('Nombre',`<input id="ce-n" value="${esc(c.nombre)}">`)}
+  ${n?`<p class="small muted">Los ${plural(n,'equipo','equipos')} de esta categoría se actualizan con el nombre nuevo.</p>`:''}</div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gEditarCat(${id})">Guardar</button></footer>`);
+  setTimeout(()=>$('ce-n')?.select(),200);
+}
+function gEditarCat(id){
+  const c=S.cats.find(x=>x.id===id),n=$('ce-n').value.trim().replace(/\s+/g,' ');
+  if(!n)return $('err').textContent='Escribe el nombre.';
+  if(n===c.nombre){cerrar();return}
+  if(S.cats.some(x=>x.id!==id&&lc(x.nombre)===lc(n)))return $('err').textContent='Ya existe una categoría con ese nombre.';
+  const eqs=S.todos.filter(x=>x.cat===c.nombre);cerrar();
+  act(async()=>{
+    await setItem('categorias',id,{Title:n});
+    if(eqs.length){const r=await batch(eqs.map(x=>({method:'PATCH',url:`${LP('equipos')}/items/${x.sid}/fields`,body:{Categoria:n}})));
+      const f=r.filter(x=>x.status>=300).length;if(f)throw new Error(`${f} equipos no se pudieron actualizar; vuelve a guardar el nombre.`)}
+    if(V.cat===c.nombre)V.cat=n;
+  },`Categoría renombrada a ${n}${eqs.length?' ('+plural(eqs.length,'equipo actualizado','equipos actualizados')+')':''}`);
+}
+function dBorrarCat(id){
+  const c=S.cats.find(x=>x.id===id);
+  if(S.equipos.some(x=>x.cat===c.nombre))return toast('Esa categoría todavía tiene equipos. Cámbialos primero.');
+  confirmar('Eliminar categoría',`¿Eliminar la categoría <strong>${esc(c.nombre)}</strong>? No tiene equipos.`,'Eliminar categoría',()=>act(()=>delItem('categorias',id),'Categoría '+c.nombre+' eliminada'));
 }
 
 /* ---------- Ubicaciones ---------- */
@@ -920,7 +968,7 @@ function dAgregar(){
   <div class="body"><div class="err" id="err"></div>
    <div class="two">${fl('Código','<input id="n-cod" placeholder="AI0110">')}${fl('Serie','<input id="n-serie" placeholder="Vacío si no tiene">')}</div>
    ${fl('Equipo','<input id="n-eq" placeholder="Computador Portátil">')}
-   <div class="two">${fl('Categoría',`<select id="n-cat">${opts(CATEGORIAS)}</select>`)}${fl('Estado',`<select id="n-cond">${opts(CONDICIONES,'Nueva')}</select>`)}</div>
+   <div class="two">${fl('Categoría',`<select id="n-cat">${opts(cats())}</select>`)}${fl('Estado',`<select id="n-cond">${opts(CONDICIONES,'Nueva')}</select>`)}</div>
    <div class="two">${fl('Fecha de compra',dateField('n-fadq',hoy()))}${fl('Responsable o ubicación',`<select id="n-dest">${selResp('u:Bodega')}</select>`)}</div>
    ${fl('Observaciones','<input id="n-obs" placeholder="Incluye cargador">')}
   </div>
@@ -1086,9 +1134,11 @@ async function leerExcel(file){
     placas.add(cod);
     equi.push({cod,serie:txt(r.serie)||'N/A',eq,cat:txt(r.categoria),ced:c,ubic:c?'':(S.ubic.find(x=>lc(x.nombre)===lc(u))?.nombre||ubs.get(lc(u))||u),fadq:f,cond:txt(r.condicion||r.estado)||'Sin revisar'});
   });
-  V.imp={pers,equi,ubs:[...ubs.values()]};
+  const yaCat=new Set(S.cats.map(c=>lc(c.nombre))),catN=new Map();equi.forEach(x=>{const k=lc(x.cat);if(x.cat&&!yaCat.has(k)&&!catN.has(k))catN.set(k,x.cat)});
+  equi.forEach(x=>{const c=S.cats.find(q=>lc(q.nombre)===lc(x.cat));if(c)x.cat=c.nombre});
+  V.imp={pers,equi,ubs:[...ubs.values()],cats:[...catN.values()]};
   const sinF=equi.filter(x=>!x.fadq).length;
-  $('i-res').innerHTML=`<div class="info"><strong>Listo para importar:</strong><br>${plural(pers.length,'colaborador nuevo','colaboradores nuevos')} · ${plural(equi.length,'equipo nuevo','equipos nuevos')}${V.imp.ubs.length?` · ${plural(V.imp.ubs.length,'ubicación nueva','ubicaciones nuevas')} (${V.imp.ubs.map(esc).join(', ')})`:''}${saltados?`<br>${plural(saltados,'equipo ya existía','equipos ya existían')} y se ${saltados===1?'salta':'saltan'}.`:''}${sinF?`<br>${plural(sinF,'equipo no tiene','equipos no tienen')} fecha de compra y no ${sinF===1?'entrará':'entrarán'} en Revisión.`:''}</div>
+  $('i-res').innerHTML=`<div class="info"><strong>Listo para importar:</strong><br>${plural(pers.length,'colaborador nuevo','colaboradores nuevos')} · ${plural(equi.length,'equipo nuevo','equipos nuevos')}${V.imp.ubs.length?` · ${plural(V.imp.ubs.length,'ubicación nueva','ubicaciones nuevas')} (${V.imp.ubs.map(esc).join(', ')})`:''}${V.imp.cats.length?` · ${plural(V.imp.cats.length,'categoría nueva','categorías nuevas')} (${V.imp.cats.map(esc).join(', ')})`:''}${saltados?`<br>${plural(saltados,'equipo ya existía','equipos ya existían')} y se ${saltados===1?'salta':'saltan'}.`:''}${sinF?`<br>${plural(sinF,'equipo no tiene','equipos no tienen')} fecha de compra y no ${sinF===1?'entrará':'entrarán'} en Revisión.`:''}</div>
    ${errores.length?`<div class="err" style="display:block">${plural(errores.length,'fila no se va a importar','filas no se van a importar')}:<br>${errores.slice(0,15).join('<br>')}${errores.length>15?'<br>…':''}</div>`:''}`;
   $('i-go').disabled=!(pers.length||equi.length||V.imp.ubs.length);
 }
@@ -1098,6 +1148,7 @@ async function importar(){
   let fallos=[];
   const ok=await act(async()=>{
     const it=k=>`${LP(k)}/items`;
+    if(I.cats?.length){const r=await batch(I.cats.map(c=>({method:'POST',url:it('categorias'),body:{fields:{Title:c}}})),(a,b)=>prog('Guardando categorías…',a,b));r.forEach((x,i)=>x.status>=300&&fallos.push('Categoría '+I.cats[i]))}
     if(I.ubs.length){const r=await batch(I.ubs.map(u=>({method:'POST',url:it('ubicaciones'),body:{fields:{Title:u}}})),(a,b)=>prog('Guardando ubicaciones…',a,b));r.forEach((x,i)=>x.status>=300&&fallos.push('Ubicación '+I.ubs[i]))}
     const ids=new Map(S.personas.map(p=>[p.ced,p.id]));
     if(I.pers.length){const r=await batch(I.pers.map(p=>({method:'POST',url:it('personal'),body:{fields:{Title:p.nombre,Cedula:p.ced}}})),(a,b)=>prog('Guardando personal…',a,b));
