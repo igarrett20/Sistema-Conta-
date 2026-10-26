@@ -319,6 +319,20 @@ body.busy .btn,body.busy .lnk{pointer-events:none;opacity:.6}
 @keyframes girar{to{transform:rotate(360deg)}}
 .lnk.armed{background:var(--danger);color:#fff;padding:2px 9px;border-radius:6px;text-decoration:none;animation:latido .35s ease}
 @keyframes latido{0%{transform:scale(.92)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+.pp{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-weight:600}
+.pp select{width:auto;padding:6px 8px}
+tr.eliminado td{background:#FDF3F3;opacity:.62}
+tr.eliminado td:first-child{box-shadow:inset 3px 0 0 var(--danger)}
+tr.eliminado .code{color:var(--danger);text-decoration:line-through}
+tr.eliminado:hover td{opacity:.9}
+.chip.del-chip[aria-pressed="true"]{background:var(--danger);border-color:var(--danger)}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.pg{display:flex;gap:4px;align-items:center}
+.pg button{appearance:none;min-width:34px;height:34px;border:1px solid var(--line-strong);background:#fff;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;color:var(--ink)}
+.pg button:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+.pg button[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.pg button:disabled{opacity:.4;cursor:default}
+.pg .gap{color:var(--muted);padding:0 2px}
 .empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;align-items:start}
 .erow{display:grid;gap:6px;margin-bottom:6px;align-items:center}
 .erow.cu{grid-template-columns:76px 118px 1fr 30px}
@@ -381,7 +395,8 @@ const SP_MANAGE=()=>[`https://${CONFIG.siteHost}/AllSites.Manage`];   // para po
 const SCHEMA={
   personal:[{name:'Cedula',text:{}}],
   equipos:[{name:'Equipo',text:{}},{name:'Categoria',text:{}},{name:'Serie',text:{}},{name:'Condicion',text:{}},{name:'Observaciones',text:{}},{name:'ResponsableId',number:{}},
-           {name:'Ubicacion',text:{}},{name:'FechaAdquisicion',dateTime:{format:'dateOnly'}},{name:'ProximaRevision',dateTime:{format:'dateOnly'}},{name:'UltimaRevision',dateTime:{format:'dateOnly'}}],
+           {name:'Ubicacion',text:{}},{name:'FechaAdquisicion',dateTime:{format:'dateOnly'}},{name:'ProximaRevision',dateTime:{format:'dateOnly'}},{name:'UltimaRevision',dateTime:{format:'dateOnly'}},
+           {name:'Eliminado',boolean:{}},{name:'EliminadoFecha',dateTime:{format:'dateOnly'}},{name:'EliminadoMotivo',text:{}}],
   historial:[{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'De',text:{}},{name:'A',text:{}},{name:'Registro',text:{}}],
   ubicaciones:[],
   bpagos:[{name:'Numero',number:{}},{name:'Empresa',text:{}},{name:'FechaSolicitud',dateTime:{format:'dateOnly'}},{name:'FechaPago',dateTime:{format:'dateOnly'}},{name:'Beneficiario',text:{}},{name:'CuentaBeneficiario',text:{}},
@@ -395,7 +410,7 @@ const SCHEMA={
 const AUTORIZAN_INICIALES=['Tim Garrett'];
 
 /* ---------- Estado ---------- */
-let S={personas:[],equipos:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
+let S={personas:[],equipos:[],todos:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
 const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null,imp:null};
 const G={pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
 let busy=false;
@@ -404,6 +419,7 @@ let busy=false;
 const $=id=>document.getElementById(id);
 const P=id=>S.personas.find(p=>p.id===id);
 const E=cod=>S.equipos.find(x=>x.cod===cod);
+const EA=cod=>(S.todos||S.equipos).find(x=>x.cod===cod);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const js=s=>esc(JSON.stringify(String(s)));
 const lc=s=>String(s||'').trim().toLowerCase();
@@ -560,8 +576,12 @@ async function loadAll(){
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
-    asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),fadq,prox:rd(f.ProximaRevision)||proxInicial(fadq),ult:rd(f.UltimaRevision)}})
-    .filter(x=>x.cod).sort((a,b)=>a.cod.localeCompare(b.cod));
+    asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),fadq,prox:rd(f.ProximaRevision)||proxInicial(fadq),ult:rd(f.UltimaRevision),
+    del:f.Eliminado===true,delF:rd(f.EliminadoFecha),delM:f.EliminadoMotivo||''}})
+    .filter(x=>x.cod).sort((a,b)=>a.cod.localeCompare(b.cod,undefined,{numeric:true}));
+  /* S.todos incluye los eliminados (para ver el consecutivo); S.equipos solo los activos */
+  S.todos=S.equipos;S.equipos=S.todos.filter(x=>!x.del);
+  S.todos.forEach(x=>{if(x.del){x.asig=null;x.ubic='';x.prox=''}});
   S.equipos.forEach(x=>{if(x.asig&&!P(x.asig))x.asig=null});
   S.hist=hi.map(i=>{const f=i.fields;return{f:rd(f.Fecha),cod:f.Title||'',de:f.De||null,a:f.A||'',por:f.Registro||i.createdBy?.user?.displayName||'',t:Date.parse(i.createdDateTime)||0}})
     .sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
@@ -666,24 +686,77 @@ function filasPe(){
 
 /* ---------- Equipos ---------- */
 function tEq(){
-  if(!S.equipos.length)return vacio('Agrega el primer equipo','Registra código, serie y fecha de compra, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dAgregar()">Agregar equipo</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
-  const cnt=c=>S.equipos.filter(x=>!c||x.cat===c).length;
-  const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat=${js(c)};render()">${esc(l)} <b>${cnt(c)}</b></button>`;
-  return `<div class="bar"><input class="search" placeholder="Buscar por código, serie, persona o ubicación" value="${esc(V.q)}" oninput="V.q=this.value;filas()"></div>
-  <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}</div>
-  <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>`;
+  if(!S.todos.length)return vacio('Agrega el primer equipo','Registra código, serie y fecha de compra, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dAgregar()">Agregar equipo</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
+  const cnt=c=>S.equipos.filter(x=>!c||x.cat===c).length,nd=S.todos.length-S.equipos.length;
+  const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat=${js(c)};V.pg=1;render()">${esc(l)} <b>${cnt(c)}</b></button>`;
+  return `<div class="bar"><input class="search" placeholder="Buscar por código, serie, persona o ubicación" value="${esc(V.q)}" oninput="V.q=this.value;V.pg=1;filas()">
+   <label class="pp">Mostrar<select onchange="V.ps=+this.value;V.pg=1;filas()">${[20,50,0].map(n=>`<option value="${n}"${(V.ps??20)===n?' selected':''}>${n?n+' por página':'Todos'}</option>`).join('')}</select></label></div>
+  <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}${nd?`<button class="chip del-chip" aria-pressed="${!!V.ocultarDel}" onclick="V.ocultarDel=!V.ocultarDel;V.pg=1;render()">${V.ocultarDel?'Eliminados ocultos':'Ocultar eliminados'} <b>${nd}</b></button>`:''}</div>
+  <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>
+  <div class="pager" id="pager"></div>`;
 }
 function filas(){
-  const q=lc(V.q);
-  const r=S.equipos.filter(x=>(!V.cat||x.cat===V.cat)&&(!q||lc([x.cod,x.eq,x.serie,donde(x),P(x.asig)?.ced].join(' ')).includes(q)));
-  $('filas').innerHTML=r.length?r.map(x=>{const p=P(x.asig);return `<tr>
+  const q=lc(V.q),ps=V.ps??20;
+  const r=S.todos.filter(x=>(!x.del||!V.ocultarDel)&&(!V.cat||x.cat===V.cat)&&(!q||lc([x.cod,x.eq,x.serie,donde(x),P(x.asig)?.ced,x.del?'eliminado '+x.delM:''].join(' ')).includes(q)));
+  const pags=ps?Math.max(1,Math.ceil(r.length/ps)):1;V.pg=Math.min(Math.max(1,V.pg||1),pags);
+  const vis=ps?r.slice((V.pg-1)*ps,V.pg*ps):r;
+  $('filas').innerHTML=vis.length?vis.map(x=>{const p=P(x.asig);
+   if(x.del)return `<tr class="eliminado"><td class="code">${esc(x.cod)}</td>
+    <td>${esc(x.eq)}<p>${esc(x.cat)}${x.fadq?' · Compra '+fCorta(x.fadq):''}</p></td><td class="ser">${esc(x.serie)}</td>
+    <td><span class="pill Danada">Eliminado</span></td><td><span class="free">${x.delF?'El '+fCorta(x.delF):''}${x.delM?' · '+esc(x.delM):''}</span></td>
+    <td><div class="acts"><button class="lnk" onclick="restaurarEquipo(${js(x.cod)})">Restaurar</button></div></td></tr>`;
+   return `<tr>
    <td class="code">${esc(x.cod)}</td>
    <td>${esc(x.eq)}<p>${esc(x.cat)}${x.fadq?' · Compra '+fCorta(x.fadq):''}${x.obs?' · '+esc(x.obs):''}</p></td>
    <td class="ser">${esc(x.serie)}</td>
    <td>${pill(x.cond)}</td>
    <td>${p?`${esc(p.nombre)}<p>Céd. ${esc(p.ced)}</p>`:x.ubic?lugar(x.ubic):'<span class="free">Sin asignar</span>'}</td>
-   <td><div class="acts">${p?`<button class="lnk" onclick="abrirActa(${p.id},[${js(x.cod)}])">Acta</button>`:''}<button class="lnk" onclick="dCambio(${js(origenDe(x))},${js(x.cod)})">${p?'Cambiar responsable':'Asignar'}</button><button class="lnk red" onclick="dBorrarEquipo(${js(x.cod)})">Eliminar</button></div></td></tr>`}).join('')
+   <td><div class="acts">${p?`<button class="lnk" onclick="abrirActa(${p.id},[${js(x.cod)}])">Acta</button>`:''}<button class="lnk" onclick="dCambio(${js(origenDe(x))},${js(x.cod)})">${p?'Cambiar responsable':'Asignar'}</button><button class="lnk" onclick="dEditarEquipo(${js(x.cod)})">Editar</button><button class="lnk red" onclick="dBorrarEquipo(${js(x.cod)})">Eliminar</button></div></td></tr>`}).join('')
   :'<tr><td colspan="6"><p class="empty">No hay equipos que coincidan con la búsqueda.</p></td></tr>';
+  /* paginación */
+  const pg=V.pg,ini=r.length?(ps?(pg-1)*ps+1:1):0,fin=ps?Math.min(pg*ps,r.length):r.length;
+  let nums=[];if(pags>1){const set=new Set([1,pags,pg-1,pg,pg+1].filter(n=>n>=1&&n<=pags));nums=[...set].sort((a,b)=>a-b)}
+  $('pager').innerHTML=`<span class="small muted">Mostrando ${ini}–${fin} de ${r.length}</span>${pags>1?`<div class="pg">
+    <button aria-label="Página anterior" ${pg===1?'disabled':''} onclick="irPag(${pg-1})">‹</button>
+    ${nums.map((n,i)=>(i&&n-nums[i-1]>1?'<span class="gap">…</span>':'')+`<button ${n===pg?'aria-current="page"':''} onclick="irPag(${n})">${n}</button>`).join('')}
+    <button aria-label="Página siguiente" ${pg===pags?'disabled':''} onclick="irPag(${pg+1})">›</button></div>`:''}`;
+}
+function irPag(n){V.pg=n;filas();$('filas')?.closest('.tbl')?.scrollIntoView?.({behavior:'smooth',block:'start'})}
+
+/* Editar los datos de un equipo (el código no se cambia porque el historial lo usa) */
+function dEditarEquipo(cod){
+  const x=E(cod);if(!x)return;
+  abrir(`<header><div><h2>Editar equipo</h2><p>${esc(x.cod)} · el código no se puede cambiar.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   ${fl('Equipo',`<input id="ed-eq" value="${esc(x.eq)}">`)}
+   <div class="two">${fl('Serie',`<input id="ed-serie" value="${esc(x.serie)}" placeholder="Vacío si no tiene">`)}${fl('Categoría',`<select id="ed-cat">${opts(CATEGORIAS.includes(x.cat)?CATEGORIAS:[x.cat,...CATEGORIAS],x.cat)}</select>`)}</div>
+   <div class="two">${fl('Estado',`<select id="ed-cond">${opts(CONDICIONES,x.cond)}</select>`)}${fl('Fecha de compra',dateField('ed-fadq',x.fadq))}</div>
+   ${fl('Observaciones',`<input id="ed-obs" value="${esc(x.obs)}">`)}
+   <p class="small muted">Si cambias la fecha de compra, la próxima revisión anual se recalcula con la fecha nueva.</p>
+  </div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gEditarEquipo(${js(cod)})">Guardar cambios</button></footer>`);
+  setTimeout(()=>$('ed-serie')?.focus(),200);
+}
+function gEditarEquipo(cod){
+  const x=E(cod),v=id=>$(id).value.trim(),n={eq:v('ed-eq'),serie:v('ed-serie')||'N/A',cat:v('ed-cat'),cond:v('ed-cond'),obs:v('ed-obs'),fadq:fv('ed-fadq')};
+  if(!n.eq)return $('err').textContent='Escribe el nombre del equipo.';
+  if($('ed-fadq').value.trim()&&!n.fadq)return $('err').textContent='Escribe una fecha de compra válida (dd/mm/aaaa).';
+  const etq={eq:'Equipo',serie:'Serie',cat:'Categoría',cond:'Estado',obs:'Observaciones',fadq:'Fecha de compra'};
+  const cambios=Object.keys(etq).filter(k=>(n[k]||'')!==(x[k]||''));
+  if(!cambios.length){cerrar();return toast('No hubo cambios.')}
+  const f={Equipo:n.eq,Serie:n.serie,Categoria:n.cat,Condicion:n.cond,Observaciones:n.obs};
+  if(cambios.includes('fadq')){f.FechaAdquisicion=wd(n.fadq);
+    let k='';if(n.fadq){if(x.ult){k=addY(n.fadq,+x.ult.slice(0,4)-+n.fadq.slice(0,4));while(k<=x.ult)k=addY(k,1)}else k=proxInicial(n.fadq)}f.ProximaRevision=wd(k)}
+  const det=cambios.map(k=>k==='serie'?`serie ${x.serie} → ${n.serie}`:k==='fadq'?`compra ${fCorta(x.fadq)||'—'} → ${fCorta(n.fadq)||'—'}`:etq[k].toLowerCase()).join(', ');
+  cerrar();
+  act(async()=>{await setItem('equipos',x.sid,f);await addItem('historial',{Title:cod,Fecha:wd(hoy()),De:'',A:('Editado: '+det).slice(0,250),Registro:yo()})},'Equipo '+cod+' actualizado');
+}
+function restaurarEquipo(cod){
+  const x=EA(cod),u=S.ubic.find(q=>q.nombre==='Bodega')?.nombre||S.ubic[0]?.nombre||'';
+  confirmar('Restaurar equipo',`¿Restaurar <strong>${esc(x.cod)}</strong> · ${esc(x.eq)}? Vuelve al inventario${u?' en <strong>'+esc(u)+'</strong>':''}.`,'Restaurar',
+    ()=>act(async()=>{await setItem('equipos',x.sid,{Eliminado:false,EliminadoFecha:null,EliminadoMotivo:'',Ubicacion:u,ResponsableId:0,ProximaRevision:wd(proxInicial(x.fadq))});
+      await addItem('historial',{Title:cod,Fecha:wd(hoy()),De:'',A:'Restaurado'+(u?' a '+u:''),Registro:yo()})},'Equipo '+cod+' restaurado'));
+  const b=$('c-go');b.classList.remove('danger');b.classList.add('primary');$('drawer').querySelector('.body p.small')?.remove();
 }
 
 /* ---------- Revisión anual ---------- */
@@ -813,7 +886,7 @@ function gAgregar(){
   const v=id=>$(id).value.trim(),cod=v('n-cod').toUpperCase(),eq=v('n-eq'),serie=v('n-serie')||'N/A',fadq=fv('n-fadq'),dest=v('n-dest');
   if(!cod||!eq)return $('err').textContent='Completa código y equipo.';
   if(!/^[A-Z0-9-]+$/.test(cod))return $('err').textContent='El código solo puede tener letras, números y guiones.';
-  if(E(cod))return $('err').textContent='Ya existe un equipo con el código '+cod+'.';
+  if(EA(cod))return $('err').textContent='Ya existe un equipo con el código '+cod+(EA(cod).del?' (eliminado).':'.');
   if(!fadq)return $('err').textContent='Escribe una fecha de compra válida (dd/mm/aaaa).';
   if(!dest)return $('err').textContent='Elige un responsable o una ubicación.';
   const pid=dest.startsWith('p:')?+dest.slice(2):null,ub=dest.startsWith('u:')?dest.slice(2):'',t=hoy();
@@ -826,7 +899,8 @@ function gAgregar(){
 function dBorrarEquipo(cod){
   const x=E(cod);
   confirmar('Eliminar activo',`¿Eliminar <strong>${esc(x.cod)}</strong> · ${esc(x.eq)} (serie ${esc(x.serie)})? Está con <strong>${esc(donde(x))}</strong>.`,'Eliminar activo',
-    ()=>act(async()=>{await delItem('equipos',x.sid);await addItem('historial',{Title:cod,Fecha:wd(hoy()),De:donde(x),A:'Eliminado'+(motivo?': '+motivo:''),Registro:yo()})},'Activo '+cod+' eliminado'));
+    ()=>act(async()=>{await setItem('equipos',x.sid,{Eliminado:true,EliminadoFecha:wd(hoy()),EliminadoMotivo:motivo,ResponsableId:0,Ubicacion:''});await addItem('historial',{Title:cod,Fecha:wd(hoy()),De:donde(x),A:'Eliminado'+(motivo?': '+motivo:''),Registro:yo()})},'Activo '+cod+' eliminado'));
+  $('drawer').querySelector('.body p.small').textContent='El equipo queda en la lista marcado como eliminado, para no perder el consecutivo. Se puede restaurar si fue un error.';
   $('c-extra').innerHTML=fl('Motivo (opcional)','<input id="c-mot" placeholder="Dado de baja, vendido, extraviado…">');
   let motivo='';$('c-mot').oninput=e=>motivo=e.target.value.trim();
 }
@@ -955,7 +1029,7 @@ async function leerExcel(file){
   hp.forEach((r,i)=>{const n=txt(r.nombre).replace(/\s+/g,' '),c=txt(r.cedula);if(!n&&!c)return;
     if(!n||!/^\d-\d{4}-\d{4}$/.test(c)){errores.push(`Personal fila ${i+2}: nombre o cédula inválidos (${esc(n||'?')} · ${esc(c||'?')})`);return}
     if(cedOk.has(c))return;cedOk.add(c);pers.push({nombre:n,ced:c})});
-  const placas=new Set(S.equipos.map(x=>x.cod)),yaUb=new Set(S.ubic.map(u=>lc(u.nombre)));let saltados=0;
+  const placas=new Set(S.todos.map(x=>x.cod)),yaUb=new Set(S.ubic.map(u=>lc(u.nombre)));let saltados=0;
   he.forEach((r,i)=>{const cod=txt(r.placa).toUpperCase();if(!cod)return;
     if(placas.has(cod)){saltados++;return}
     const c=txt(r.cedula),u=txt(r.ubicacion),f=fechaXL(r.fechaadquisicion),eq=txt(r.equipo||r.elemento);
@@ -1070,10 +1144,12 @@ function pdf(){
 function tHi(){
   if(!S.hist.length)return vacio('Todavía no hay movimientos','Cada entrega, cambio, revisión o eliminación queda registrada aquí.','');
   const mov=h=>{if(h.a.startsWith('Revisión: '))return `<span class="kind">Revisión</span> ${pill(h.a.slice(10))}`;
+    if(h.a.startsWith('Editado: '))return `<span class="kind">Editado</span> ${esc(h.a.slice(9))}`;
+    if(h.a.startsWith('Restaurado'))return `<span class="pill Nueva">${esc(h.a)}</span>`;
     if(h.a.startsWith('Eliminado'))return `${h.de?esc(h.de)+' → ':''}<span class="pill Danada">${esc(h.a)}</span>`;
     return `${h.de?esc(h.de)+' → ':'<span class="kind">Nuevo</span> '}${h.a==='Devuelto'?'<span class="pill Usada">Devuelto</span>':esc(h.a)}`};
   return `<div class="tbl"><table><thead><tr><th>Fecha</th><th>Equipo</th><th>Movimiento</th><th>Registró</th></tr></thead><tbody>
-  ${S.hist.slice(0,400).map(h=>{const x=E(h.cod);return `<tr><td style="white-space:nowrap">${fCorta(h.f)}</td>
+  ${S.hist.slice(0,400).map(h=>{const x=EA(h.cod);return `<tr><td style="white-space:nowrap">${fCorta(h.f)}</td>
    <td><span class="code">${esc(h.cod)}</span><p>${x?esc(x.eq):''}</p></td>
    <td>${mov(h)}</td><td class="muted">${esc(h.por)}</td></tr>`}).join('')}
   </tbody></table></div>${S.hist.length>400?'<p class="small muted">Se muestran los 400 movimientos más recientes.</p>':''}`;
