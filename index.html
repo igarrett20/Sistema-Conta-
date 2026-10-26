@@ -333,6 +333,18 @@ tr.eliminado:hover td{opacity:.9}
 .pg button[aria-current="page"]{background:var(--brand);border-color:var(--brand);color:#fff}
 .pg button:disabled{opacity:.4;cursor:default}
 .pg .gap{color:var(--muted);padding:0 2px}
+.seg.vista{margin:-4px 0 16px}
+.seg.vista b{font-weight:700;opacity:.7;margin-left:3px}
+.seg.vista button.v-del[aria-checked="true"]{background:var(--danger)}
+.pill-btn{appearance:none;border:1px solid var(--line);cursor:pointer;font:inherit;font-size:11px;font-weight:600;padding:1px 8px;margin-left:4px;transition:background .15s,color .15s,border-color .15s}
+.pill-btn span{display:inline-block;transition:transform .15s}
+.pill-btn:hover{background:var(--brand-soft);color:var(--brand);border-color:var(--brand)}
+.pill-btn:hover span{transform:translateX(2px)}
+tr.foco td{background:#EAF5F7}
+tr.foco td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
+tr.flash td{animation:flash 1.6s ease}
+@keyframes flash{0%,40%{background:#CDE8EC}100%{background:#EAF5F7}}
+.focobox{border:1px solid var(--brand);border-radius:12px;padding:14px 16px;margin-bottom:26px;background:#fff}
 .empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;align-items:start}
 .erow{display:grid;gap:6px;margin-bottom:6px;align-items:center}
 .erow.cu{grid-template-columns:76px 118px 1fr 30px}
@@ -410,7 +422,7 @@ const SCHEMA={
 const AUTORIZAN_INICIALES=['Tim Garrett'];
 
 /* ---------- Estado ---------- */
-let S={personas:[],equipos:[],todos:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
+let S={personas:[],equipos:[],todos:[],fant:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
 const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null,imp:null};
 const G={pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
 let busy=false;
@@ -585,6 +597,9 @@ async function loadAll(){
   S.equipos.forEach(x=>{if(x.asig&&!P(x.asig))x.asig=null});
   S.hist=hi.map(i=>{const f=i.fields;return{f:rd(f.Fecha),cod:f.Title||'',de:f.De||null,a:f.A||'',por:f.Registro||i.createdBy?.user?.displayName||'',t:Date.parse(i.createdDateTime)||0}})
     .sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
+  /* Equipos borrados con la versión anterior (ya no están en la lista): se reconstruyen desde el historial */
+  const yaEsta=new Set(S.todos.map(x=>x.cod));S.fant=[];
+  S.hist.forEach(h=>{if(h.a.startsWith('Eliminado')&&!yaEsta.has(h.cod)){yaEsta.add(h.cod);S.fant.push({cod:h.cod,eq:'',cat:'',serie:'',del:true,ghost:true,delF:h.f,delM:h.a.replace(/^Eliminado:?\s*/,''),de:h.de||''})}});
   /* Boletas */
   S.benef=bb.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cuenta:(i.fields.Cuenta||'').trim()})).filter(b=>b.nombre);
   S.aut=ba.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(a=>a.nombre);
@@ -639,7 +654,7 @@ function render(){if(M==='bol'&&V.view!=='acta')renderB();else renderA();const m
 function renderA(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
   const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
-  const tb=(k,l,b)=>`<button class="tab" role="tab" aria-selected="${V.tab===k}" onclick="V.tab='${k}';V.q='';render()">${l}${b?`<span class="badge" aria-label="${b} pendientes">${b}</span>`:''}</button>`;
+  const tb=(k,l,b)=>`<button class="tab" role="tab" aria-selected="${V.tab===k}" onclick="V.tab='${k}';V.q='';V.revFoco=null;render()">${l}${b?`<span class="badge" aria-label="${b} pendientes">${b}</span>`:''}</button>`;
   $('app').innerHTML=`<div class="head"><h1>Activos y equipos</h1>
    <div class="head-acts">
     <div class="dd" id="dd"><button class="btn primary" aria-haspopup="true" aria-expanded="false" onclick="menu(event)">Agregar ▾</button>
@@ -679,7 +694,7 @@ function filasPe(){
   const ps=[...S.personas].sort(porNombre).filter(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return !q||lc([p.nombre,p.ced,...m.map(x=>x.cod+' '+x.eq)].join(' ')).includes(q)});
   $('filasPe').innerHTML=ps.length?ps.map(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
    <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${plural(m.length,'equipo','equipos')}</p></div></div></td>
-   <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
+   <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${x.cond==='Sin revisar'?`<button class="pill Sinrev pill-btn" title="Ir a Revisión" onclick="irRevision(${js(x.cod)})">Sin revisar <span aria-hidden="true">→</span></button>`:pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
    <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`}).join('')
   :'<tr><td colspan="3"><p class="empty">No hay personal que coincida con la búsqueda.</p></td></tr>';
 }
@@ -687,20 +702,26 @@ function filasPe(){
 /* ---------- Equipos ---------- */
 function tEq(){
   if(!S.todos.length)return vacio('Agrega el primer equipo','Registra código, serie y fecha de compra, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dAgregar()">Agregar equipo</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
-  const cnt=c=>S.equipos.filter(x=>!c||x.cat===c).length,nd=S.todos.length-S.equipos.length;
+  const cnt=c=>S.equipos.filter(x=>!c||x.cat===c).length,nd=S.todos.length-S.equipos.length+S.fant.length,vi=V.vista||'todos';
   const ch=(c,l)=>`<button class="chip" aria-pressed="${V.cat===c}" onclick="V.cat=${js(c)};V.pg=1;render()">${esc(l)} <b>${cnt(c)}</b></button>`;
   return `<div class="bar"><input class="search" placeholder="Buscar por código, serie, persona o ubicación" value="${esc(V.q)}" oninput="V.q=this.value;V.pg=1;filas()">
    <label class="pp">Mostrar<select onchange="V.ps=+this.value;V.pg=1;filas()">${[20,50,0].map(n=>`<option value="${n}"${(V.ps??20)===n?' selected':''}>${n?n+' por página':'Todos'}</option>`).join('')}</select></label></div>
-  <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}${nd?`<button class="chip del-chip" aria-pressed="${!!V.ocultarDel}" onclick="V.ocultarDel=!V.ocultarDel;V.pg=1;render()">${V.ocultarDel?'Eliminados ocultos':'Ocultar eliminados'} <b>${nd}</b></button>`:''}</div>
+  <div class="chips">${ch('','Todos')}${CATEGORIAS.map(c=>ch(c,c)).join('')}</div>
+  ${nd?`<div class="seg vista" role="radiogroup" aria-label="Mostrar equipos">${[['todos','Todos',S.equipos.length+nd],['activos','Activos',S.equipos.length],['elim','Eliminados',nd]].map(([k,l,n])=>`<button role="radio" aria-checked="${vi===k}" class="${k==='elim'?'v-del':''}" onclick="V.vista='${k}';V.pg=1;render()">${l} <b>${n}</b></button>`).join('')}</div>`:''}
   <div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Serie</th><th>Estado</th><th>Responsable</th><th></th></tr></thead><tbody id="filas"></tbody></table></div>
   <div class="pager" id="pager"></div>`;
 }
 function filas(){
   const q=lc(V.q),ps=V.ps??20;
-  const r=S.todos.filter(x=>(!x.del||!V.ocultarDel)&&(!V.cat||x.cat===V.cat)&&(!q||lc([x.cod,x.eq,x.serie,donde(x),P(x.asig)?.ced,x.del?'eliminado '+x.delM:''].join(' ')).includes(q)));
+  const vi=V.vista||'todos';
+  const r=[...S.todos,...S.fant].filter(x=>(vi==='todos'||(vi==='elim'?x.del:!x.del))&&(!V.cat||x.cat===V.cat||(x.ghost&&vi==='elim'))&&(!q||lc([x.cod,x.eq,x.serie,donde(x),P(x.asig)?.ced,x.del?'eliminado '+x.delM+' '+(x.de||''):''].join(' ')).includes(q)))
+    .sort((a,b)=>a.cod.localeCompare(b.cod,undefined,{numeric:true}));
   const pags=ps?Math.max(1,Math.ceil(r.length/ps)):1;V.pg=Math.min(Math.max(1,V.pg||1),pags);
   const vis=ps?r.slice((V.pg-1)*ps,V.pg*ps):r;
   $('filas').innerHTML=vis.length?vis.map(x=>{const p=P(x.asig);
+   if(x.ghost)return `<tr class="eliminado"><td class="code">${esc(x.cod)}</td>
+    <td><span class="free">Datos no disponibles</span><p>Se eliminó con la versión anterior del sistema</p></td><td class="ser">—</td>
+    <td><span class="pill Danada">Eliminado</span></td><td><span class="free">${x.delF?'El '+fCorta(x.delF):''}${x.delM?' · '+esc(x.delM):''}</span>${x.de?`<p>Estaba con ${esc(x.de)}</p>`:''}</td><td></td></tr>`;
    if(x.del)return `<tr class="eliminado"><td class="code">${esc(x.cod)}</td>
     <td>${esc(x.eq)}<p>${esc(x.cat)}${x.fadq?' · Compra '+fCorta(x.fadq):''}</p></td><td class="ser">${esc(x.serie)}</td>
     <td><span class="pill Danada">Eliminado</span></td><td><span class="free">${x.delF?'El '+fCorta(x.delF):''}${x.delM?' · '+esc(x.delM):''}</span></td>
@@ -765,27 +786,34 @@ function tRev(){
   const pend=pendientes().sort((a,b)=>a.prox.localeCompare(b.prox)||a.cod.localeCompare(b.cod));
   const prox=S.equipos.filter(x=>x.prox>t&&x.prox<=lim).sort((a,b)=>a.prox.localeCompare(b.prox));
   const sig=S.equipos.filter(x=>x.prox>lim).sort((a,b)=>a.prox.localeCompare(b.prox)).slice(0,5);
-  const fila=(x,due)=>{const d=dias(x.prox);return `<tr class="${due?'due':''}">
+  const foco=V.revFoco&&E(V.revFoco),enLista=foco&&foco.prox&&foco.prox<=lim;
+  const fila=(x,due,temprano)=>{const d=dias(x.prox);return `<tr id="rvrow-${x.sid}" class="${due?'due':''}${foco&&foco.sid===x.sid?' foco':''}">
    <td class="code">${esc(x.cod)}</td>
    <td>${esc(x.eq)}<p>${esc(x.cat)} · Serie ${esc(x.serie)}</p></td>
    <td>${x.asig?esc(donde(x)):x.ubic?lugar(x.ubic):'<span class="free">Sin asignar</span>'}</td>
    <td>${fCorta(x.fadq)}<p>${anios(x.fadq)}</p></td>
    <td><span class="when${due?'':' soon'}">${due?(d===0?'Cumple año hoy':'Cumplió año el '+fCorta(x.prox)):'Cumple año en '+plural(d,'día','días')}</span>${x.ult?`<p>Última revisión ${fCorta(x.ult)}</p>`:''}</td>
-   <td><div class="rev"><select id="rv-${x.sid}" aria-label="Estado de ${esc(x.cod)}">${opts(CONDICIONES,x.cond)}</select><button class="btn sm primary" onclick="guardarRev(${x.sid})">Guardar</button></div></td></tr>`};
-  const tabla=(rows,due)=>`<div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Responsable</th><th>Compra</th><th>Aniversario</th><th>Estado</th></tr></thead><tbody>${rows.map(x=>fila(x,due)).join('')}</tbody></table></div>`;
+   <td><div class="rev"><select id="rv-${x.sid}" aria-label="Estado de ${esc(x.cod)}">${opts(CONDICIONES,x.cond)}</select><button class="btn sm primary" onclick="guardarRev(${x.sid}${temprano?',1':''})">Guardar</button></div></td></tr>`};
+  const tabla=(rows,due,temprano)=>`<div class="tbl"><table><thead><tr><th>Código</th><th>Equipo</th><th>Responsable</th><th>Compra</th><th>Aniversario</th><th>Estado</th></tr></thead><tbody>${rows.map(x=>fila(x,due,temprano)).join('')}</tbody></table></div>`;
   return `<p class="small muted" style="margin:-6px 0 18px">Cada activo se revisa una vez al año, en el aniversario de su fecha de compra. Al guardar el estado, la siguiente revisión pasa al próximo aniversario.</p>
+  ${foco&&!enLista?`<div class="focobox"><div class="ch-h" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Equipo seleccionado</h2><button class="lnk" onclick="V.revFoco=null;render()">Quitar</button></div>
+   <p class="small muted" style="margin:4px 0 10px">${foco.prox?'Todavía no cumple año. Puedes registrar su estado ya; su revisión anual del '+fCorta(foco.prox)+' se mantiene.':'No tiene fecha de compra, así que no entra en la revisión anual. Igual puedes registrar su estado.'}</p>${tabla([foco],false,true)}</div>`:''}
   <h2>Pendientes de revisión <span class="count">${pend.length}</span></h2>
   ${pend.length?tabla(pend,true):'<p class="empty">No hay activos pendientes. Todo al día.</p>'}
   <h2 style="margin-top:30px">Cumplen año en los próximos ${CONFIG.diasAviso} días <span class="count">${prox.length}</span></h2>
   ${prox.length?tabla(prox,false):'<p class="empty">Ningún activo cumple año en los próximos '+CONFIG.diasAviso+' días.</p>'}
   ${sig.length?`<h2 style="margin-top:30px">Siguientes</h2><div class="tbl"><table><tbody>${sig.map(x=>`<tr><td class="code">${esc(x.cod)}</td><td>${esc(x.eq)}</td><td>${x.asig?esc(donde(x)):lugar(x.ubic||'Sin asignar')}</td><td class="muted">Cumple año el ${fCorta(x.prox)}</td></tr>`).join('')}</tbody></table></div>`:''}`;
 }
-function guardarRev(sid){
-  const x=S.equipos.find(q=>q.sid===sid),est=$('rv-'+sid).value,next=proxSiguiente(x.prox),t=hoy();
+/* Desde Personal: lleva a Revisión con ese equipo resaltado */
+function irRevision(cod){V.tab='rev';V.view='list';V.revFoco=cod;render();
+  const x=E(cod),el=x&&$('rvrow-'+x.sid);if(el){el.scrollIntoView?.({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>$('rv-'+x.sid)?.focus({preventScroll:true}),500)}}
+function guardarRev(sid,temprano){
+  const x=S.equipos.find(q=>q.sid===sid),est=$('rv-'+sid).value,next=temprano?x.prox:proxSiguiente(x.prox),t=hoy();
+  if(V.revFoco===x.cod)V.revFoco=null;
   act(async()=>{
-    await setItem('equipos',sid,{Condicion:est,UltimaRevision:wd(t),ProximaRevision:wd(next)});
+    await setItem('equipos',sid,temprano?{Condicion:est,UltimaRevision:wd(t)}:{Condicion:est,UltimaRevision:wd(t),ProximaRevision:wd(next)});
     await addItem('historial',{Title:x.cod,Fecha:wd(t),De:'',A:'Revisión: '+est,Registro:yo()});
-  },`${x.cod} revisado como ${est}. Próxima revisión: ${fCorta(next)}`);
+  },`${x.cod} revisado como ${est}.${next?' Próxima revisión: '+fCorta(next):''}`);
 }
 
 /* ---------- Ubicaciones ---------- */
