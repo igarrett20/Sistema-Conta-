@@ -345,6 +345,9 @@ tr.foco td:first-child{box-shadow:inset 3px 0 0 var(--brand)}
 tr.flash td{animation:flash 1.6s ease}
 @keyframes flash{0%,40%{background:#CDE8EC}100%{background:#EAF5F7}}
 .focobox{border:1px solid var(--brand);border-radius:12px;padding:14px 16px;margin-bottom:26px;background:#fff}
+.avatar.loc{background:#EEF2F4;color:var(--brand)}
+tr.grp td{background:var(--sunk);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 10px}
+tr.grp .count{vertical-align:0}
 .empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;align-items:start}
 .erow{display:grid;gap:6px;margin-bottom:6px;align-items:center}
 .erow.cu{grid-template-columns:76px 118px 1fr 30px}
@@ -686,17 +689,31 @@ const lugar=n=>`<span class="kind">Ubicación</span> ${esc(n)}`;
 /* ---------- Personal ---------- */
 function tPe(){
   if(!S.personas.length)return vacio('Agrega a tu primer colaborador','Registra nombre y cédula uno por uno, o carga todo de una vez desde Excel.','<button class="btn primary" onclick="dPersona()">Agregar personal</button> <button class="btn" onclick="dImportar()">Importar desde Excel</button>');
-  return `<div class="bar"><input class="search" placeholder="Buscar por nombre, cédula o código de equipo" value="${esc(V.q)}" oninput="V.q=this.value;filasPe()"></div>
+  return `<div class="bar"><input class="search" placeholder="Buscar por nombre, cédula, ubicación o código de equipo" value="${esc(V.q)}" oninput="V.q=this.value;filasPe()"></div>
   <div class="tbl"><table><thead><tr><th>Colaborador</th><th>Equipos a cargo</th><th></th></tr></thead><tbody id="filasPe"></tbody></table></div>`;
 }
+/* Lista de equipos de una persona o ubicación (el "Sin revisar" lleva a Revisión) */
+const listaEq=m=>m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${x.cond==='Sin revisar'?`<button class="pill Sinrev pill-btn" title="Ir a Revisión" onclick="irRevision(${js(x.cod)})">Sin revisar <span aria-hidden="true">→</span></button>`:pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>';
+const ICO_PIN='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 function filasPe(){
   const q=lc(V.q);
   const ps=[...S.personas].sort(porNombre).filter(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return !q||lc([p.nombre,p.ced,...m.map(x=>x.cod+' '+x.eq)].join(' ')).includes(q)});
-  $('filasPe').innerHTML=ps.length?ps.map(p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
+  const filaP=p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
    <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${plural(m.length,'equipo','equipos')}</p></div></div></td>
-   <td>${m.length?m.map(x=>`<div class="eqline"><span class="code">${esc(x.cod)}</span> ${esc(x.eq)} ${x.cond==='Sin revisar'?`<button class="pill Sinrev pill-btn" title="Ir a Revisión" onclick="irRevision(${js(x.cod)})">Sin revisar <span aria-hidden="true">→</span></button>`:pill(x.cond)}</div>`).join(''):'<span class="free">Sin equipos asignados</span>'}</td>
-   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`}).join('')
-  :'<tr><td colspan="3"><p class="empty">No hay personal que coincida con la búsqueda.</p></td></tr>';
+   <td>${listaEq(m)}</td>
+   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`};
+  /* Ubicaciones (y equipos sin asignar), mostradas igual que una persona */
+  const lugares=S.ubic.map(u=>({nombre:u.nombre,o:'u:'+u.nombre,m:S.equipos.filter(x=>!x.asig&&x.ubic===u.nombre)}));
+  const sinA=S.equipos.filter(x=>!x.asig&&!x.ubic);if(sinA.length)lugares.push({nombre:'Sin asignar',o:'n:',m:sinA,sa:true});
+  const us=lugares.filter(l=>!q||lc([l.nombre,'ubicacion',...l.m.map(x=>x.cod+' '+x.eq)].join(' ')).includes(q));
+  const filaU=l=>`<tr class="lugar">
+   <td><div class="who"><span class="avatar loc">${ICO_PIN}</span><div><strong>${esc(l.nombre)}</strong><p>${l.sa?'Sin persona ni ubicación':'Ubicación'} · ${plural(l.m.length,'equipo','equipos')}</p></div></div></td>
+   <td>${listaEq(l.m)}</td>
+   <td><div class="acts">${l.m.length?`<button class="lnk" onclick="dCambio(${js(l.o)})">${l.sa?'Asignar':'Mover equipos'}</button>`:''}</div></td></tr>`;
+  $('filasPe').innerHTML=(ps.length||us.length)?
+    (ps.length?`<tr class="grp"><td colspan="3">Personal <span class="count">${ps.length}</span></td></tr>`+ps.map(filaP).join(''):'')+
+    (us.length?`<tr class="grp"><td colspan="3">Ubicaciones <span class="count">${us.length}</span></td></tr>`+us.map(filaU).join(''):'')
+   :'<tr><td colspan="3"><p class="empty">No hay personal ni ubicaciones que coincidan con la búsqueda.</p></td></tr>';
 }
 
 /* ---------- Equipos ---------- */
