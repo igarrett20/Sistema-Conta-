@@ -406,6 +406,14 @@ tr.danado td{background:#FDF6F6}
 .chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px;cursor:pointer}
 .chk input{width:auto;accent-color:var(--brand)}
 @media (max-width:640px){.adm-nav.horiz button{max-width:none}.tipos{grid-template-columns:1fr}}
+.aud{max-width:620px}
+.aud .dep-sel select{min-width:150px}
+.aud-btns{display:grid;gap:10px}
+.aud-b{appearance:none;display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s}
+.aud-b:hover{border-color:var(--brand);background:var(--brand-soft)}
+.aud-b strong{display:block;font-size:15px}.aud-b small{display:block;font-size:13px;color:var(--muted)}
+.aud-b>span:nth-child(2){flex:1}
+.aud-dl{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700}
 .empgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px;align-items:start}
 .erow{display:grid;gap:6px;margin-bottom:6px;align-items:center}
 .erow.cu{grid-template-columns:76px 118px 1fr 30px}
@@ -593,14 +601,15 @@ async function connect(){
   let spTok=null;const nuevas=new Set();
   if(Object.values(CONFIG.lists).some(n=>!busca(n))){await token(MANAGE);spTok=await spToken()}
   /* Cada módulo (Activos y Boletas) se habilita solo si la persona tiene acceso a todas sus listas */
-  G.mods={act:true,bol:true};
+  G.mods={act:true,bol:true};let sinCrear=false;
   for(const [key,name] of Object.entries(CONFIG.lists)){
-    const mod=modDe(key);if(!G.mods[mod])continue;
+    const mod=modDe(key);
     let f=busca(name);
     if(!f){
+      if(sinCrear||!G.mods[mod]){G.mods[mod]=false;continue}
       paso('Creando la lista '+name+'…');
       try{f=await gx('POST',`/sites/${G.siteId}/lists`,{displayName:name,columns:SCHEMA[key],list:{template:'genericList'}},MANAGE);nuevas.add(key)}
-      catch(e){if(e.status===403||e.status===401){G.mods[mod]=false;continue}throw e}
+      catch(e){if(e.status===403||e.status===401){G.mods[mod]=false;sinCrear=true;continue}throw e}
     }
     G.listIds[key]=f.id;
     if(nuevas.has(key)){
@@ -611,13 +620,16 @@ async function connect(){
       if(key==='bemp')for(const id of EMP_IDS){const b=EMPRESAS[id].base;await addItem('bemp',{Title:id,Nombre:b.nombre,Cedula:b.cedula,Telefono:b.tel,Fax:b.fax,Apartado:b.apartado,Correo:b.correo,Direccion:b.dir,CampoEmpresa:b.campo,Cuentas:JSON.stringify(b.cuentas),Tarjetas:JSON.stringify(b.tarjetas),UltimoNumero:0})}
     }
   }
-  if(!G.mods.act&&!G.mods.bol)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de Activos ni de Boletas.');
+  /* Auditoría: sin acceso completo a Activos, pero con lectura de equipos y categorías → solo reportes de depreciación */
+  G.aud=!G.mods.act&&!!G.listIds.equipos&&!!G.listIds.categorias&&!G.listIds.historial;
+  if(!G.mods.act&&!G.mods.bol&&!G.aud)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de Activos ni de Boletas.');
   if(!G.mods.act)M='bol';if(!G.mods.bol)M='act';
+  if(G.aud&&!G.mods.bol){M='aud'}
   /* Revisión de columnas: solo cuando cambia la estructura (se recuerda en este navegador) y todas a la vez */
   const marca='columnas:'+G.siteId,ver=SCHEMA_VER;let hecho=false;try{hecho=localStorage.getItem(marca)===ver}catch(e){}
   if(!hecho){
     paso('Revisando la estructura de las listas…');
-    await Promise.all(Object.entries(CONFIG.lists).filter(([k])=>G.mods[modDe(k)]&&!nuevas.has(k)&&SCHEMA[k].length).map(async([key,name])=>{
+    await Promise.all(Object.entries(CONFIG.lists).filter(([k])=>G.listIds[k]&&!nuevas.has(k)&&SCHEMA[k].length).map(async([key,name])=>{
       const cols=new Set((await gx('GET',`${LP(key)}/columns?$select=name&$top=200`)).value.map(c=>c.name));
       for(const c of SCHEMA[key].filter(c=>!cols.has(c.name))){
         try{await gx('POST',`${LP(key)}/columns`,c,MANAGE)}
@@ -650,7 +662,7 @@ async function alMenu(id,name,tk){
   aviso();
 }
 async function loadAll(){
-  const [pe,eq,hi,ub,bp,bb,ba,be,ca,pf]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp','categorias','perifericos'].map(k=>G.mods?.[modDe(k)]===false?[]:allItems(k)));
+  const [pe,eq,hi,ub,bp,bb,ba,be,ca,pf]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp','categorias','perifericos'].map(k=>G.listIds[k]?allItems(k):[]));
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
   S.per=pf.map(i=>{const f=i.fields;return{id:+i.id,cod:f.Title||'',tipo:f.Tipo||'',num:+f.Numero||0,fc:rd(f.FechaCompra),asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),marca:f.Marca||'',obs:f.Observaciones||'',dano:rd(f.FechaDano),motivo:f.MotivoDano||''}}).filter(x=>x.tipo&&x.fc);
@@ -670,14 +682,15 @@ async function loadAll(){
   const yaEsta=new Set(S.todos.map(x=>x.cod));S.fant=[];
   S.hist.forEach(h=>{if(h.a.startsWith('Eliminado')&&!yaEsta.has(h.cod)){yaEsta.add(h.cod);S.fant.push({cod:h.cod,eq:'',cat:'',serie:'',del:true,ghost:true,delF:h.f,delM:h.a.replace(/^Eliminado:?\s*/,''),de:h.de||''})}});
   /* Boletas */
-  S.benef=bb.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cuenta:(i.fields.Cuenta||'').trim()})).filter(b=>b.nombre);
+  S.benef=bb.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cuenta:fmtIban(i.fields.Cuenta||'')})).filter(b=>b.nombre);
   S.aut=ba.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(a=>a.nombre);
   S.empData={};be.forEach(i=>{const f=i.fields,k=lc(f.Title);if(!EMPRESAS[k]||S.empData[k])return;
     S.empData[k]={sid:+i.id,nombre:f.Nombre||'',cedula:f.Cedula||'',tel:f.Telefono||'',fax:f.Fax||'',apartado:f.Apartado||'',correo:f.Correo||'',dir:f.Direccion||'',campo:f.CampoEmpresa||'',
-      cuentas:J(f.Cuentas,EMPRESAS[k].base.cuentas),tarjetas:J(f.Tarjetas,[]),ultimo:+f.UltimoNumero||0}});
+      cuentas:J(f.Cuentas,EMPRESAS[k].base.cuentas).map(c=>({...c,iban:fmtIban(c.iban)})),tarjetas:J(f.Tarjetas,[]),ultimo:+f.UltimoNumero||0}});
   S.pagos=bp.map(i=>{const f=i.fields;return{id:+i.id,num:+f.Numero||0,emp:lc(f.Empresa),fsol:rd(f.FechaSolicitud),fpago:rd(f.FechaPago),benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',mov:f.Movimiento||'Transferencia',
     cta:f.CuentaDebito||'',banco:f.Banco||'',mon:MON[f.Moneda]?f.Moneda:'CRC',monto:+f.Monto||0,concepto:f.Concepto||'',hecho:f.HechoPor||'',aut:f.Autoriza||'',snap:J(f.EmpresaDatos,null),
-    lineas:(J(f.Pagos,null)||[{benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',monto:+f.Monto||0,concepto:f.Concepto||''}]).map(l=>({benef:l.benef||'',cuentaB:l.cuentaB||'',monto:+l.monto||0,concepto:l.concepto||''}))}}).filter(b=>EMPRESAS[b.emp]);
+    lineas:(J(f.Pagos,null)||[{benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',monto:+f.Monto||0,concepto:f.Concepto||''}]).map(l=>({benef:l.benef||'',cuentaB:fmtIban(l.cuentaB||''),monto:+l.monto||0,concepto:l.concepto||''}))}}).filter(b=>EMPRESAS[b.emp]);
+  S.pagos.forEach(b=>{if(b.mov!=='Tarjeta de crédito')b.cta=fmtIban(b.cta)});
   S.pagos.forEach(b=>{b.benef=b.lineas[0].benef;b.cuentaB=b.lineas[0].cuentaB});
 }
 /* Guarda en SharePoint, recarga y vuelve a pintar */
@@ -719,7 +732,7 @@ async function boot(){
 
 /* ---------- Vista principal ---------- */
 let M='act';try{if(localStorage.getItem('modulo')==='bol')M='bol'}catch(e){}
-function render(){if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
+function render(){if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
 function renderA(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
   const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
@@ -1516,6 +1529,24 @@ function filasDep(){
   $('dep-p').innerHTML=`<span class="small muted">Mostrando ${a}–${b} de ${r.length}</span>${pags>1?`<div class="pg"><button aria-label="Página anterior" ${pg===1?'disabled':''} onclick="V.dep.pg=${pg-1};filasDep()">‹</button>${nums.map((n,i)=>(i&&n-nums[i-1]>1?'<span class="gap">…</span>':'')+`<button ${n===pg?'aria-current="page"':''} onclick="V.dep.pg=${n};filasDep()">${n}</button>`).join('')}<button aria-label="Página siguiente" ${pg===pags?'disabled':''} onclick="V.dep.pg=${pg+1};filasDep()">›</button></div>`:''}`;
 }
 
+/* ---------- Vista de auditoría: solo mes de cierre y los dos PDF ---------- */
+function renderAud(){
+  const D=V.dep||(V.dep={y:+hoy().slice(0,4),m:+hoy().slice(5,7),cat:'',est:'',q:'',pg:1,ps:20}),fin=finDeMes(D.y,D.m);
+  const anios=[...new Set([+hoy().slice(0,4),...S.todos.map(x=>+String(x.fadq).slice(0,4)).filter(Boolean)])].filter(y=>y>=2014).sort((a,b)=>b-a);
+  $('app').innerHTML=`<div class="head"><h1>Depreciación</h1><span class="pill Sinrev" style="font-size:13px;padding:4px 12px">Acceso de auditoría · solo lectura</span></div>
+  <div class="aud fade"><div class="box">
+   <div class="sec">Mes de cierre</div>
+   <div class="dep-sel"><select aria-label="Mes" onchange="V.dep.m=+this.value;renderAud()">${MESES.map((m,i)=>`<option value="${i+1}"${D.m===i+1?' selected':''}>${m}</option>`).join('')}</select>
+    <select aria-label="Año" onchange="V.dep.y=+this.value;renderAud()">${anios.map(y=>`<option${D.y===y?' selected':''}>${y}</option>`).join('')}</select></div>
+   <p class="small muted" style="margin:8px 0 0">La depreciación se calcula al <strong>${fActa(fin)}</strong>.</p>
+   <div class="sec" style="margin-top:22px">Reportes</div>
+   <div class="aud-btns">
+    <button class="aud-b" onclick="pdfAsiento()"><span class="adm-ic">${ICO_ADM.hi}</span><span><strong>PDF asiento</strong><small>Asiento contable del mes por categoría</small></span><span class="aud-dl" aria-hidden="true">↓</span></button>
+    <button class="aud-b" onclick="pdfDetalle()"><span class="adm-ic">${ICO_ADM.cat}</span><span><strong>PDF detalle</strong><small>Depreciación del mes por categoría y activo</small></span><span class="aud-dl" aria-hidden="true">↓</span></button>
+   </div>
+  </div></div>`;
+}
+
 /* ---------- PDFs de depreciación (logo y nombre de Aura) ---------- */
 function encabezadoDep(doc,titulo,fin,W){
   barraDegradado(doc,'#1C5FA8','#5FD6C0',0,0,W,4);
@@ -1542,7 +1573,7 @@ function pdfAsiento(){
   const tg=porCat.reduce((s,c)=>s+c.gasto,0);y+=2;doc.setDrawColor(28,95,168);doc.setLineWidth(.5);doc.line(L,y,R,y);y+=6;
   doc.setFont('helvetica','bold');doc.setFontSize(10.5);doc.text('Total',x0[1]+3,y);doc.text('¢ '+fmtN(tg),R-3,y,{align:'right'});
   y+=26;doc.setLineWidth(.3);doc.setDrawColor(27,42,51);doc.line(L,y,L+70,y);doc.line(R-70,y,R,y);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(85,99,108);
-  doc.text('Elaborado por: '+yo(),L,y+5);doc.text('Revisado por',R-70,y+5);
+  doc.text((G.aud?'Generado por: ':'Elaborado por: ')+yo(),L,y+5);doc.text('Revisado por',R-70,y+5);
   try{doc.save(`Asiento_depreciacion_${fin.slice(0,7)}.pdf`)}catch(e){toast('No se pudo descargar el PDF.')}
 }
 function pdfDetalle(){
@@ -1641,6 +1672,10 @@ const compact=(n,m)=>{const s=MON[m].s,a=Math.abs(n);return s+(a>=1e6?(n/1e6).to
 const sinEsp=s=>String(s||'').replace(/\s+/g,'').toUpperCase();
 const J=(s,d)=>{try{const v=JSON.parse(s||'');return v??d}catch(e){return d}};
 const IBAN_RE=/^CR ?\d{2}( ?\d){18}$/;
+/* Formato estándar de cuentas: CR 0000 0000 0000 0000 0000 */
+function fmtIban(v){const s=String(v||'').toUpperCase().replace(/[^0-9A-Z]/g,'');if(!/^CR\d{20}$/.test(s))return String(v||'').trim();return 'CR '+s.slice(2).match(/.{1,4}/g).join(' ')}
+function mascaraIban(el){const v=el.value.toUpperCase().replace(/[^0-9A-Z]/g,'');if(/^C?$/.test(v)){el.value=v;return}
+  const d=v.replace(/^CR?/,'').replace(/\D/g,'').slice(0,20);el.value='CR'+(d?' '+d.match(/.{1,4}/g).join(' '):'')}
 function numLetras(x){
   const U=['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE','VEINTE','VEINTIUNO','VEINTIDÓS','VEINTITRÉS','VEINTICUATRO','VEINTICINCO','VEINTISÉIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
   const D=['','','','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
@@ -1658,8 +1693,8 @@ const cuentaTxt=c=>`${c.banco} · ${MON[c.mon].s} ${MON[c.mon].n} · ${c.iban}`;
 const tarjetaTxt=t=>`${t.banco} · ${MON[t.mon].s} ${MON[t.mon].n} · •••• ${t.ult}${t.alias?' ('+t.alias+')':''}`;
 
 /* ---------- Encabezado del módulo ---------- */
-function modSwitch(){if(!G.mods?.act||!G.mods?.bol)return '';return `<div class="modsw" role="group" aria-label="Sistema"><button aria-pressed="${M!=='bol'}" onclick="irMod('act')">Activos</button><button aria-pressed="${M==='bol'}" onclick="irMod('bol')">Boletas</button></div>`}
-function irMod(m){if(G.mods&&!G.mods[m])return;if(m===M&&V.view!=='acta')return;M=m;try{localStorage.setItem('modulo',m)}catch(e){}V.view='list';render();scrollTo(0,0)}
+function modSwitch(){if(!(G.mods?.act||G.aud)||!G.mods?.bol)return '';return `<div class="modsw" role="group" aria-label="Sistema"><button aria-pressed="${M!=='bol'}" onclick="irMod('act')">Activos</button><button aria-pressed="${M==='bol'}" onclick="irMod('bol')">Boletas</button></div>`}
+function irMod(m){if(G.mods&&!G.mods[m]&&!(m==='act'&&G.aud))return;if(m===M&&V.view!=='acta')return;M=m;try{localStorage.setItem('modulo',m)}catch(e){}V.view='list';render();scrollTo(0,0)}
 function renderB(){
   $('app').innerHTML=`<div class="head"><h1>Boletas de pago</h1></div>
   <div class="tabs" role="tablist">${[['nueva','Nueva boleta'],['hist','Historial'],['ben','Beneficiarios'],['aut','Autorizan'],['emp','Empresas']].map(([k,l])=>`<button class="tab" role="tab" aria-selected="${B.tab===k}" onclick="B.tab='${k}';renderB()">${l}</button>`).join('')}</div>
@@ -1911,10 +1946,10 @@ function filasBen(){if(!$('ben-t'))return;const q=lc(B.bq),qs=sinEsp(q);
    <td><div class="acts"><button class="lnk" onclick="dBenef(${b.id})">${b.cuenta?'Editar':'Agregar cuenta'}</button><button class="lnk red" onclick="borrarBen(${b.id})">Eliminar</button></div></td></tr>`}).join(''):'<tr><td colspan="4"><p class="empty">No hay beneficiarios que coincidan.</p></td></tr>'}
 function dBenef(id,nombre,linea){B.linea=linea??null;const b=id?S.benef.find(x=>x.id===id):null;document.querySelectorAll('.combo.open').forEach(c=>c.classList.remove('open'));if(B.tab==='nueva')nbSet();
   abrir(`<header><div><h2>${b?'Editar beneficiario':'Agregar beneficiario'}</h2><p>La base es la misma para Aura y Unicen.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
-  <div class="body"><div class="err" id="err"></div>${fl('Nombre','<input id="bn-n" value="'+esc(b?b.nombre:nombre||'')+'" placeholder="Nombre o razón social">')}${fl('Cuenta (IBAN)','<input id="bn-c" value="'+esc(b?.cuenta||'')+'" placeholder="CR00 0000 0000 0000 0000 00">')}
+  <div class="body"><div class="err" id="err"></div>${fl('Nombre','<input id="bn-n" value="'+esc(b?b.nombre:nombre||'')+'" placeholder="Nombre o razón social">')}${fl('Cuenta (IBAN)','<input id="bn-c" value="'+esc(fmtIban(b?.cuenta||''))+'" placeholder="CR 0000 0000 0000 0000 0000" inputmode="text" autocomplete="off" oninput="mascaraIban(this)">')}
   <p class="small muted">Si se le paga con tarjeta de crédito o no tiene cuenta, puedes dejarla vacía.${b?' Las boletas anteriores conservan el nombre y la cuenta con que se hicieron.':''}</p></div>
   <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gBenef(${id||'null'})">Guardar</button></footer>`);setTimeout(()=>$(b&&!b.cuenta?'bn-c':'bn-n')?.focus(),200)}
-function gBenef(id){const n=$('bn-n').value.trim().replace(/\s+/g,' '),c=$('bn-c').value.trim().toUpperCase().replace(/\s+/g,' ');
+function gBenef(id){const n=$('bn-n').value.trim().replace(/\s+/g,' '),c=fmtIban($('bn-c').value.trim().toUpperCase().replace(/\s+/g,' '));
   if(!n)return $('err').textContent='Escribe el nombre.';
   if(c&&!IBAN_RE.test(c))return $('err').textContent='La cuenta debe ser un IBAN de Costa Rica: CR seguido de 20 dígitos.';
   const dn=S.benef.find(x=>x.id!==id&&lc(x.nombre)===lc(n));if(dn)return $('err').textContent='Ya existe un beneficiario con ese nombre.';
@@ -1940,7 +1975,7 @@ async function leerBen(file){
   if(hi<0)return er.textContent='No encontré la columna "Nombre" en el archivo.';
   const hd=filas[hi].map(c=>lc(c)),cn=hd.findIndex(c=>c==='nombre'||c==='nombbenef'),cc=hd.findIndex(c=>c.startsWith('cuenta')||c.startsWith('cta'));
   const nombres=new Set(S.benef.map(b=>lc(b.nombre))),ctas=new Set(S.benef.map(b=>sinEsp(b.cuenta)).filter(Boolean)),nuevos=[],errores=[];let salt=0;
-  filas.slice(hi+1).forEach((r,i)=>{const n=txt(r[cn]).replace(/\s+/g,' '),c=cc>=0?txt(r[cc]).toUpperCase().replace(/\s+/g,' '):'';if(!n)return;
+  filas.slice(hi+1).forEach((r,i)=>{const n=txt(r[cn]).replace(/\s+/g,' '),c=cc>=0?fmtIban(txt(r[cc]).toUpperCase().replace(/\s+/g,' ')):'';if(!n)return;
     if(c&&!IBAN_RE.test(c)){errores.push(`Fila ${hi+i+2} (${esc(n)}): la cuenta "${esc(c)}" no es un IBAN válido`);return}
     if(nombres.has(lc(n))||(c&&ctas.has(sinEsp(c)))){salt++;return}
     nombres.add(lc(n));if(c)ctas.add(sinEsp(c));nuevos.push({n,c})});
@@ -1984,14 +2019,14 @@ function tEmp(){
    <button class="btn primary wide" style="margin-top:14px" onclick="gEmp('${id}')">Guardar ${E.largo}</button>
   </div>`}).join('')}</div>`}
 const monOpts=v=>Object.entries(MON).map(([k,m])=>`<option value="${k}"${k===v?' selected':''}>${m.s} ${m.n}</option>`).join('');
-const filaCuenta=(id,i,c)=>`<div class="erow cu"><input class="banco" value="${esc(c?.banco||'')}" placeholder="Banco" aria-label="Banco"><select class="mon" aria-label="Moneda">${monOpts(c?.mon||'CRC')}</select><input class="iban" value="${esc(c?.iban||'')}" placeholder="CR00 0000 0000 0000 0000 00" aria-label="Cuenta IBAN"><button class="x" aria-label="Quitar cuenta" onclick="this.parentNode.remove()">×</button></div>`;
+const filaCuenta=(id,i,c)=>`<div class="erow cu"><input class="banco" value="${esc(c?.banco||'')}" placeholder="Banco" aria-label="Banco"><select class="mon" aria-label="Moneda">${monOpts(c?.mon||'CRC')}</select><input class="iban" value="${esc(fmtIban(c?.iban||''))}" placeholder="CR 0000 0000 0000 0000 0000" aria-label="Cuenta IBAN" autocomplete="off" oninput="mascaraIban(this)"><button class="x" aria-label="Quitar cuenta" onclick="this.parentNode.remove()">×</button></div>`;
 const filaTarjeta=(id,i,t)=>`<div class="erow ta"><input class="banco" value="${esc(t?.banco||'')}" placeholder="Banco" aria-label="Banco"><select class="mon" aria-label="Moneda">${monOpts(t?.mon||'USD')}</select><input class="ult" value="${esc(t?.ult||'')}" placeholder="Últimos 4" maxlength="4" inputmode="numeric" aria-label="Últimos 4 dígitos" oninput="this.value=this.value.replace(/\\D/g,'')"><input class="alias" value="${esc(t?.alias||'')}" placeholder="Nombre (opcional)" aria-label="Nombre de la tarjeta"><button class="x" aria-label="Quitar tarjeta" onclick="this.parentNode.remove()">×</button></div>`;
 function addFila(id,t){$(`e-${id}-${t}`).insertAdjacentHTML('beforeend',t==='cu'?filaCuenta(id):filaTarjeta(id));$(`e-${id}-ta0`)?.remove();$(`e-${id}-${t}`).lastElementChild.querySelector('input').focus()}
 function gEmp(id){
   const v=k=>$(`e-${id}-${k}`).value.trim(),er=$(`e-${id}-err`);er.textContent='';
   const d={nombre:v('nombre'),cedula:v('cedula'),tel:v('tel'),fax:v('fax'),apartado:v('apartado'),correo:v('correo'),dir:v('dir'),campo:v('campo')};
   if(!d.nombre||!d.cedula||!d.campo)return er.textContent='Completa al menos el nombre, la cédula jurídica y el texto del campo Empresa.';
-  const cuentas=[...document.querySelectorAll(`#e-${id}-cu .erow`)].map(r=>({banco:r.querySelector('.banco').value.trim().toUpperCase(),mon:r.querySelector('.mon').value,iban:r.querySelector('.iban').value.trim().toUpperCase().replace(/\s+/g,' ')})).filter(c=>c.banco||c.iban);
+  const cuentas=[...document.querySelectorAll(`#e-${id}-cu .erow`)].map(r=>({banco:r.querySelector('.banco').value.trim().toUpperCase(),mon:r.querySelector('.mon').value,iban:fmtIban(r.querySelector('.iban').value.trim().toUpperCase().replace(/\s+/g,' '))})).filter(c=>c.banco||c.iban);
   const tarjetas=[...document.querySelectorAll(`#e-${id}-ta .erow`)].map(r=>({banco:r.querySelector('.banco').value.trim().toUpperCase(),mon:r.querySelector('.mon').value,ult:r.querySelector('.ult').value.trim(),alias:r.querySelector('.alias').value.trim()})).filter(t=>t.banco||t.ult);
   if(!cuentas.length)return er.textContent='Debe quedar al menos una cuenta bancaria.';
   for(const c of cuentas){if(!c.banco)return er.textContent='Falta el banco en una de las cuentas.';if(!IBAN_RE.test(c.iban))return er.textContent=`La cuenta "${c.iban}" no es un IBAN de Costa Rica válido.`}
