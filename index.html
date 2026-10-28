@@ -398,8 +398,8 @@ table.dep-t tr.nodata td{background:#FFFBF2}
 .chip-sep{display:inline-block;width:1px;height:22px;background:var(--line-strong);margin:0 4px;align-self:center}
 tr.danado td{background:#FDF6F6}
 .dur{font-size:14px}.dur.viva{color:var(--brand)}
-.tipos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tipo{display:flex;align-items:center;gap:10px;border:1px solid var(--line-strong);border-radius:11px;padding:10px;cursor:pointer}
+.tipos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tipo{display:flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:11px;padding:10px;cursor:pointer}
 .tipo input{width:auto;accent-color:var(--brand)}
 .tipo strong{display:block;font-size:14px}.tipo small{display:block;font-size:12px;color:var(--muted)}
 .tipo:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
@@ -1351,9 +1351,10 @@ function tHi(){
    MOUSE Y TECLADO: registro simple para medir cuánto dura cada uno
    (desde la compra hasta que se reporta dañado). No entra en actas, revisión ni depreciación.
    ===================================================================== */
-const TIPOS_PER=['Mouse','Teclado'];
+const TIPOS_PER=['Mouse','Teclado','Adaptador'];
 const ICO_PER={
   Mouse:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>',
+  Adaptador:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v5M15 2v5"/><path d="M6 7h12v4a6 6 0 0 1-12 0V7z"/><path d="M12 17v5"/></svg>',
   Teclado:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
   gen:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'};
 /* Duración legible entre dos fechas (aaaa-mm-dd) */
@@ -1367,10 +1368,10 @@ const mesesEntre=(a,b)=>(new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5/
 const perDonde=x=>x.asig?P(x.asig)?.nombre||'':x.ubic||'';
 const sigPer=t=>S.per.filter(x=>x.tipo===t).reduce((m,x)=>Math.max(m,x.num),0)+1;
 
-/* Pestaña Equipos con dos secciones: Equipo general y Mouse y teclado */
+/* Pestaña Equipos con dos secciones: Equipo general y Mouse, teclado y adaptadores */
 function tEqTab(){
   const sub=V.eqsub||'gen',enUso=S.per.filter(x=>!x.dano).length;
-  const it=[['gen','Equipo general','Inventario con código AI',S.equipos.length],['per','Mouse y teclado','Cuánto dura cada uno',enUso]];
+  const it=[['gen','Equipo general','Inventario con código AI',S.equipos.length],['per','Mouse, teclado y adaptadores','Cuánto dura cada uno',enUso]];
   return `<nav class="adm-nav horiz" aria-label="Tipo de equipo">${it.map(([k,l,d,n])=>`<button aria-current="${sub===k?'page':'false'}" onclick="V.eqsub='${k}';V.q='';render()"><span class="adm-ic">${k==='gen'?ICO_PER.gen:ICO_PER.Mouse}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span><span class="adm-n">${n}</span></button>`).join('')}</nav>
   <div class="fade">${sub==='per'?tPer():tEq()}</div>`;
 }
@@ -1379,7 +1380,7 @@ function tPer(){
   const prom=t=>{const l=S.per.filter(x=>x.tipo===t&&x.dano);return l.length?{n:l.length,m:l.reduce((s,x)=>s+mesesEntre(x.fc,x.dano),0)/l.length}:null};
   const kp=t=>{const p=prom(t),u=S.per.filter(x=>x.tipo===t&&!x.dano).length;return `<div class="kpi"><span class="kpi-t">${ICO_PER[t]} ${t}</span><strong>${p?(p.m<1?Math.round(p.m*30.4)+' días':p.m.toFixed(1)+' meses'):'—'}</strong><small class="muted">${p?'duración promedio · '+plural(p.n,'dañado','dañados'):'sin daños reportados'} · ${u} en uso</small></div>`};
   return `<div class="kpis">${TIPOS_PER.map(kp).join('')}<div class="kpi main"><span>En uso</span><strong>${S.per.filter(x=>!x.dano).length}</strong><small class="muted">de ${S.per.length} registrados</small></div></div>
-  <div class="bar"><input class="search" placeholder="Buscar por código, persona o marca" value="${esc(V.q)}" oninput="V.q=this.value;filasPer()"><button class="btn primary" onclick="dPer()">Agregar mouse o teclado</button></div>
+  <div class="bar"><input class="search" placeholder="Buscar por código, persona o marca" value="${esc(V.q)}" oninput="V.q=this.value;filasPer()"><button class="btn primary" onclick="dPer()">Agregar mouse, teclado o adaptador</button></div>
   <div class="chips">${[['','Todos'],...TIPOS_PER.map(t=>[t,t])].map(([v,l])=>`<button class="chip" aria-pressed="${F.tipo===v}" onclick="V.pf.tipo='${v}';render()">${l} <b>${S.per.filter(x=>!v||x.tipo===v).length}</b></button>`).join('')}
    <span class="chip-sep"></span>${[['','Todos'],['uso','En uso'],['dano','Dañados']].map(([v,l])=>`<button class="chip" aria-pressed="${F.est===v}" onclick="V.pf.est='${v}';render()">${l}</button>`).join('')}</div>
   <div class="tbl"><table><thead><tr><th>Código</th><th>Asignado a</th><th>Compra</th><th>Estado</th><th>Duración</th><th></th></tr></thead><tbody id="per-f"></tbody></table></div>`;
@@ -1395,14 +1396,14 @@ function filasPer(){
    <td>${x.dano?`<span class="pill Danada">Dañado</span><p>El ${fCorta(x.dano)}${x.motivo?' · '+esc(x.motivo):''}</p>`:'<span class="pill Nueva">En uso</span>'}</td>
    <td><strong class="dur${x.dano?'':' viva'}">${duracion(x.fc,x.dano||t)}</strong><p>${x.dano?'duró':'lleva'}</p></td>
    <td><div class="acts">${x.dano?'':`<button class="lnk red" onclick="dDano(${x.id})">Reportar daño</button>`}<button class="lnk" onclick="dPer(${x.id})">Editar</button><button class="lnk red" onclick="borrarPer(${x.id})">Eliminar</button></div></td></tr>`).join('')
-   :`<tr><td colspan="6"><p class="empty">${S.per.length?'No hay registros con estos filtros.':'Todavía no hay mouse ni teclados registrados. Agrega el primero con el botón de arriba.'}</p></td></tr>`;
+   :`<tr><td colspan="6"><p class="empty">${S.per.length?'No hay registros con estos filtros.':'Todavía no hay mouse, teclados ni adaptadores registrados. Agrega el primero con el botón de arriba.'}</p></td></tr>`;
 }
 /* Agregar (puede ser mouse y teclado a la vez) o editar */
 function dPer(id,base){
   const x=id?S.per.find(p=>p.id===id):null,b=base||{};
-  abrir(`<header><div><h2>${x?'Editar '+esc(x.cod):'Agregar mouse o teclado'}</h2><p>${x?'Corrige los datos del registro.':'Si se compraron los dos, márcalos y se crean juntos.'}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  abrir(`<header><div><h2>${x?'Editar '+esc(x.cod):'Agregar mouse, teclado o adaptador'}</h2><p>${x?'Corrige los datos del registro.':'Marca todo lo que se compró y se crean juntos.'}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
-   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${!b.tipo||b.tipo===t?' checked':''}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t} ${sigPer(t)}</strong><small>siguiente número</small></span></label>`).join('')}</div></div>`}
+   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${b.tipo?(b.tipo===t?' checked':''):(t!=='Adaptador'?' checked':'')}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t} ${sigPer(t)}</strong><small>siguiente</small></span></label>`).join('')}</div></div>`}
    <div class="two">${fl('Fecha de compra',dateField('pr-f',x?x.fc:hoy()))}${fl('Asignado a',`<select id="pr-d"><option value="">Sin asignar</option>${selResp(x?(x.asig?'p:'+x.asig:x.ubic?'u:'+x.ubic:''):b.dest||'')}</select>`)}</div>
    ${fl('Marca o modelo (opcional)',`<input id="pr-m" value="${esc(x?.marca||'')}" placeholder="Logitech M170">`)}
    ${fl('Observaciones (opcional)',`<input id="pr-o" value="${esc(x?.obs||'')}">`)}
@@ -1416,7 +1417,7 @@ function gPer(id){
   const dest={ResponsableId:d.startsWith('p:')?+d.slice(2):0,Ubicacion:d.startsWith('u:')?d.slice(2):''};
   if(x){let dano=x.dano;if($('pr-dn')){const raw=$('pr-dn').value.trim();dano=raw?fv('pr-dn'):'';if(raw&&!dano)return er.textContent='Escribe una fecha de daño válida (dd/mm/aaaa).';if(dano&&dano<fc)return er.textContent='La fecha del daño no puede ser antes de la compra.'}
     cerrar();return act(()=>setItem('perifericos',id,{FechaCompra:wd(fc),...dest,Marca:m,Observaciones:o,FechaDano:dano?wd(dano):null,MotivoDano:dano?($('pr-mo')?.value.trim()??x.motivo):''}),x.cod+' actualizado')}
-  const tipos=[...document.querySelectorAll('.pt:checked')].map(i=>i.value);if(!tipos.length)return er.textContent='Marca mouse, teclado o los dos.';
+  const tipos=[...document.querySelectorAll('.pt:checked')].map(i=>i.value);if(!tipos.length)return er.textContent='Marca al menos uno: mouse, teclado o adaptador.';
   cerrar();
   act(async()=>{const hechos=[];for(const t of tipos){const n=sigPer(t);await addItem('perifericos',{Title:t+' '+n,Tipo:t,Numero:n,FechaCompra:wd(fc),...dest,Marca:m,Observaciones:o});hechos.push(t+' '+n);S.per.push({tipo:t,num:n})}return hechos},
     h=>h.join(' y ')+(h.length>1?' agregados':' agregado'),()=>{V.tab='eq';V.eqsub='per';render()});
