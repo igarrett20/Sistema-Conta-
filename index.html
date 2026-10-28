@@ -1366,11 +1366,14 @@ function duracion(a,b){
 }
 const mesesEntre=(a,b)=>(new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5/30.4375;
 const perDonde=x=>x.asig?P(x.asig)?.nombre||'':x.ubic||'';
+/* Estado: dañado, en uso (con persona o en una ubicación de uso) o por asignar (sin persona, o guardado en Bodega / Por Asignar) */
+const POR_ASIGNAR_UBIC=['bodega','por asignar'];
+const estPer=x=>x.dano?'dano':(!x.asig&&(!x.ubic||POR_ASIGNAR_UBIC.includes(sinAc(x.ubic))))?'pend':'uso';
 const sigPer=t=>S.per.filter(x=>x.tipo===t).reduce((m,x)=>Math.max(m,x.num),0)+1;
 
 /* Pestaña Equipos con dos secciones: Equipo general y Mouse, teclado y adaptadores */
 function tEqTab(){
-  const sub=V.eqsub||'gen',enUso=S.per.filter(x=>!x.dano).length;
+  const sub=V.eqsub||'gen',enUso=S.per.filter(x=>estPer(x)==='uso').length;
   const it=[['gen','Equipo general','Inventario con código AI',S.equipos.length],['per','Mouse, teclado y adaptadores','Cuánto dura cada uno',enUso]];
   return `<nav class="adm-nav horiz" aria-label="Tipo de equipo">${it.map(([k,l,d,n])=>`<button aria-current="${sub===k?'page':'false'}" onclick="V.eqsub='${k}';V.q='';render()"><span class="adm-ic">${k==='gen'?ICO_PER.gen:ICO_PER.Mouse}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span><span class="adm-n">${n}</span></button>`).join('')}</nav>
   <div class="fade">${sub==='per'?tPer():tEq()}</div>`;
@@ -1378,22 +1381,22 @@ function tEqTab(){
 function tPer(){
   const F=V.pf||(V.pf={tipo:'',est:''});
   const prom=t=>{const l=S.per.filter(x=>x.tipo===t&&x.dano);return l.length?{n:l.length,m:l.reduce((s,x)=>s+mesesEntre(x.fc,x.dano),0)/l.length}:null};
-  const kp=t=>{const p=prom(t),u=S.per.filter(x=>x.tipo===t&&!x.dano).length;return `<div class="kpi"><span class="kpi-t">${ICO_PER[t]} ${t}</span><strong>${p?(p.m<1?Math.round(p.m*30.4)+' días':p.m.toFixed(1)+' meses'):'—'}</strong><small class="muted">${p?'duración promedio · '+plural(p.n,'dañado','dañados'):'sin daños reportados'} · ${u} en uso</small></div>`};
-  return `<div class="kpis">${TIPOS_PER.map(kp).join('')}<div class="kpi main"><span>En uso</span><strong>${S.per.filter(x=>!x.dano).length}</strong><small class="muted">de ${S.per.length} registrados</small></div></div>
+  const kp=t=>{const p=prom(t),u=S.per.filter(x=>x.tipo===t&&estPer(x)==='uso').length,pa=S.per.filter(x=>x.tipo===t&&estPer(x)==='pend').length;return `<div class="kpi"><span class="kpi-t">${ICO_PER[t]} ${t}</span><strong>${p?(p.m<1?Math.round(p.m*30.4)+' días':p.m.toFixed(1)+' meses'):'—'}</strong><small class="muted">${p?'duración promedio · '+plural(p.n,'dañado','dañados'):'sin daños reportados'} · ${u} en uso${pa?' · '+pa+' por asignar':''}</small></div>`};
+  return `<div class="kpis">${TIPOS_PER.map(kp).join('')}<div class="kpi main"><span>En uso</span><strong>${S.per.filter(x=>estPer(x)==='uso').length}</strong><small class="muted">${S.per.filter(x=>estPer(x)==='pend').length} por asignar · ${S.per.length} registrados</small></div></div>
   <div class="bar"><input class="search" placeholder="Buscar por código, persona o marca" value="${esc(V.q)}" oninput="V.q=this.value;filasPer()"><button class="btn primary" onclick="dPer()">Agregar mouse, teclado o adaptador</button></div>
   <div class="chips">${[['','Todos'],...TIPOS_PER.map(t=>[t,t])].map(([v,l])=>`<button class="chip" aria-pressed="${F.tipo===v}" onclick="V.pf.tipo='${v}';render()">${l} <b>${S.per.filter(x=>!v||x.tipo===v).length}</b></button>`).join('')}
-   <span class="chip-sep"></span>${[['','Todos'],['uso','En uso'],['dano','Dañados']].map(([v,l])=>`<button class="chip" aria-pressed="${F.est===v}" onclick="V.pf.est='${v}';render()">${l}</button>`).join('')}</div>
+   <span class="chip-sep"></span>${[['','Todos'],['uso','En uso'],['pend','Por asignar'],['dano','Dañados']].map(([v,l])=>`<button class="chip" aria-pressed="${F.est===v}" onclick="V.pf.est='${v}';render()">${l}</button>`).join('')}</div>
   <div class="tbl"><table><thead><tr><th>Código</th><th>Asignado a</th><th>Compra</th><th>Estado</th><th>Duración</th><th></th></tr></thead><tbody id="per-f"></tbody></table></div>`;
 }
 function filasPer(){
   if(!$('per-f'))return;const F=V.pf,q=lc(V.q),t=hoy();
-  const r=S.per.filter(x=>(!F.tipo||x.tipo===F.tipo)&&(!F.est||(F.est==='dano'?!!x.dano:!x.dano))&&(!q||lc([x.cod,perDonde(x),x.marca,x.obs,x.motivo].join(' ')).includes(q)))
+  const r=S.per.filter(x=>(!F.tipo||x.tipo===F.tipo)&&(!F.est||estPer(x)===F.est)&&(!q||lc([x.cod,perDonde(x),x.marca,x.obs,x.motivo].join(' ')).includes(q)))
     .sort((a,b)=>(!!a.dano-!!b.dano)||a.tipo.localeCompare(b.tipo)||b.num-a.num);
   $('per-f').innerHTML=r.length?r.map(x=>`<tr class="${x.dano?'danado':''}">
    <td><div class="who"><span class="avatar loc">${ICO_PER[x.tipo]||''}</span><div><strong>${esc(x.cod)}</strong><p>${esc(x.marca||x.tipo)}</p></div></div></td>
    <td>${x.asig?esc(perDonde(x)):x.ubic?lugar(x.ubic):'<span class="free">Sin asignar</span>'}</td>
    <td style="white-space:nowrap">${fCorta(x.fc)}</td>
-   <td>${x.dano?`<span class="pill Danada">Dañado</span><p>El ${fCorta(x.dano)}${x.motivo?' · '+esc(x.motivo):''}</p>`:'<span class="pill Nueva">En uso</span>'}</td>
+   <td>${x.dano?`<span class="pill Danada">Dañado</span><p>El ${fCorta(x.dano)}${x.motivo?' · '+esc(x.motivo):''}</p>`:(estPer(x)==='pend'?'<span class="pill Usada">Por asignar</span>':'<span class="pill Nueva">En uso</span>')}</td>
    <td><strong class="dur${x.dano?'':' viva'}">${duracion(x.fc,x.dano||t)}</strong><p>${x.dano?'duró':'lleva'}</p></td>
    <td><div class="acts">${x.dano?'':`<button class="lnk red" onclick="dDano(${x.id})">Reportar daño</button>`}<button class="lnk" onclick="dPer(${x.id})">Editar</button><button class="lnk red" onclick="borrarPer(${x.id})">Eliminar</button></div></td></tr>`).join('')
    :`<tr><td colspan="6"><p class="empty">${S.per.length?'No hay registros con estos filtros.':'Todavía no hay mouse, teclados ni adaptadores registrados. Agrega el primero con el botón de arriba.'}</p></td></tr>`;
