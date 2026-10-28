@@ -103,7 +103,7 @@ td p{margin:2px 0 0;font-size:13px;color:var(--muted)}
 .drawer header{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 20px;border-bottom:1px solid var(--line)}
 .drawer header h2{margin:0}
 .drawer header p{margin:2px 0 0;font-size:13px;color:var(--muted)}
-.drawer .body{padding:18px 20px;overflow-y:auto;flex:1}
+.drawer .body{padding:18px 20px;overflow-y:auto;overflow-x:hidden;flex:1}
 .drawer footer{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
 .x{border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:5px}
 .x:hover{color:var(--ink);background:var(--sunk)}
@@ -398,14 +398,14 @@ table.dep-t tr.nodata td{background:#FFFBF2}
 .chip-sep{display:inline-block;width:1px;height:22px;background:var(--line-strong);margin:0 4px;align-self:center}
 tr.danado td{background:#FDF6F6}
 .dur{font-size:14px}.dur.viva{color:var(--brand)}
-.tipos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.tipo{display:flex;align-items:center;gap:8px;border:1px solid var(--line-strong);border-radius:11px;padding:10px;cursor:pointer}
-.tipo input{width:auto;accent-color:var(--brand)}
-.tipo strong{display:block;font-size:14px}.tipo small{display:block;font-size:12px;color:var(--muted)}
+.tipos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tipo{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-width:0;border:1px solid var(--line-strong);border-radius:11px;padding:14px 6px 10px;cursor:pointer;transition:border-color .15s,background .15s}
+.tipo input{position:absolute;top:8px;left:8px;width:auto;margin:0;accent-color:var(--brand)}
+.tipo strong{display:block;font-size:13px;line-height:1.25;overflow-wrap:anywhere}.tipo small{display:block;font-size:11px;color:var(--muted)}
 .tipo:has(input:checked){border-color:var(--brand);background:var(--brand-soft)}
 .chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:10px;cursor:pointer}
 .chk input{width:auto;accent-color:var(--brand)}
-@media (max-width:640px){.adm-nav.horiz button{max-width:none}.tipos{grid-template-columns:1fr}}
+@media (max-width:640px){.adm-nav.horiz button{max-width:none}}
 .aud{max-width:620px}
 .aud .dep-sel select{min-width:150px}
 .aud-btns{display:grid;gap:10px}
@@ -1406,7 +1406,7 @@ function dPer(id,base){
   const x=id?S.per.find(p=>p.id===id):null,b=base||{};
   abrir(`<header><div><h2>${x?'Editar '+esc(x.cod):'Agregar mouse, teclado o adaptador'}</h2><p>${x?'Corrige los datos del registro.':'Marca todo lo que se compró y se crean juntos.'}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
-   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${b.tipo?(b.tipo===t?' checked':''):(t!=='Adaptador'?' checked':'')}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t} ${sigPer(t)}</strong><small>siguiente</small></span></label>`).join('')}</div></div>`}
+   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${b.tipo?(b.tipo===t?' checked':''):(t!=='Adaptador'?' checked':'')}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t}</strong><small>N° ${sigPer(t)}</small></span></label>`).join('')}</div></div>`}
    <div class="two">${fl('Fecha de compra',dateField('pr-f',x?x.fc:hoy()))}${fl('Asignado a',`<select id="pr-d"><option value="">Sin asignar</option>${selResp(x?(x.asig?'p:'+x.asig:x.ubic?'u:'+x.ubic:''):b.dest||'')}</select>`)}</div>
    ${fl('Marca o modelo (opcional)',`<input id="pr-m" value="${esc(x?.marca||'')}" placeholder="Logitech M170">`)}
    ${fl('Observaciones (opcional)',`<input id="pr-o" value="${esc(x?.obs||'')}">`)}
