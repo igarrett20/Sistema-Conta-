@@ -469,6 +469,8 @@ td.tot{font-weight:700;white-space:nowrap}
 .ing-t tfoot td{font-weight:700;background:var(--brand-soft);color:var(--brand);border:0;white-space:nowrap}
 .drawer.wide{width:min(760px,100%)}
 .cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.cfg-full{grid-column:1/-1}
+.cfg-full code{background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:12px}
 .cfg-l{list-style:none;margin:0;padding:0}
 .cfg-l li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .cfg-l li>span:nth-child(2),.cfg-l li>strong{flex:1}
@@ -548,7 +550,7 @@ const SCHEMA={
   ubicaciones:[],
   categorias:[{name:'CuentaGasto',text:{}},{name:'CuentaDepAcum',text:{}}],
   imontos:[{name:'Mes',text:{}},{name:'Monto',number:{}}],
-  iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}}],
+  iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}},{name:'Texto',text:{allowMultipleLines:true,textType:'plain'}}],
   ienvios:[{name:'Periodo',text:{}},{name:'Mes',text:{}},{name:'Destinatarios',text:{allowMultipleLines:true,textType:'plain'}},{name:'EnviadoPor',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Datos',text:{allowMultipleLines:true,textType:'plain'}}],
   perifericos:[{name:'Tipo',text:{}},{name:'Numero',number:{}},{name:'FechaCompra',dateTime:{format:'dateOnly'}},{name:'ResponsableId',number:{}},{name:'Ubicacion',text:{}},{name:'Marca',text:{}},{name:'Observaciones',text:{}},{name:'FechaDano',dateTime:{format:'dateOnly'}},{name:'MotivoDano',text:{}}],
   bpagos:[{name:'Numero',number:{}},{name:'Empresa',text:{}},{name:'FechaSolicitud',dateTime:{format:'dateOnly'}},{name:'FechaPago',dateTime:{format:'dateOnly'}},{name:'Beneficiario',text:{}},{name:'CuentaBeneficiario',text:{}},
@@ -736,9 +738,10 @@ async function loadAll(){
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
   /* Ingresos aseguradoras */
   S.ing.aseg=ic.filter(i=>lc(i.fields.Tipo)==='aseguradora'&&i.fields.Title).map(i=>({id:+i.id,nombre:i.fields.Title.trim(),orden:+i.fields.Orden||0})).sort((a,b)=>a.orden-b.orden||a.nombre.localeCompare(b.nombre));
+  S.ing.textos={};ic.filter(i=>lc(i.fields.Tipo)==='texto').forEach(i=>S.ing.textos[i.fields.Title]={id:+i.id,v:i.fields.Texto||''});
   S.ing.dest=ic.filter(i=>lc(i.fields.Tipo)==='destinatario'&&i.fields.Correo).map(i=>({id:+i.id,n:(i.fields.Title||'').trim(),e:i.fields.Correo.trim().toLowerCase()})).sort((a,b)=>a.n.localeCompare(b.n));
   S.ing.montos={};S.ing.ids={};im.forEach(i=>{const f=i.fields,k=(f.Title||'').trim()+'|'+(f.Mes||'');if(f.Monto==null||f.Monto==='')return;S.ing.montos[k]={id:+i.id,v:+f.Monto};S.ing.ids[k]=+i.id});
-  S.ing.envios=ie.map(i=>{const f=i.fields,dd=J(f.Datos,{});return{f:rd(f.Fecha),per:f.Periodo||'',por:f.EnviadoPor||'',dest:f.Destinatarios||'',orden:dd.orden||[],t:Date.parse(i.createdDateTime)||0}}).sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
+  S.ing.envios=ie.map(i=>{const f=i.fields,dd=J(f.Datos,{});return{f:rd(f.Fecha),per:f.Periodo||'',por:f.EnviadoPor||'',dest:f.Destinatarios||'',orden:dd.orden||[],msg:dd.msg||'',t:Date.parse(i.createdDateTime)||0}}).sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
   S.per=pf.map(i=>{const f=i.fields;return{id:+i.id,cod:f.Title||'',tipo:f.Tipo||'',num:+f.Numero||0,fc:rd(f.FechaCompra),asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),marca:f.Marca||'',obs:f.Observaciones||'',dano:rd(f.FechaDano),motivo:f.MotivoDano||''}}).filter(x=>x.tipo&&x.fc);
   S.cats=ca.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cg:(i.fields.CuentaGasto||'').trim(),cc:(i.fields.CuentaDepAcum||'').trim()})).filter(c=>c.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
@@ -1427,6 +1430,11 @@ function tHi(){
    Listas: IngresosMontos (montos por aseguradora y mes), IngresosConfig (aseguradoras y destinatarios), IngresosEnvios (historial)
    ===================================================================== */
 const ASEGURADORAS_INICIALES=['Adisa','Assa','BMI','INS','Mapfre','Lafise','Palic','Qualitas','MNK'];
+/* Textos del correo y del PDF (editables en Configuración). {periodo} se reemplaza por el período */
+const TEXTOS_ING={titulo:{l:'Título',v:'Últimos 3 meses'},
+  intro:{l:'Texto de introducción',v:'Hola, este es el porcentaje que ha representado cada aseguradora en los ingresos de los últimos 3 meses. Pueden usarlo como referencia al recomendar una aseguradora a un cliente.'},
+  pie:{l:'Nota al final',v:'Porcentajes calculados sobre el total de ingresos de {periodo}.'}};
+const txtIng=(k,f)=>{const t=S.ing.textos?.[k]?.v?.trim()?S.ing.textos[k].v:TEXTOS_ING[k].v;return t.replace(/\{periodo\}/g,periodoIng(f).toLowerCase())};
 const IV={tab:'ing',fin:null};
 function finIni(){const d=new Date();return d.getMonth()===0?{y:d.getFullYear()-1,m:12}:{y:d.getFullYear(),m:d.getMonth()}}
 const mesesDe=f=>[2,1,0].map(k=>{const d=new Date(f.y,f.m-1-k,1);return{k:d.getFullYear()+'-'+pad(d.getMonth()+1),n:MESES[d.getMonth()],c:MESES[d.getMonth()].slice(0,3),y:d.getFullYear()}});
@@ -1462,13 +1470,13 @@ function tIng(){
 }
 function resumenIng(){
   if(!$('ing-res'))return;const d=datosIng(IV.fin),q=(at,a)=>document.querySelector(`[${at}="${CSS.escape(a)}"]`);
-  d.filas.forEach(f=>{q('data-t',f.a).textContent=fmtN(f.t);q('data-p',f.a).textContent=f.pct.toFixed(1)+'%';q('data-pb',f.a).style.width=f.pct+'%'});
+  d.filas.forEach(f=>{q('data-t',f.a).textContent=fmtN(f.t);q('data-p',f.a).textContent=f.pct.toFixed(2)+'%';q('data-pb',f.a).style.width=f.pct+'%'});
   d.porMes.forEach((v,i)=>document.querySelector(`[data-mt="${i}"]`).textContent=fmtN(v));$('gt').textContent='₡ '+fmtN(d.tot);
   const top=d.orden[0];
   $('ing-res').innerHTML=`<div class="kpis">
    <div class="kpi main"><span>Total del período</span><strong>₡ ${fmtN(d.tot)}</strong><small class="muted">${periodoIng(IV.fin)}</small></div>
    <div class="kpi"><span>Promedio mensual</span><strong>₡ ${fmtN(d.prom)}</strong><small class="muted">de las ${S.ing.aseg.length} aseguradoras</small></div>
-   <div class="kpi"><span>Aseguradora principal</span><strong>${top&&top.t?esc(top.a):'—'}</strong><small class="muted">${top&&top.t?top.pct.toFixed(1)+'% del total':''}</small></div>
+   <div class="kpi"><span>Aseguradora principal</span><strong>${top&&top.t?esc(top.a):'—'}</strong><small class="muted">${top&&top.t?top.pct.toFixed(2)+'% del total':''}</small></div>
    <div class="kpi${d.faltan?' warn':''}"><span>${d.faltan?'Montos pendientes':'Estado'}</span><strong>${d.faltan?d.faltan:'Completo'}</strong><small class="muted">${d.faltan?(d.faltan===1?'casilla vacía':'casillas vacías'):'listo para enviar'}</small></div></div>`;
 }
 /* Guarda cada monto en SharePoint un momento después de escribir (sin recargar la tabla) */
@@ -1492,7 +1500,7 @@ function estadoIng(t){const el=$('ing-st');if(el){el.textContent=t;el.className=
 function sigCeldaIng(el){const all=[...document.querySelectorAll('.mi input')],i=all.indexOf(el),next=all[i+3]||all[(i%3)+1];next?.focus();next?.select()}
 
 /* ---------- Correo (tablas y estilos en línea para Outlook) · solo aseguradora y % ---------- */
-function correoIngHTML(d,f,logo){
+function correoIngHTML(d,f,logo,msg){
   const C='#0D6174',T='#1B2A33',M='#66737C',LN='#E2E7EA',F="font-family:'Segoe UI',Arial,Helvetica,sans-serif;";
   const top=d.orden[0]&&d.orden[0].t?d.orden[0]:null;
   return `<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(asuntoIng(f))}</title></head>
@@ -1503,13 +1511,14 @@ function correoIngHTML(d,f,logo){
  <tr><td style="padding:26px 32px 8px"><img src="${logo}" alt="Grupo Garrett" width="170" style="display:block;width:170px;height:auto;border:0"></td></tr>
  <tr><td style="${F}padding:14px 32px 0">
   <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:${C}">Participación por aseguradora</p>
-  <h1 style="margin:6px 0 2px;font-size:24px;line-height:1.25;color:${T}">Últimos 3 meses</h1>
+  <h1 style="margin:6px 0 2px;font-size:24px;line-height:1.25;color:${T}">${esc(txtIng('titulo',f))}</h1>
   <p style="margin:0;font-size:15px;font-weight:600;color:${M}">${periodoIng(f)}</p>
-  <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:${T}">Hola, este es el porcentaje que ha representado cada aseguradora en los ingresos de los últimos 3 meses. Pueden usarlo como referencia al recomendar una aseguradora a un cliente.</p></td></tr>
+  <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:${T}">${esc(txtIng('intro',f)).replace(/\n/g,'<br>')}</p></td></tr>
+ ${msg&&msg.trim()?`<tr><td style="padding:16px 32px 0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="${F}padding:14px 18px;background:#FFFFFF;border:1px solid ${LN};border-left:4px solid ${C};border-radius:8px;font-size:14px;line-height:1.6;color:${T}">${esc(msg.trim()).replace(/\n/g,'<br>')}</td></tr></table></td></tr>`:''}
  ${top?`<tr><td style="padding:20px 32px 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
   <td style="${F}padding:16px 18px;background:#E4F0F2;border-radius:12px">
    <p style="margin:0;font-size:12px;color:${M}">Aseguradora con mayor participación</p>
-   <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:${C}">${esc(top.a)} <span style="font-size:15px;color:${T}">· ${top.pct.toFixed(1)}%</span></p></td></tr></table></td></tr>`:''}
+   <p style="margin:4px 0 0;font-size:20px;font-weight:700;color:${C}">${esc(top.a)} <span style="font-size:15px;color:${T}">· ${top.pct.toFixed(2)}%</span></p></td></tr></table></td></tr>`:''}
  <tr><td style="padding:18px 32px 6px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
   <tr>${['#','Aseguradora','Participación',''].map((h,i)=>`<td style="${F}padding:9px 10px;background:#F6F8F9;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${M};border-bottom:2px solid ${LN};${i===3?'text-align:right':''}">${h}</td>`).join('')}</tr>
   ${d.orden.map((r,i)=>`<tr>
@@ -1518,9 +1527,9 @@ function correoIngHTML(d,f,logo){
    <td style="padding:12px 10px;border-bottom:1px solid ${LN}"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
      <td width="${Math.max(1,Math.round(r.pct))}%" style="background:${i===0?C:'#3FA3A8'};height:10px;border-radius:5px;font-size:0;line-height:0">&nbsp;</td>
      <td style="background:#EEF2F4;height:10px;font-size:0;line-height:0">&nbsp;</td></tr></table></td>
-   <td width="64" style="${F}padding:12px 10px;border-bottom:1px solid ${LN};font-size:15px;font-weight:700;color:${i===0?C:T};text-align:right;white-space:nowrap">${r.pct.toFixed(1)}%</td></tr>`).join('')}
+   <td width="64" style="${F}padding:12px 10px;border-bottom:1px solid ${LN};font-size:15px;font-weight:700;color:${i===0?C:T};text-align:right;white-space:nowrap">${r.pct.toFixed(2)}%</td></tr>`).join('')}
  </table></td></tr>
- <tr><td style="${F}padding:12px 32px 24px;font-size:12px;line-height:1.5;color:${M}">Porcentajes calculados sobre el total de ingresos de ${periodoIng(f).toLowerCase()}. El reporte también va adjunto en PDF.</td></tr>
+ <tr><td style="${F}padding:12px 32px 24px;font-size:12px;line-height:1.5;color:${M}">${esc(txtIng('pie',f)).replace(/\n/g,'<br>')} El reporte también va adjunto en PDF.</td></tr>
  <tr><td style="${F}padding:16px 32px;background:#F6F8F9;border-top:1px solid ${LN};font-size:12px;color:${M}">Enviado por <strong style="color:${T}">${esc(yo())}</strong> desde el sistema de Contaduría · ${new Date().toLocaleDateString('es-CR',{day:'numeric',month:'long',year:'numeric'})}</td></tr>
 </table></td></tr></table></body></html>`;
 }
@@ -1530,10 +1539,12 @@ function verCorreoIng(enviarYa){
   <div class="body" style="padding:0;background:#F2F5F6">
    ${!dest.length?`<div class="warn-s" style="margin:12px 16px 0">No hay destinatarios. Agrégalos en <button class="lnk" onclick="cerrar();IV.tab='cfg';renderIng()">Configuración</button>.</div>`:''}
    ${!d.tot?`<div class="warn-s" style="margin:12px 16px 0">No hay montos en este período.</div>`:d.faltan?`<div class="warn-s" style="margin:12px 16px 0">Faltan ${d.faltan} ${d.faltan===1?'monto':'montos'}. Los porcentajes se calculan solo con los montos que sí están.</div>`:''}
+   <div style="padding:14px 16px 0"><label class="f" style="margin:0"><span>Mensaje para comercial <span class="muted" style="font-weight:400">(opcional)</span></span><textarea id="ing-msg" rows="3" placeholder="Ej.: Este mes INS sube por la renovación de pólizas colectivas." oninput="IV.msg=this.value;clearTimeout(IV._t);IV._t=setTimeout(prevCorreoIng,250)">${esc(IV.msg||'')}</textarea></label><p class="small muted" style="margin:4px 0 0">Aparece en el correo debajo del saludo, resaltado. No va en el PDF.</p></div>
    <iframe id="mailf" title="Vista previa del correo" style="width:100%;height:100%;min-height:760px;border:0;display:block"></iframe></div>
   <footer><span class="small muted" style="margin-right:auto">📎 ${esc(nombrePdfIng(IV.fin))}</span><button class="btn" onclick="cerrar()">Cerrar</button><button class="btn primary" id="ing-send" onclick="enviarIng()" ${!dest.length||!d.tot?'disabled':''}>Enviar a ${plural(dest.length,'persona','personas')}</button></footer>`);
-  $('drawer').classList.add('wide');$('mailf').srcdoc=correoIngHTML(d,IV.fin,GG_LOGO);
+  $('drawer').classList.add('wide');prevCorreoIng();
 }
+function prevCorreoIng(){const f=$('mailf');if(f)f.srcdoc=correoIngHTML(datosIng(IV.fin),IV.fin,GG_LOGO,IV.msg)}
 const nombrePdfIng=f=>`Participacion_aseguradoras_${mesesDe(f)[2].k}.pdf`;
 async function enviarIng(){
   const f={...IV.fin},d=datosIng(f),dest=S.ing.dest,b=$('ing-send');if(!dest.length||!d.tot||busy)return;
@@ -1541,13 +1552,14 @@ async function enviarIng(){
   try{
     if(!window.jspdf)throw new Error('No se pudo cargar el generador de PDF.');
     const pdf=docPdfIng(d,f).output('datauristring').split(',')[1],logo=GG_LOGO.split(',')[1];
-    await gx('POST','/me/sendMail',{message:{subject:asuntoIng(f),body:{contentType:'HTML',content:correoIngHTML(d,f,'cid:logo-gg')},
+    await gx('POST','/me/sendMail',{message:{subject:asuntoIng(f),body:{contentType:'HTML',content:correoIngHTML(d,f,'cid:logo-gg',IV.msg)},
       toRecipients:dest.map(x=>({emailAddress:{address:x.e,name:x.n}})),
       attachments:[{'@odata.type':'#microsoft.graph.fileAttachment',name:'grupo-garrett.png',contentType:'image/png',contentBytes:logo,isInline:true,contentId:'logo-gg'},
                    {'@odata.type':'#microsoft.graph.fileAttachment',name:nombrePdfIng(f),contentType:'application/pdf',contentBytes:pdf}]},saveToSentItems:true},['Mail.Send']);
     cerrar();
     await act(()=>addItem('ienvios',{Title:asuntoIng(f),Periodo:periodoIng(f),Mes:mesesDe(f)[2].k,Destinatarios:dest.map(x=>`${x.n} <${x.e}>`).join('; '),EnviadoPor:yo(),Fecha:wd(hoy()),
-      Datos:JSON.stringify({orden:d.orden.map(r=>({a:r.a,pct:Math.round(r.pct*10)/10})),faltan:d.faltan})}),`Correo enviado a ${plural(dest.length,'persona','personas')}`);
+      Datos:JSON.stringify({orden:d.orden.map(r=>({a:r.a,pct:Math.round(r.pct*100)/100})),faltan:d.faltan,msg:(IV.msg||'').trim()})}),`Correo enviado a ${plural(dest.length,'persona','personas')}`);
+    IV.msg='';
   }catch(e){console.error(e);if(e.message==='redirect')return;b.disabled=false;b.textContent='Reintentar';
     toast(e.status===403?'Tu cuenta no tiene permiso para enviar correos desde la página (Mail.Send).':'No se pudo enviar el correo: '+(e.message||e))}
 }
@@ -1557,11 +1569,12 @@ function docPdfIng(d,f){
   const doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),W=215.9,L=18,R=W-18;
   barraDegradado(doc,'#0D6174','#3FA3A8',0,0,W,4);doc.addImage(GG_LOGO,'PNG',L,12,48,8.7);
   doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(13,97,116);doc.text('PARTICIPACIÓN POR ASEGURADORA',L,32);
-  doc.setFontSize(20);doc.setTextColor(27,42,51);doc.text('Últimos 3 meses',L,41);
+  doc.setFontSize(20);doc.setTextColor(27,42,51);doc.text(txtIng('titulo',f),L,41);
   doc.setFontSize(11);doc.setTextColor(102,115,124);doc.text(periodoIng(f),L,47.5);
-  const top=d.orden[0]&&d.orden[0].t?d.orden[0]:null;let y=56;
+  doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(27,42,51);const il=doc.splitTextToSize(txtIng('intro',f),R-L);doc.text(il,L,55);
+  const top=d.orden[0]&&d.orden[0].t?d.orden[0]:null;let y=55+il.length*4.6+4;
   if(top){doc.setFillColor(228,240,242);doc.roundedRect(L,y,R-L,17,3,3,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(102,115,124);doc.text('Aseguradora con mayor participación',L+5,y+6.5);
-    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(13,97,116);doc.text(`${top.a}  ·  ${top.pct.toFixed(1)}%`,L+5,y+13.5);y+=25}
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(13,97,116);doc.text(`${top.a}  ·  ${top.pct.toFixed(2)}%`,L+5,y+13.5);y+=25}
   doc.setFillColor(246,248,249);doc.rect(L,y,R-L,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(102,115,124);
   doc.text('#',L+3,y+5.3);doc.text('ASEGURADORA',L+12,y+5.3);doc.text('PARTICIPACIÓN',L+62,y+5.3);doc.text('%',R-3,y+5.3,{align:'right'});y+=8;
   const bw=R-L-62-26;
@@ -1570,10 +1583,10 @@ function docPdfIng(d,f){
     doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(27,42,51);doc.text(r.a,L+12,y+6.5);
     doc.setFillColor(238,242,244);doc.roundedRect(L+62,y+3.6,bw,3.6,1.8,1.8,'F');
     if(r.pct>0){doc.setFillColor(...(i===0?[13,97,116]:[63,163,168]));doc.roundedRect(L+62,y+3.6,Math.max(3.6,bw*r.pct/100),3.6,1.8,1.8,'F')}
-    doc.setTextColor(...(i===0?[13,97,116]:[27,42,51]));doc.text(r.pct.toFixed(1)+'%',R-3,y+6.5,{align:'right'});
+    doc.setTextColor(...(i===0?[13,97,116]:[27,42,51]));doc.text(r.pct.toFixed(2)+'%',R-3,y+6.5,{align:'right'});
     doc.setDrawColor(226,231,234);doc.setLineWidth(.2);doc.line(L,y+10,R,y+10);y+=10});
   y+=8;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(102,115,124);
-  doc.text(`Porcentajes calculados sobre el total de ingresos de ${periodoIng(f).toLowerCase()}.`,L,y);doc.text('Generado el '+aDMY(hoy())+' por '+yo()+' · Contaduría',L,y+5);
+  const pl=doc.splitTextToSize(txtIng('pie',f),R-L);doc.text(pl,L,y);doc.text('Generado el '+aDMY(hoy())+' por '+yo()+' · Contaduría',L,y+pl.length*4+1.5);
   return doc;
 }
 function pdfIng(){if(!window.jspdf)return toast('No se pudo cargar el generador de PDF.');const d=datosIng(IV.fin);if(!d.tot)return toast('No hay montos en este período.');
@@ -1581,24 +1594,47 @@ function pdfIng(){if(!window.jspdf)return toast('No se pudo cargar el generador 
 
 /* ---------- Envíos ---------- */
 function tEnvIng(){return S.ing.envios.length?`<div class="tbl"><table><thead><tr><th>Fecha</th><th>Período</th><th>Enviado por</th><th>Destinatarios</th><th>Principal</th></tr></thead><tbody>
-  ${S.ing.envios.map(e=>`<tr><td style="white-space:nowrap">${fCorta(e.f)}</td><td><strong>${esc(e.per)}</strong></td><td>${esc(e.por)}</td><td><span title="${esc(e.dest)}">${plural(e.dest.split(';').filter(Boolean).length,'persona','personas')}</span></td><td>${e.orden?.[0]?esc(e.orden[0].a)+' · '+e.orden[0].pct+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
+  ${S.ing.envios.map(e=>`<tr><td style="white-space:nowrap">${fCorta(e.f)}</td><td><strong>${esc(e.per)}</strong>${e.msg?`<p>“${esc(e.msg.length>90?e.msg.slice(0,90)+'…':e.msg)}”</p>`:''}</td><td>${esc(e.por)}</td><td><span title="${esc(e.dest)}">${plural(e.dest.split(';').filter(Boolean).length,'persona','personas')}</span></td><td>${e.orden?.[0]?esc(e.orden[0].a)+' · '+e.orden[0].pct+'%':'—'}</td></tr>`).join('')}</tbody></table></div>`
   :vacio('Todavía no se ha enviado ningún reporte','Cada envío a comercial queda registrado aquí.','')}
 
 /* ---------- Configuración: aseguradoras y destinatarios ---------- */
 function tCfgIng(){const A=S.ing.aseg,D=S.ing.dest;return `<div class="cfg-grid">
   <div class="box"><h2>Aseguradoras</h2><p class="small muted" style="margin:0 0 12px">Aparecen en este orden en la tabla. En el correo se ordenan de mayor a menor participación.</p>
    <div class="addrow"><input id="na" placeholder="Nueva aseguradora" onkeydown="if(event.key==='Enter')addAsegIng()"><button class="btn primary" onclick="addAsegIng()">Agregar</button></div>
-   <ul class="cfg-l">${A.map((a,i)=>`<li><span class="aseg-ic">${esc(a.nombre.slice(0,2).toUpperCase())}</span><strong>${esc(a.nombre)}</strong><span class="cfg-a"><button class="x" aria-label="Subir ${esc(a.nombre)}" onclick="moverAsegIng(${i},-1)" ${i?'':'disabled'}>↑</button><button class="x" aria-label="Bajar ${esc(a.nombre)}" onclick="moverAsegIng(${i},1)" ${i<A.length-1?'':'disabled'}>↓</button><button class="x" aria-label="Quitar ${esc(a.nombre)}" onclick="quitarCfgIng(${a.id},${js(a.nombre)})">×</button></span></li>`).join('')}</ul></div>
+   <ul class="cfg-l">${A.map((a,i)=>`<li><span class="aseg-ic">${esc(a.nombre.slice(0,2).toUpperCase())}</span><strong>${esc(a.nombre)}</strong><span class="cfg-a"><button class="x" aria-label="Subir ${esc(a.nombre)}" onclick="moverAsegIng(${i},-1)" ${i?'':'disabled'}>↑</button><button class="x" aria-label="Bajar ${esc(a.nombre)}" onclick="moverAsegIng(${i},1)" ${i<A.length-1?'':'disabled'}>↓</button><button class="x" aria-label="Cambiar nombre de ${esc(a.nombre)}" title="Cambiar nombre" onclick="dRenAseg(${a.id})">✎</button><button class="x" aria-label="Quitar ${esc(a.nombre)}" onclick="quitarCfgIng(${a.id},${js(a.nombre)})">×</button></span></li>`).join('')}</ul></div>
   <div class="box"><h2>Destinatarios del correo</h2><p class="small muted" style="margin:0 0 12px">A estas personas les llega el reporte. El correo sale desde la cuenta de quien lo envía.</p>
    <div class="two"><input id="dn" placeholder="Nombre"><input id="de" type="email" placeholder="correo@empresa.com" onkeydown="if(event.key==='Enter')addDestIng()"></div><button class="btn primary wide" style="margin:8px 0 12px" onclick="addDestIng()">Agregar destinatario</button>
    ${D.length?`<ul class="cfg-l">${D.map(x=>`<li><span class="avatar">${esc(ini(x.n))}</span><span><strong>${esc(x.n)}</strong><small>${esc(x.e)}</small></span><span class="cfg-a"><button class="x" aria-label="Quitar ${esc(x.n)}" onclick="quitarCfgIng(${x.id},${js(x.n)})">×</button></span></li>`).join('')}</ul>`:'<p class="empty" style="padding:4px 0">Todavía no hay destinatarios.</p>'}</div>
+  <div class="box cfg-full"><h2>Textos del correo y del PDF</h2><p class="small muted" style="margin:0 0 12px">Escribe <code>{periodo}</code> donde quieras que aparezca el período (por ejemplo, julio – septiembre 2026). Si dejas un campo vacío, se usa el texto original.</p>
+   ${Object.entries(TEXTOS_ING).map(([k,o])=>`<label class="f"><span>${o.l}</span>${k==='titulo'?`<input id="tx-${k}" value="${esc(S.ing.textos[k]?.v||o.v)}">`:`<textarea id="tx-${k}" rows="${k==='intro'?4:2}">${esc(S.ing.textos[k]?.v||o.v)}</textarea>`}</label>`).join('')}
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" onclick="gTextosIng()">Guardar textos</button><button class="btn" onclick="verCorreoIng()">Ver cómo queda</button><button class="lnk" style="margin-left:auto" onclick="Object.entries(TEXTOS_ING).forEach(([k,o])=>$('tx-'+k).value=o.v)">Restaurar textos originales</button></div></div>
  </div>`}
+function gTextosIng(){
+  const cambios=Object.keys(TEXTOS_ING).map(k=>({k,v:$('tx-'+k).value.trim(),it:S.ing.textos[k]})).filter(x=>x.v!==(x.it?.v||TEXTOS_ING[x.k].v));
+  if(!cambios.length)return toast('No hubo cambios.');
+  act(async()=>{for(const c of cambios){const v=c.v===TEXTOS_ING[c.k].v?'':c.v;
+    if(c.it)await setItem('iconfig',c.it.id,{Texto:v});else await addItem('iconfig',{Title:c.k,Tipo:'texto',Texto:v})}},'Textos guardados');
+}
 function addAsegIng(){const n=$('na').value.trim().replace(/\s+/g,' ');if(!n)return toast('Escribe el nombre.');if(S.ing.aseg.some(a=>lc(a.nombre)===lc(n)))return toast('Esa aseguradora ya está.');
   const o=S.ing.aseg.reduce((m,a)=>Math.max(m,a.orden),0)+1;act(()=>addItem('iconfig',{Title:n,Tipo:'aseguradora',Orden:o}),n+' agregada')}
 function moverAsegIng(i,d){const a=S.ing.aseg[i],b=S.ing.aseg[i+d];if(!a||!b)return;
   act(async()=>{await setItem('iconfig',a.id,{Orden:b.orden===a.orden?a.orden+d:b.orden});await setItem('iconfig',b.id,{Orden:a.orden})})}
 function quitarCfgIng(id,nombre){confirmar('Quitar',`¿Quitar a <strong>${esc(nombre)}</strong>?`,'Quitar',()=>act(()=>delItem('iconfig',id),nombre+' quitado'));
   $('drawer').querySelector('.body p.small').textContent='Los montos guardados no se borran; si la vuelves a agregar con el mismo nombre, reaparecen.'}
+/* Cambiar el nombre de una aseguradora: también pasa sus montos guardados al nombre nuevo */
+function dRenAseg(id){const a=S.ing.aseg.find(x=>x.id===id),n=Object.keys(S.ing.ids).filter(k=>k.startsWith(a.nombre+'|')).length;
+  abrir(`<header><div><h2>Cambiar nombre</h2><p>Aseguradora ${esc(a.nombre)}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>${fl('Nombre',`<input id="ra-n" value="${esc(a.nombre)}" onkeydown="if(event.key==='Enter')gRenAseg(${id})">`)}
+  ${n?`<p class="small muted">Sus ${plural(n,'monto guardado pasa','montos guardados pasan')} al nombre nuevo. Los correos ya enviados no cambian.</p>`:''}</div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gRenAseg(${id})">Guardar</button></footer>`);setTimeout(()=>$('ra-n')?.select(),150)}
+function gRenAseg(id){const a=S.ing.aseg.find(x=>x.id===id),n=$('ra-n').value.trim().replace(/\s+/g,' ');
+  if(!n)return $('err').textContent='Escribe el nombre.';if(n===a.nombre){cerrar();return}
+  if(S.ing.aseg.some(x=>x.id!==id&&lc(x.nombre)===lc(n)))return $('err').textContent='Ya existe una aseguradora con ese nombre.';
+  const ids=Object.entries(S.ing.ids).filter(([k])=>k.startsWith(a.nombre+'|')).map(([,v])=>v);cerrar();
+  act(async()=>{await setItem('iconfig',id,{Title:n});
+    if(ids.length){const r=await batch(ids.map(i=>({method:'PATCH',url:`${LP('imontos')}/items/${i}/fields`,body:{Title:n}})));const f=r.filter(x=>x.status>=300).length;if(f)throw new Error(`${f} montos no se pudieron pasar al nombre nuevo; vuelve a guardar el nombre.`)}},
+    `${a.nombre} ahora se llama ${n}`);
+}
 function addDestIng(){const n=$('dn').value.trim(),e=$('de').value.trim().toLowerCase();
   if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e))return toast('Escribe el nombre y un correo válido.');if(S.ing.dest.some(x=>x.e===e))return toast('Ese correo ya está en la lista.');
   act(()=>addItem('iconfig',{Title:n,Tipo:'destinatario',Correo:e}),n+' agregado')}
@@ -1630,7 +1666,7 @@ const MODULOS=[
   {id:'ing',nombre:'Ingresos aseguradoras',desc:'Participación de cada aseguradora en los ingresos, para el departamento comercial',c1:'#2E7D4F',c2:'#7CC79A',
    ok:()=>G.mods?.ing,
    datos:()=>{const f=IV.fin||finIni(),d=datosIng(f),u=S.ing.envios[0];
-     return{stats:[['Período',periodoIng(f)],['Principal',d.tot?d.orden[0].a+' · '+d.orden[0].pct.toFixed(0)+'%':'—'],['Último envío',u?fCorta(u.f):'Nunca']],
+     return{stats:[['Período',periodoIng(f)],['Principal',d.tot?d.orden[0].a+' · '+d.orden[0].pct.toFixed(2)+'%':'—'],['Último envío',u?fCorta(u.f):'Nunca']],
        alerta:d.faltan?`${plural(d.faltan,'monto pendiente','montos pendientes')}`:'',
        links:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]}}}
 ];
