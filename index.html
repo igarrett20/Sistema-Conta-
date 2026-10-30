@@ -491,6 +491,108 @@ td.tot{font-weight:700;white-space:nowrap}
 .hbt .hb{height:100%;background:linear-gradient(90deg,var(--brand),#3FA3A8);border-radius:5px}
 @media (max-width:640px){.empgrid{grid-template-columns:1fr}.erow.cu,.erow.ta{grid-template-columns:1fr 1fr 30px}.erow .iban,.erow .alias{grid-column:1/3}.hbrow{grid-template-columns:1fr 90px}.hbrow .hbt{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.est-fil{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.dep-seg{margin:0}
+.per-sel{display:flex;gap:6px;align-items:center}.per-sel select{width:auto;font-weight:600}
+.kpi strong{white-space:nowrap;font-size:clamp(17px,1.9vw,23px)}
+.kpi strong.neg,.neg{color:var(--danger)}
+.pos{color:var(--ok)}
+.dl{font-weight:700;font-size:12px;margin-left:4px}.dl.up{color:var(--ok)}.dl.dn{color:var(--danger)}
+.ln{stroke-dasharray:2000;stroke-dashoffset:2000;transition:stroke-dashoffset 1.2s ease .3s}
+.on .ln{stroke-dashoffset:0}
+#est-body .charts{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-bottom:14px}
+.hbrow.nosel{cursor:default}.hbrow.nosel:hover{background:none}
+.hb.ing{background:linear-gradient(90deg,#2E7D4F,#7CC79A)!important}
+.deps{display:grid;gap:10px}
+.depc{appearance:none;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.depc:hover{border-color:var(--brand);box-shadow:0 6px 18px rgba(20,40,50,.08)}
+.depc-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.depc-h span{font-weight:700;font-size:15px}
+.depc-r{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:3px 0 6px}
+.top10{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px}
+.t10{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.t10-n{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
+.t10-x{flex:1;min-width:0}.t10-x strong{display:block;font-size:14px}.t10-x small{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.t10 .hbt{height:6px}
+.er-w{border:1px solid var(--line);border-radius:12px;max-height:640px;overflow:auto}
+table.er{font-size:13px;border-collapse:separate;border-spacing:0}
+table.er th{position:sticky;top:0;background:#fff;z-index:2;padding:10px}
+table.er th:first-child,table.er td:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:250px}
+table.er th:first-child{z-index:3}
+table.er td{padding:7px 10px;white-space:nowrap}
+table.er td.r,table.er th.r{text-align:right}
+table.er .acu{font-weight:700;background:var(--sunk)}
+table.er td.ind{padding-left:22px;color:var(--muted)}
+table.er td.ind2{padding-left:40px;color:var(--muted);font-size:12px}
+.er-dep td{background:var(--ink)!important;color:#fff;font-weight:700;letter-spacing:.03em;text-transform:uppercase;font-size:12px;padding:9px 10px!important}
+.er-cat{cursor:pointer}.er-cat:hover td{background:var(--sunk)}
+.er-cat td:first-child{font-weight:600}
+.car{display:inline-block;width:16px;color:var(--muted);transition:transform .15s}.car.op{transform:rotate(90deg)}
+.er-sub td{background:#FBFCFC}
+.er-tot td{font-weight:700;border-top:1px solid var(--line-strong)}
+.er-ut td{font-weight:700;background:var(--brand-soft)!important;color:var(--brand)}
+.er-ut td.neg{color:var(--danger)}
+.er-ut.big td{font-size:14px}
+.er-acu td{color:var(--muted);font-style:italic}
+.mes-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px}
+.mes-b{appearance:none;flex:none;min-width:74px;border:1px solid var(--line-strong);background:#fff;border-radius:10px;padding:7px 10px;cursor:pointer;text-align:center}
+.mes-b strong{display:block;font-size:14px}.mes-b small{display:block;font-size:11px;color:var(--muted)}
+.mes-b[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#fff}.mes-b[aria-selected="true"] small{color:#D6ECEF}
+.mes-b.nuevo{border-style:dashed}
+.carga-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.quick{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.6fr) auto;gap:10px;align-items:start;padding:16px;border:1px solid var(--brand);border-radius:14px;background:linear-gradient(180deg,#F4FAFB,#fff)}
+.quick .lbl-s{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:5px}
+.q-info{font-size:12px;color:var(--muted);margin-top:6px;min-height:18px}
+.q-b{display:flex;flex-direction:column;gap:6px;padding-top:22px}
+kbd{font:inherit;font-size:11px;background:rgba(255,255,255,.2);border-radius:4px;padding:0 5px;margin-left:4px}
+.tipo-b{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px}
+.tipo-b.i{background:var(--ok-soft);color:var(--ok)}.tipo-b.g{background:var(--pend-soft);color:var(--pend)}
+.mv-t td p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.mv-t td.r,.mv-t th.r{text-align:right;white-space:nowrap}
+tr.nuevo td{animation:flash 1.6s ease}
+.drawer.wide{width:min(760px,100%)}
+.est-fil2{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.per-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.per-lbl{margin:0 0 18px;font-size:14px;color:var(--muted)}.per-lbl strong{color:var(--ink)}
+.charts2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.tops{display:grid;gap:2px}
+.t10-n.ing{background:var(--ok-soft);color:var(--ok)}
+.bar-r.fuera{opacity:.28}
+.ana{border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:24px;background:linear-gradient(180deg,#F7FBFC,#fff)}
+.ana-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.ana-h h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}.ana-h p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.ana-ic{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#0D6174,#3FA3A8);color:#fff;font-size:13px}
+.ana-g{display:grid;grid-template-columns:1fr 1fr;gap:12px;animation:fadeUp .4s ease both}
+.ana-s{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+.ana-s h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+.ana-s h4 span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:700}
+.a-d h4 span{background:var(--brand-soft);color:var(--brand)}.a-a h4 span{background:var(--danger-soft);color:var(--danger)}
+.a-f h4 span{background:var(--pend-soft);color:var(--pend)}.a-o h4 span{background:var(--ok-soft);color:var(--ok)}
+.ana-s ul{margin:0;padding-left:18px}.ana-s li{font-size:14px;line-height:1.55;margin:4px 0}
+@media (max-width:960px){.charts2col,.ana-g{grid-template-columns:1fr}}
+.est-fil2{flex-wrap:nowrap}
+.per-box{flex-wrap:nowrap;margin-left:auto}
+.seg-sl{position:relative;isolation:isolate}
+.seg-sl .seg-ind{position:absolute;left:0;top:0;bottom:0;background:var(--brand);border-radius:7px;z-index:-1;transition:transform .32s cubic-bezier(.3,.9,.3,1),width .32s cubic-bezier(.3,.9,.3,1)}
+.seg-sl button{background:transparent!important;transition:color .25s}
+.seg-sl button[aria-checked="true"]{color:#fff}
+.seg-sl button+button{border-left-color:transparent}
+.per-w{display:inline-flex;overflow:hidden;transition:width .36s cubic-bezier(.3,.9,.3,1);white-space:nowrap}
+.per-pill{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 6px 0 12px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;color:var(--brand);box-shadow:0 1px 2px rgba(20,40,50,.05)}
+.per-pill select{border:0;background:transparent;padding:6px 22px 6px 4px;width:auto;font-weight:700;color:var(--ink);cursor:pointer;box-shadow:none}
+.per-pill select:focus{box-shadow:none;background:var(--brand-soft);border-radius:7px}
+.pp-txt{font-weight:700;color:var(--ink);padding:0 10px 0 4px}
+.pp-lbl{font-size:12px;font-weight:600;color:var(--muted)}
+.pp-arr{color:var(--muted);margin:0 2px}
+.pop{animation:popIn2 .34s cubic-bezier(.2,.9,.3,1.25) both}
+@keyframes popIn2{from{opacity:0;transform:translateY(-4px) scale(.92)}to{opacity:1;transform:none}}
+.per-lbl{min-height:21px;animation:fadeUp .3s ease both}
+.est-fil2 .seg{flex:none}
+.est-fil2 .seg button{white-space:nowrap;padding:7px 11px;font-size:13px}
+.per-pill select{padding:6px 18px 6px 2px}
+@media (max-width:1100px){.est-fil2{flex-wrap:wrap}.per-box{margin-left:0}}
+@media (max-width:960px){#est-body .charts{grid-template-columns:1fr}.quick{grid-template-columns:1fr 1fr}.q-cta,.q-d{grid-column:1/-1}.top10{grid-template-columns:1fr}}
+
+.anio-sel{width:auto;display:inline-block;border:0;background:var(--sunk);font:inherit;font-weight:700;padding:0 22px 0 6px;border-radius:8px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -518,6 +620,7 @@ const CONFIG={
   sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
   lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',perifericos:'ActivosPerifericos',
          imontos:'IngresosMontos',iconfig:'IngresosConfig',ienvios:'IngresosEnvios',
+         ecta:'EstadosCuentas',emov:'EstadosMovimientos',
          bpagos:'BoletasPagos',bbenef:'BoletasBeneficiarios',baut:'BoletasAutorizan',bemp:'BoletasEmpresas'},
   diasAviso:30                                       // días antes del aniversario en que aparece en Revisión
 };
@@ -550,6 +653,8 @@ const SCHEMA={
   ubicaciones:[],
   categorias:[{name:'CuentaGasto',text:{}},{name:'CuentaDepAcum',text:{}}],
   imontos:[{name:'Mes',text:{}},{name:'Monto',number:{}}],
+  ecta:[{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'Departamento',text:{}}],
+  emov:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}}],
   iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}},{name:'Texto',text:{allowMultipleLines:true,textType:'plain'}}],
   ienvios:[{name:'Periodo',text:{}},{name:'Mes',text:{}},{name:'Destinatarios',text:{allowMultipleLines:true,textType:'plain'}},{name:'EnviadoPor',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Datos',text:{allowMultipleLines:true,textType:'plain'}}],
   perifericos:[{name:'Tipo',text:{}},{name:'Numero',number:{}},{name:'FechaCompra',dateTime:{format:'dateOnly'}},{name:'ResponsableId',number:{}},{name:'Ubicacion',text:{}},{name:'Marca',text:{}},{name:'Observaciones',text:{}},{name:'FechaDano',dateTime:{format:'dateOnly'}},{name:'MotivoDano',text:{}}],
@@ -670,7 +775,7 @@ async function connect(){
   let spTok=null;const nuevas=new Set();
   if(Object.values(CONFIG.lists).some(n=>!busca(n))){await token(MANAGE);spTok=await spToken()}
   /* Cada módulo (Activos y Boletas) se habilita solo si la persona tiene acceso a todas sus listas */
-  G.mods={act:true,bol:true,ing:true};let sinCrear=false;
+  G.mods={act:true,bol:true,ing:true,est:true};let sinCrear=false;
   for(const [key,name] of Object.entries(CONFIG.lists)){
     const mod=modDe(key);
     let f=busca(name);
@@ -693,7 +798,7 @@ async function connect(){
   /* Auditoría: sin acceso completo a Activos, pero con lectura de equipos y categorías → solo reportes de depreciación */
   G.aud=!G.mods.act&&!!G.listIds.equipos&&!!G.listIds.categorias&&!G.listIds.historial;
   /* Módulos disponibles para esta persona: con uno solo entra directo; con varios, al menú de Inicio */
-  const disp=[G.mods.act?'act':G.aud?'aud':null,G.mods.bol?'bol':null,G.mods.ing?'ing':null].filter(Boolean);
+  const disp=[G.mods.act?'act':G.aud?'aud':null,G.mods.bol?'bol':null,G.mods.ing?'ing':null,G.mods.est?'est':null].filter(Boolean);
   if(!disp.length)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de ningún módulo de Contaduría.');
   M=disp.length>1?'home':disp[0];
   /* Revisión de columnas: solo cuando cambia la estructura (se recuerda en este navegador) y todas a la vez */
@@ -713,7 +818,7 @@ async function connect(){
 }
 /* Huella de la estructura de las listas: si cambia, se vuelven a revisar las columnas */
 /* A qué módulo pertenece cada lista */
-const modDe=k=>k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
+const modDe=k=>k==='ecta'||k==='emov'?'est':k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
 const SCHEMA_VER=(()=>{const t=JSON.stringify(SCHEMA)+JSON.stringify(CONFIG.lists);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return String(h)})();
 /* Pantalla de carga con el paso actual */
 function paso(t){const el=$('paso');if(el)el.textContent=t}
@@ -805,11 +910,13 @@ async function boot(){
       :`<h1>No se pudieron cargar los datos</h1><p>${esc(e.message)}</p><button class="btn" onclick="location.reload()">Intentar de nuevo</button>`);return}
   render();
   if(G.avisos.length)toast(G.avisos.join(' '));
+  /* Estados se carga aparte (muchos movimientos) para no atrasar la entrada */
+  if(G.mods.est&&!ES.cargado)cargarEst().then(()=>{if(M==='home')render()}).catch(e=>console.warn('Estados',e));
 }
 
 /* ---------- Vista principal ---------- */
 let M='act';
-function render(){if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
+function render(){if(M==='est'){renderEst();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
 function renderA(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
   const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
@@ -1640,15 +1747,447 @@ function addDestIng(){const n=$('dn').value.trim(),e=$('de').value.trim().toLowe
   act(()=>addItem('iconfig',{Title:n,Tipo:'destinatario',Correo:e}),n+' agregado')}
 
 /* =====================================================================
+   ESTADOS POR DEPARTAMENTO — datos en SharePoint
+   Listas: EstadosCuentas (catálogo: cuenta → categoría, subcategoría, departamento) y EstadosMovimientos (cuenta, año, mes, monto, descripción)
+   Montos en signo natural: ingresos y gastos en positivo; negativo solo para reversiones.
+   ===================================================================== */
+const ES={sub:'dash',dep:'',desde:1,hasta:1,abiertas:{},catSel:null,mes:1,q:'',pg:1,anio:+hoy().slice(0,4),cat:[],catMap:{},movAll:[],mov:[],per:null,cargado:false,ana:null};
+const CTA=c=>ES.catMap[c];
+const fmt0=n=>Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0});
+const parseMe=s=>{const t=String(s||'').replace(/[₡¢\s]/g,'').replace(/,/g,'');const neg=/^\(.*\)$/.test(t);const v=parseFloat(t.replace(/[()]/g,''));return isNaN(v)?null:Math.round((neg?-v:v)*100)/100};
+const compactE=n=>{const a=Math.abs(n),s=n<0?'-':'';return s+'₡'+(a>=1e6?(a/1e6).toFixed(a>=1e8?0:1)+'M':a>=1e3?(a/1e3).toFixed(0)+'k':Math.round(a))};
+const tipoDeCat=cat=>sinAc(cat).startsWith('ingreso')?'I':'G';
+function aniosEst(conSiguiente){const y=+hoy().slice(0,4),s=new Set([y,...ES.movAll.map(x=>x.anio)]);if(conSiguiente)s.add(y);return[...s].sort((a,b)=>b-a)}
+function indexarCat(){ES.catMap={};ES.cat.forEach(c=>ES.catMap[c.cta]=c)}
+function setAnio(y){ES.anio=y;ES.mov=ES.movAll.filter(x=>x.anio===y);const ult=Math.max(...mesesConDatos());
+  ES.per={t:ES.per?.t||'año',m:ult,q:Math.ceil(ult/3),s:ult>6?2:1,de:1,a:ult};ES.mes=ES.mov.length?ult:(y===+hoy().slice(0,4)?+hoy().slice(5,7):1);ES.ana=null}
+async function cargarEst(){
+  const [cs,ms]=await Promise.all([allItems('ecta'),allItems('emov')]);
+  ES.cat=cs.map(i=>{const f=i.fields;return{id:+i.id,cta:(f.Title||'').trim(),nombre:f.Nombre||'',cat:f.Categoria||'',sub:f.Subcategoria||'',dep:f.Departamento||'',tipo:tipoDeCat(f.Categoria)}}).filter(c=>c.cta).sort((a,b)=>a.cta.localeCompare(b.cta));
+  indexarCat();
+  ES.movAll=ms.map(i=>{const f=i.fields;return{id:+i.id,cta:(f.Title||'').trim(),anio:+f.Anio||0,mes:+f.Mes||0,monto:+f.Monto||0,desc:f.Descripcion||''}}).filter(x=>x.cta&&x.anio&&x.mes>=1&&x.mes<=12);
+  /* arranca en el año más reciente con datos */
+  const ys=[...new Set(ES.movAll.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);
+  ES.cargado=true;
+}
+function trasCambioEst(){ES.mov=ES.movAll.filter(x=>x.anio===ES.anio);ES.ana=null}
+
+/* ---------- Guardar movimientos ---------- */
+async function qAgregar(){const m=parseMe($('q-m').value),d=$('q-d').value.trim();
+  if(!qCta){$('q-c').focus();return toast('Elige una cuenta de la lista.')}
+  if(m==null||m===0){$('q-m').focus();return toast('Escribe el monto.')}
+  const c=qCta,btn=document.querySelector('.q-b .btn');btn.disabled=true;
+  try{const r=await addItem('emov',{Title:c.cta,Anio:ES.anio,Mes:ES.mes,Monto:m,Descripcion:d});
+    const x={id:+r.id,anio:ES.anio,mes:ES.mes,cta:c.cta,monto:m,desc:d,nuevo:true};ES.movAll.push(x);trasCambioEst();
+    $('q-m').value='';$('q-d').value='';
+    if($('q-keep').checked)$('q-m').focus();else{qCta=null;$('q-c').value='';$('q-i').innerHTML='';$('q-c').focus()}
+    ES.q='';$('est-body').querySelector('.carga-h p').innerHTML=resumenMes();filasMes();toast('Guardado: '+c.sub+' · ₡ '+fmtN(m));
+    document.querySelectorAll('.mes-b[aria-selected="true"] small').forEach(s=>s.textContent=fmt0(ES.mov.filter(y=>y.mes===ES.mes).length)+' mov.')}
+  catch(e){console.error(e);toast('No se pudo guardar: '+(e.message||e))}finally{btn.disabled=false}}
+async function gMov(id){const x=ES.movAll.find(y=>y.id===id),v=parseMe($('e-v').value);if(v==null)return $('err').textContent='Escribe un monto válido.';
+  const n={cta:$('e-c').value,mes:+$('e-m').value,monto:v,desc:$('e-d').value.trim()};cerrar();
+  try{await setItem('emov',id,{Title:n.cta,Mes:n.mes,Monto:n.monto,Descripcion:n.desc});Object.assign(x,n);trasCambioEst();renderEst();toast('Movimiento actualizado')}
+  catch(e){console.error(e);toast('No se pudo guardar: '+(e.message||e))}}
+async function borrarMov(btn,id){if(!btn.classList.contains('armed')){document.querySelectorAll('.lnk.armed').forEach(b=>{b.classList.remove('armed');b.textContent='Eliminar'});btn.classList.add('armed');btn.textContent='¿Seguro?';clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.classList.remove('armed');btn.textContent='Eliminar'},4000);return}
+  btn.textContent='Eliminando…';
+  try{await delItem('emov',id);ES.movAll=ES.movAll.filter(y=>y.id!==id);trasCambioEst();$('est-body').querySelector('.carga-h p').innerHTML=resumenMes();filasMes();toast('Movimiento eliminado')}
+  catch(e){console.error(e);btn.textContent='Eliminar';toast('No se pudo eliminar: '+(e.message||e))}}
+/* Guarda varios de una vez (pegar, copiar e importar) */
+async function guardarVariosEst(lista,titulo,el){
+  const r=await batch(lista.map(x=>({method:'POST',url:`${LP('emov')}/items`,body:{fields:{Title:x.cta,Anio:x.anio,Mes:x.mes,Monto:x.monto,Descripcion:x.desc||''}}})),
+    (a,b)=>{if(el)el.innerHTML=`<div class="info"><strong>${titulo}</strong> ${a} de ${b}<div class="bar-p"><span style="width:${Math.round(a/b*100)}%"></span></div></div>`});
+  let ok=0;r.forEach((res,i)=>{if(res&&res.status<300){ok++;ES.movAll.push({...lista[i],id:+res.body.id,nuevo:true})}});trasCambioEst();return{ok,fallos:lista.length-ok}}
+async function aplicarPegado(){if(!_peg.length)return;const b=$('p-go');b.disabled=true;
+  try{const{ok,fallos}=await guardarVariosEst(_peg.map(x=>({cta:x.c.cta,anio:ES.anio,mes:ES.mes,monto:x.m,desc:x.d})),'Guardando…',$('p-r'));cerrar();renderEst();toast(plural(ok,'movimiento agregado','movimientos agregados')+(fallos?` · ${fallos} no se guardaron, vuelve a intentarlo`:''))}
+  catch(e){console.error(e);b.disabled=false;toast('No se pudo guardar: '+(e.message||e))}}
+async function aplicarCopia(){const ids=[...document.querySelectorAll('#cp-l input:checked')].map(i=>+i.value);if(!ids.length)return toast('Marca al menos uno.');
+  const lista=ES.mov.filter(x=>ids.includes(x.id)).map(x=>({cta:x.cta,anio:ES.anio,mes:ES.mes,monto:x.monto,desc:x.desc.replace(new RegExp(MESES[ES.mes-2]||'^$','i'),MESES[ES.mes-1])}));
+  try{const{ok,fallos}=await guardarVariosEst(lista,'Copiando…',document.querySelector('#drawer .body'));cerrar();renderEst();toast(plural(ok,'movimiento copiado','movimientos copiados')+(fallos?` · ${fallos} no se guardaron`:''))}
+  catch(e){console.error(e);toast('No se pudo copiar: '+(e.message||e))}}
+
+/* ---------- Catálogo de cuentas ---------- */
+async function gCta(id){const v=k=>$(k).value.trim(),o={cta:v('c-c'),nombre:v('c-n'),cat:v('c-ca'),sub:v('c-s'),dep:v('c-d')};
+  if(!o.cta||!o.nombre||!o.cat||!o.sub)return $('err').textContent='Completa todos los campos.';
+  if(!id&&CTA(o.cta))return $('err').textContent='Esa cuenta ya existe.';
+  const f={Title:o.cta,Nombre:o.nombre,Categoria:o.cat,Subcategoria:o.sub,Departamento:o.dep};cerrar();
+  try{if(id){await setItem('ecta',id,f);Object.assign(ES.cat.find(x=>x.id===id),o,{tipo:tipoDeCat(o.cat)})}
+    else{const r=await addItem('ecta',f);ES.cat.push({id:+r.id,...o,tipo:tipoDeCat(o.cat)})}
+    indexarCat();ES.ana=null;renderEst();toast('Cuenta guardada')}catch(e){console.error(e);toast('No se pudo guardar: '+(e.message||e))}}
+
+/* ---------- Estado de resultados a Excel ---------- */
+async function excelER(){try{if(!window.XLSX){toast('Preparando Excel…');await cargarScript(XLSX_URL)}}catch(e){return toast('No se pudo cargar el generador de Excel.')}
+  const P=periodo(),t=$('d-er');if(!t)return;
+  /* abre todas las categorías para que el Excel lleve el detalle completo */
+  const prev={...ES.abiertas};document.querySelectorAll('#d-er .er-cat').forEach(()=>{});const r=rango();
+  const B=bloqueDep;Object.assign(ES.abiertas,Object.fromEntries((ES.dep?[ES.dep]:DEPTOS).flatMap(d=>B(d,r).gcats.map(g=>[d+'|'+g.c,true]))));pintarER();
+  const wb=XLSX.utils.table_to_book(t,{raw:false});ES.abiertas=prev;pintarER();
+  XLSX.writeFile(wb,`Estado_resultados_${(ES.dep||'consolidado').replace(/\s+/g,'_')}_${P.a}-${P.b}_${ES.anio}.xlsx`)}
+
+/* ---------- Importar Excel: hoja Cuentas (opcional) y hoja Movimientos ---------- */
+function dImpEst(){V.imp=null;
+  abrir(`<header><div><h2>Importar Excel</h2><p>Para cargas grandes, por ejemplo la carga inicial.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <ul class="small muted" style="padding-left:18px;margin:0 0 12px"><li><strong>Movimientos</strong>: Cuenta, Año, Mes, Monto, Descripcion</li><li><strong>Cuentas</strong> (opcional): Cuenta, Nombre, Categoria, Subcategoria, Departamento</li></ul>
+   <p class="small muted">Los meses que ya tienen movimientos se saltan, para no duplicar si importas el mismo archivo dos veces.</p>
+   <label class="f"><span>Archivo</span><input type="file" id="i-f" accept=".xlsx,.xls" onchange="leerImpEst(this.files[0])"></label><div id="i-res"></div></div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" id="i-go" disabled onclick="importarEst()">Importar</button></footer>`)}
+async function leerImpEst(file){
+  const er=$('err');er.textContent='';$('i-res').innerHTML='';$('i-go').disabled=true;V.imp=null;if(!file)return;
+  if(!window.XLSX){try{er.textContent='Cargando el lector de Excel…';await cargarScript(XLSX_URL);er.textContent=''}catch(e){return er.textContent='No se pudo cargar el lector de Excel.'}}
+  let wb;try{wb=XLSX.read(await file.arrayBuffer())}catch(e){return er.textContent='No se pudo leer el archivo: '+e.message}
+  const hoja=n=>{const k=wb.SheetNames.find(s=>sinAc(s)===n);return k?XLSX.utils.sheet_to_json(wb.Sheets[k],{defval:''}).map(r=>{const o={};for(const c in r)o[sinAc(c).replace(/[^a-z]/g,'')]=r[c];return o}):null};
+  const hc=hoja('cuentas')||[],hm=hoja('movimientos');if(!hm)return er.textContent='El archivo necesita una hoja llamada "Movimientos".';
+  const nuevasC=[],vistas=new Set(ES.cat.map(c=>c.cta));
+  hc.forEach(r=>{const c=txt(r.cuenta);if(!c||vistas.has(c))return;if(!r.nombre||!r.categoria||!r.subcategoria||!DEPTOS.includes(txt(r.departamento)))return;vistas.add(c);nuevasC.push({cta:c,nombre:txt(r.nombre),cat:txt(r.categoria),sub:txt(r.subcategoria),dep:txt(r.departamento)})});
+  const ocupados=new Set(ES.movAll.map(x=>x.anio+'-'+x.mes)),movs=[],saltados={},errores=[];
+  hm.forEach((r,i)=>{const c=txt(r.cuenta),y=+r.ano||+r.anio||ES.anio,m=+r.mes,v=parseMe(r.monto);if(!c&&v==null)return;
+    if(!vistas.has(c)){errores.push(`Fila ${i+2}: la cuenta ${esc(c)} no está en el catálogo`);return}
+    if(!(m>=1&&m<=12)||v==null){errores.push(`Fila ${i+2}: mes o monto inválido`);return}
+    if(ocupados.has(y+'-'+m)){saltados[MESES[m-1]+' '+y]=(saltados[MESES[m-1]+' '+y]||0)+1;return}
+    movs.push({cta:c,anio:y,mes:m,monto:v,desc:txt(r.descripcion)})});
+  V.imp={nuevasC,movs};
+  const porMes={};movs.forEach(x=>{const k=MESES[x.mes-1].slice(0,3)+' '+x.anio;porMes[k]=(porMes[k]||0)+1});
+  $('i-res').innerHTML=`<div class="info"><strong>Listo para importar:</strong> ${plural(movs.length,'movimiento','movimientos')}${nuevasC.length?` y ${plural(nuevasC.length,'cuenta nueva','cuentas nuevas')}`:''}.<br><span class="small">${Object.entries(porMes).map(([k,n])=>`${k}: ${fmt0(n)}`).join(' · ')}</span></div>
+   ${Object.keys(saltados).length?`<div class="warn-s">Se saltan porque ya tienen movimientos: ${Object.entries(saltados).map(([k,n])=>`${k} (${n})`).join(', ')}</div>`:''}
+   ${errores.length?`<div class="err" style="display:block">${errores.slice(0,10).join('<br>')}${errores.length>10?'<br>…':''}</div>`:''}`;
+  $('i-go').disabled=!(movs.length||nuevasC.length);
+}
+async function importarEst(){const I=V.imp;if(!I||busy)return;I.corriendo=true;$('i-go').disabled=true;$('i-f').disabled=true;const res=$('i-res');
+  try{
+    if(I.nuevasC.length){const r=await batch(I.nuevasC.map(c=>({method:'POST',url:`${LP('ecta')}/items`,body:{fields:{Title:c.cta,Nombre:c.nombre,Categoria:c.cat,Subcategoria:c.sub,Departamento:c.dep}}})),(a,b)=>res.innerHTML=`<div class="info"><strong>Guardando cuentas…</strong> ${a} de ${b}<div class="bar-p"><span style="width:${Math.round(a/b*100)}%"></span></div></div>`);
+      r.forEach((x,i)=>{if(x&&x.status<300)ES.cat.push({id:+x.body.id,...I.nuevasC[i],tipo:tipoDeCat(I.nuevasC[i].cat)})});indexarCat()}
+    const{ok,fallos}=I.movs.length?await guardarVariosEst(I.movs,'Guardando movimientos…',res):{ok:0,fallos:0};
+    I.corriendo=false;cerrar();const ys=[...new Set(I.movs.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);renderEst();
+    toast(`Importación lista: ${plural(ok,'movimiento','movimientos')}${I.nuevasC.length?' y '+plural(I.nuevasC.length,'cuenta','cuentas'):''}${fallos?` · ${fallos} fallaron; vuelve a importar el archivo`:''}`)}
+  catch(e){console.error(e);I.corriendo=false;$('i-f').disabled=false;res.innerHTML=`<div class="err" style="display:block">No se pudo importar: ${esc(e.message||e)}</div>`}}
+
+
+/* ---------- Pantallas de Estados ---------- */
+const DEPTOS=['Beneficios','Ventas Corporativas','Administrativo'];
+const IMPUESTO=0.30;   /* impuesto sobre la renta usado en tu estado de resultados */
+
+function periodo(){const p=ES.per,ult=Math.max(...mesesConDatos());let a,b,lbl,pa=null;
+  if(p.t==='mes'){a=b=p.m;lbl=MESES[p.m-1]+' '+ES.anio;pa=p.m>1?p.m-1:null}
+  else if(p.t==='tri'){a=(p.q-1)*3+1;b=a+2;lbl=`Trimestre ${p.q} · ${MESES[a-1].slice(0,3)}–${MESES[b-1].slice(0,3)} ${ES.anio}`;pa=p.q>1?a-3:null}
+  else if(p.t==='sem'){a=(p.s-1)*6+1;b=a+5;lbl=`Semestre ${p.s} · ${MESES[a-1].slice(0,3)}–${MESES[b-1].slice(0,3)} ${ES.anio}`;pa=p.s>1?a-6:null}
+  else if(p.t==='año'){a=1;b=12;lbl='Año '+ES.anio}
+  else{a=p.de;b=p.a;lbl=`${MESES[a-1]} a ${MESES[b-1]} ${ES.anio}`;const n=b-a+1;pa=a-n>=1?a-n:null}
+  const parcial=b>ult;b=Math.min(b,ult);if(b<a)b=a;
+  ES.desde=a;ES.hasta=b;const n=b-a+1;
+  return{a,b,lbl:lbl+(parcial?' (parcial, con datos hasta '+MESES[ult-1].toLowerCase()+')':''),prev:pa?[pa,pa+n-1]:null,prevLbl:pa?(n===1?MESES[pa-1]:`${MESES[pa-1].slice(0,3)}–${MESES[pa+n-2].slice(0,3)}`):''}}
+const rangoDe=(a,b)=>{const r=[];for(let m=a;m<=b;m++)r.push(m-1);return r};
+const mesesConDatos=()=>{const m=[...new Set(ES.mov.map(x=>x.mes))].sort((a,b)=>a-b);return m.length?m:[ES.anio===+hoy().slice(0,4)?+hoy().slice(5,7):1]};
+
+/* ---------- Cálculos ---------- */
+function agrupar(f){
+  const R={ing:{},gas:{},porMes:Array.from({length:12},()=>({i:0,g:0})),porDep:{}};
+  DEPTOS.forEach(d=>R.porDep[d]=Array.from({length:12},()=>({i:0,g:0})));
+  ES.mov.forEach(x=>{const c=CTA(x.cta);if(!c)return;if(f.dep&&c.dep!==f.dep)return;const k=x.mes-1;
+    const dst=c.tipo==='I'?'i':'g';R.porMes[k][dst]+=x.monto;if(R.porDep[c.dep])R.porDep[c.dep][k][dst]+=x.monto;
+    const T=c.tipo==='I'?R.ing:R.gas;T[c.cat]=T[c.cat]||{tot:Array(12).fill(0),subs:{}};T[c.cat].tot[k]+=x.monto;
+    const s=T[c.cat].subs[c.sub]=T[c.cat].subs[c.sub]||Array(12).fill(0);s[k]+=x.monto});
+  return R;
+}
+const rango=()=>{const a=[];for(let m=ES.desde;m<=ES.hasta;m++)a.push(m-1);return a};
+const sumR=(arr,r)=>r.reduce((s,k)=>s+arr[k],0);
+
+/* ---------- Estructura de la página ---------- */
+const ICO={dash:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg>',
+  carga:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  cat:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'};
+function renderEst(){
+  if(!ES.cargado){$('app').innerHTML='<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando estados…</p></div></div>';cargarEst().then(()=>{if(M==='est')renderEst()}).catch(e=>{console.error(e);$('app').innerHTML=`<div class="gate"><h1>No se pudieron cargar los estados</h1><p>${esc(e.message||e)}</p><button class="btn" onclick="ES.cargado=false;renderEst()">Intentar de nuevo</button></div>`});return}
+  const it=[['dash','Dashboard','Resultados por departamento'],['carga','Cargar datos','Movimientos de cada mes'],['cat','Catálogo de cuentas',plural(ES.cat.length,'cuenta','cuentas')]];
+  $('app').innerHTML=`<div class="head"><div><h1>Estados por departamento</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.anio}.</p></div></div>
+  <nav class="adm-nav horiz" aria-label="Secciones">${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
+  <div class="fade" id="est-body">${{dash:tDash,carga:tCarga,cat:tCatE}[ES.sub]()}</div>`;
+  if(ES.sub==='dash'){refreshDash();requestAnimationFrame(moverInd)}
+  if(ES.sub==='carga')filasMes();
+  if(ES.sub==='cat')filasCat();
+}
+
+/* =====================================================================
+   DASHBOARD
+   ===================================================================== */
+/* Encabezado del dashboard: se dibuja una vez; al cambiar filtros solo se actualiza el contenido de abajo */
+const TIPOS_PERIODO=[['mes','Mes'],['tri','Trimestre'],['sem','Semestre'],['año','Año'],['rango','Rango']];
+function selPer(){const md=mesesConDatos(),p=ES.per,ult=Math.max(...md),o=(v,l,on)=>`<option value="${v}"${on?' selected':''}>${l}</option>`;
+  const ic='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>';
+  let c;
+  if(p.t==='mes')c=`<select aria-label="Mes" onchange="ES.per.m=+this.value;refreshDash()">${md.map(m=>o(m,MESES[m-1],p.m===m)).join('')}</select>`;
+  else if(p.t==='tri')c=`<select aria-label="Trimestre" onchange="ES.per.q=+this.value;refreshDash()">${[1,2,3,4].filter(q=>(q-1)*3+1<=ult).map(q=>o(q,'Trimestre '+q,p.q===q)).join('')}</select>`;
+  else if(p.t==='sem')c=`<select aria-label="Semestre" onchange="ES.per.s=+this.value;refreshDash()">${[1,2].filter(x=>(x-1)*6+1<=ult).map(x=>o(x,'Semestre '+x,p.s===x)).join('')}</select>`;
+  else if(p.t==='año')c=`<select aria-label="Año" onchange="setAnio(+this.value);refreshDash()">${aniosEst().map(y=>o(y,y,ES.anio===y)).join('')}</select>`;
+  else c=`<select aria-label="Desde" onchange="ES.per.de=+this.value;if(ES.per.a<ES.per.de){ES.per.a=ES.per.de;this.parentNode.querySelectorAll('select')[1].value=ES.per.a}refreshDash()">${md.map(m=>o(m,MESES[m-1].slice(0,3),p.de===m)).join('')}</select>
+    <span class="pp-arr" aria-hidden="true">→</span><select aria-label="Hasta" onchange="ES.per.a=+this.value;if(ES.per.de>ES.per.a){ES.per.de=ES.per.a;this.parentNode.querySelector('select').value=ES.per.de}refreshDash()">${md.map(m=>o(m,MESES[m-1].slice(0,3),p.a===m)).join('')}</select>`;
+  return `<span class="per-pill pop">${ic}${c}</span>`}
+function tDash(){periodo();
+  return `<div class="est-fil2">
+   <div class="seg dep-seg" role="radiogroup" aria-label="Departamento" id="dep-seg">${[['','Todos'],...DEPTOS.map(d=>[d,d])].map(([v,l])=>`<button role="radio" aria-checked="${ES.dep===v}" data-v="${esc(v)}" title="${esc(l)}" onclick="setDep(${js(v)})">${l==='Ventas Corporativas'?'Ventas Corp.':l}</button>`).join('')}</div>
+   <div class="per-box"><div class="seg seg-sl" role="radiogroup" aria-label="Tipo de período" id="tipo-seg" style="margin:0"><span class="seg-ind" aria-hidden="true"></span>${TIPOS_PERIODO.map(([k,l])=>`<button role="radio" aria-checked="${ES.per.t===k}" data-k="${k}" onclick="setTipo('${k}')">${l}</button>`).join('')}</div>
+    <div class="per-w" id="per-w">${selPer()}</div></div>
+  </div>
+  <p class="per-lbl" id="per-lbl"></p>
+  <div id="dash-b"></div>`;
+}
+function tDashBody(P){return `<div class="kpis" id="d-k"></div>
+  <div class="chart" style="margin-bottom:14px"><div class="ch-h"><div><h3>Ingresos, gastos y utilidad por mes</h3><p>${ES.dep||'Todos los departamentos'} · utilidad antes de impuestos</p></div><div class="legend" style="flex-direction:row;gap:14px"><span><i style="background:#0D6174"></i>Ingresos</span><span><i style="background:#E8A23A"></i>Gastos</span><span><i style="background:#1B2A33;height:3px;border-radius:2px"></i>Utilidad</span></div></div><div id="d-c1"></div></div>
+  <div class="charts">
+   <div class="chart"><div class="ch-h"><div><h3 id="d-c2t">Gastos por categoría</h3><p id="d-c2p">Haz clic en una categoría para ver sus subcategorías</p></div><button class="lnk" id="d-c2b" onclick="ES.catSel=null;pintarDash()" hidden>← Todas las categorías</button></div><div id="d-c2"></div></div>
+   <div class="chart"><div class="ch-h"><div><h3>${ES.dep?'Ingresos por subcategoría':'Resultado por departamento'}</h3><p>${ES.dep?'Origen de los ingresos del período':'Utilidad antes de impuestos del período'}</p></div></div><div id="d-c3"></div></div>
+  </div>
+  <div class="charts2col">
+   <div class="chart"><div class="ch-h"><div><h3>Top ingresos</h3><p>Subcategorías con más ingreso${P.prev?' · variación vs '+esc(P.prevLbl):''}</p></div></div><div id="d-ti"></div></div>
+   <div class="chart"><div class="ch-h"><div><h3>Top gastos</h3><p>Subcategorías con más gasto${P.prev?' · variación vs '+esc(P.prevLbl):''}</p></div></div><div id="d-c4"></div></div>
+  </div>
+  <div class="ana" id="d-ana"></div>
+  <div class="ch-h" style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 10px"><div><h2 style="margin:0">Estado de resultados</h2><p class="small muted" style="margin:2px 0 0">${ES.dep||'Por departamento'} · ${MESES[ES.desde-1]} a ${MESES[ES.hasta-1]} ${ES.anio} · clic en una categoría para abrirla</p></div><button class="btn sm" onclick="excelER()">Descargar Excel</button></div>
+  <div class="tbl er-w"><table class="er" id="d-er"></table></div>`;
+}
+function refreshDash(){const P=periodo();
+  $('per-lbl').innerHTML=`<strong>${esc(P.lbl)}</strong>${P.prev?` · comparado con ${esc(P.prevLbl)}`:' · sin período anterior para comparar'}`;
+  const b=$('dash-b');b.classList.remove('fade');void b.offsetWidth;b.innerHTML=tDashBody(P);b.classList.add('fade');pintarDash()}
+function setDep(v){ES.dep=v;ES.catSel=null;ES.ana=null;document.querySelectorAll('#dep-seg button').forEach(x=>x.setAttribute('aria-checked',x.dataset.v===v));refreshDash()}
+/* Cambia el tipo de período: la píldora de fechas cambia de ancho con animación, sin mover el resto */
+function setTipo(k){if(ES.per.t===k)return;ES.per.t=k;ES.ana=null;document.querySelectorAll('#tipo-seg button').forEach(x=>x.setAttribute('aria-checked',x.dataset.k===k));moverInd();
+  const w=$('per-w'),w0=w.getBoundingClientRect().width;w.style.width=w0+'px';w.innerHTML=selPer();w.style.width='auto';const w1=w.getBoundingClientRect().width;
+  w.style.width=w0+'px';void w.offsetWidth;w.style.width=w1+'px';clearTimeout(w._t);w._t=setTimeout(()=>w.style.width='auto',380);refreshDash()}
+/* Indicador deslizante del selector de tipo */
+function moverInd(){const seg=$('tipo-seg');if(!seg)return;const b=seg.querySelector('[aria-checked="true"]'),ind=seg.querySelector('.seg-ind');if(!b||!ind)return;
+  ind.style.width=b.offsetWidth+'px';ind.style.transform=`translateX(${b.offsetLeft}px)`}
+function pintarDash(){
+  const P=periodo(),r=rango(),A=agrupar({dep:ES.dep}),ti=sumR(A.porMes.map(x=>x.i),r),tg=sumR(A.porMes.map(x=>x.g),r),ut=ti-tg,mg=ti?ut/ti*100:0;
+  const rp=P.prev?rangoDe(...P.prev):null,pi=rp?sumR(A.porMes.map(x=>x.i),rp):null,pg=rp?sumR(A.porMes.map(x=>x.g),rp):null,pu=rp?pi-pg:null,pm=rp&&pi?pu/pi*100:null;
+  const delta=(a,b,inv)=>{if(b==null||!b)return '';const p=(a-b)/Math.abs(b)*100,up=p>=0,good=inv?!up:up;return `<span class="dl ${good?'up':'dn'}">${up?'▲':'▼'} ${Math.abs(p).toFixed(0)}%</span>`};
+  $('d-k').innerHTML=`
+   <div class="kpi"><span>Ingresos</span><strong>₡ ${fmtN(ti)}</strong><small class="muted">${rp?`${delta(ti,pi)} vs ${compactE(pi)}`:'&nbsp;'}</small></div>
+   <div class="kpi"><span>Gastos</span><strong>₡ ${fmtN(tg)}</strong><small class="muted">${rp?`${delta(tg,pg,true)} vs ${compactE(pg)}`:'&nbsp;'}</small></div>
+   <div class="kpi main"><span>Utilidad antes de impuestos</span><strong class="${ut<0?'neg':''}">₡ ${fmtN(ut)}</strong><small class="muted">${rp?`${delta(ut,pu)} vs ${compactE(pu)}`:'&nbsp;'}</small></div>
+   <div class="kpi"><span>Margen</span><strong class="${mg<0?'neg':''}">${mg.toFixed(1)}%</strong><small class="muted">${rp&&pm!=null?`${(mg-pm>=0?'▲ ':'▼ ')+Math.abs(mg-pm).toFixed(1)} pts vs ${pm.toFixed(1)}%`:'utilidad sobre ingresos'}</small></div>`;
+  /* gráfico mensual */
+  const rc=rangoDe(1,Math.max(...mesesConDatos())),enR=k=>r.includes(k);
+  const W=880,H=230,PX=46,n=rc.length,mx=Math.max(1,...rc.map(k=>Math.max(A.porMes[k].i,A.porMes[k].g))),mn=Math.min(0,...rc.map(k=>A.porMes[k].i-A.porMes[k].g));
+  const sc=v=>10+(H-10)*(1-(v-mn)/(mx-mn)),gw=(W-PX)/n,bw=Math.min(26,gw/3.2);
+  let s=`<svg viewBox="0 0 ${W} ${H+28}" width="100%" role="img" aria-label="Ingresos, gastos y utilidad por mes">`;
+  for(let i=0;i<=4;i++){const v=mn+(mx-mn)*i/4,y=sc(v);s+=`<line x1="${PX}" x2="${W}" y1="${y}" y2="${y}" stroke="${Math.abs(v)<1?'#9AA7AF':'#E2E7EA'}"/><text x="${PX-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#66737C">${compactE(v)}</text>`}
+  const pts=[];rc.forEach((k,j)=>{const x=PX+gw*j+gw/2,mi=A.porMes[k],u=mi.i-mi.g,y0=sc(0);pts.push([x,sc(u)]);
+    if(enR(k))s+=`<rect x="${x-gw/2+2}" y="2" width="${gw-4}" height="${H+24}" rx="8" fill="#F1F7F8"/>`;
+    s+=`<g class="bar-r${enR(k)?'':' fuera'}" style="transition-delay:${j*50}ms;transform-origin:${x}px ${y0}px" data-tip="${esc(MESES[k]+' · Ingresos ₡'+fmtN(mi.i)+' · Gastos ₡'+fmtN(mi.g)+' · Utilidad ₡'+fmtN(u))}">
+     <rect x="${x-bw-2}" y="${sc(mi.i)}" width="${bw}" height="${Math.max(0,y0-sc(mi.i))}" rx="3" fill="#0D6174"/><rect x="${x+2}" y="${sc(mi.g)}" width="${bw}" height="${Math.max(0,y0-sc(mi.g))}" rx="3" fill="#E8A23A"/><rect x="${x-gw/2}" y="0" width="${gw}" height="${H}" fill="transparent"/></g>
+     <text x="${x}" y="${H+20}" text-anchor="middle" font-size="11" font-weight="${enR(k)?700:400}" fill="${enR(k)?'#0D6174':'#9AA7AF'}">${MESES[k].slice(0,3)}</text>`});
+  s+=`<polyline class="ln" points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#1B2A33" stroke-width="2.2" stroke-linejoin="round"/>${pts.map(([x,y],j)=>`<circle cx="${x}" cy="${y}" r="3.5" fill="#fff" stroke="#1B2A33" stroke-width="2"/>`).join('')}</svg>`;
+  $('d-c1').innerHTML=s;
+  /* gastos por categoría o subcategoría */
+  let items;
+  if(ES.catSel&&A.gas[ES.catSel]){items=Object.entries(A.gas[ES.catSel].subs).map(([k,v])=>[k,sumR(v,r)]);$('d-c2t').textContent=ES.catSel;$('d-c2p').textContent='Subcategorías · '+plural(items.length,'subcategoría','subcategorías');$('d-c2b').hidden=false}
+  else{items=Object.entries(A.gas).map(([k,v])=>[k,sumR(v.tot,r)]);$('d-c2t').textContent='Gastos por categoría';$('d-c2p').textContent='Haz clic en una categoría para ver sus subcategorías';$('d-c2b').hidden=true}
+  items=items.filter(x=>Math.abs(x[1])>0.004).sort((a,b)=>b[1]-a[1]);const tot=items.reduce((a,x)=>a+x[1],0),mxi=Math.max(1,...items.map(x=>x[1]));
+  $('d-c2').innerHTML=items.length?items.map(([k,v],i)=>`<button type="button" class="hbrow${ES.catSel?' nosel':''}" ${ES.catSel?'':`onclick="ES.catSel=${js(k)};pintarDash()"`}><span title="${esc(k)}">${esc(k)}</span><div class="hbt"><div class="hb" style="width:${Math.max(0,v)/mxi*100}%;transition-delay:${i*40}ms"></div></div><span class="amt-c">${compactE(v)} <small class="muted">${tot?(v/tot*100).toFixed(0):0}%</small></span></button>`).join(''):'<p class="empty">Sin gastos en el período.</p>';
+  /* tercer gráfico */
+  if(ES.dep){const ii=Object.values(A.ing).flatMap(c=>Object.entries(c.subs)).map(([k,v])=>[k,sumR(v,r)]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]),t2=ii.reduce((a,x)=>a+x[1],0),m2=Math.max(1,...ii.map(x=>x[1]));
+    $('d-c3').innerHTML=ii.length?ii.map(([k,v],i)=>`<div class="hbrow nosel"><span>${esc(k)}</span><div class="hbt"><div class="hb ing" style="width:${Math.max(0,v)/m2*100}%;transition-delay:${i*40}ms"></div></div><span class="amt-c">${compactE(v)} <small class="muted">${t2?(v/t2*100).toFixed(0):0}%</small></span></div>`).join(''):'<p class="empty">Este departamento no tiene ingresos en el período.</p>'}
+  else{const B=agrupar({});$('d-c3').innerHTML=`<div class="deps">${DEPTOS.map(d=>{const i=sumR(B.porDep[d].map(x=>x.i),r),g=sumR(B.porDep[d].map(x=>x.g),r),u=i-g;
+    const sp=r.map(k=>B.porDep[d][k].i-B.porDep[d][k].g),smx=Math.max(1,...sp.map(Math.abs));
+    return `<button type="button" class="depc" onclick="ES.dep=${js(d)};renderEst()"><div class="depc-h"><strong>${d}</strong><span class="${u<0?'neg':'pos'}">₡ ${fmt0(u)}</span></div>
+     <div class="depc-r"><span>Ingresos ${compactE(i)}</span><span>Gastos ${compactE(g)}</span><span>Margen ${i?(u/i*100).toFixed(0):0}%</span></div>
+     <svg viewBox="0 0 ${sp.length*14} 30" width="100%" height="30" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="${sp.length*14}" y1="15" y2="15" stroke="#E2E7EA"/>${sp.map((v,j)=>`<rect x="${j*14+3}" y="${v>=0?15-Math.abs(v)/smx*14:15}" width="8" height="${Math.max(1,Math.abs(v)/smx*14)}" rx="1.5" fill="${v>=0?'#2E7D4F':'#B3242D'}"/>`).join('')}</svg></button>`}).join('')}</div>`}
+  /* top ingresos y top gastos */
+  const topDe=(T,tipo)=>{const l=Object.entries(T).flatMap(([c,o])=>Object.entries(o.subs).map(([k,v])=>({k,c,v:sumR(v,r),p:rp?sumR(v,rp):null}))).filter(x=>Math.abs(x.v)>0.004).sort((a,b)=>b.v-a.v).slice(0,8),
+    t=Object.values(T).reduce((s2,o)=>s2+sumR(o.tot,r),0),m=Math.max(1,...l.map(x=>x.v));
+    return l.length?`<div class="tops">${l.map((x,i)=>{const d=x.p?((x.v-x.p)/Math.abs(x.p)*100):null,good=tipo==='i'?d>=0:d<=0;
+      return `<div class="t10"><span class="t10-n${tipo==='i'?' ing':''}">${i+1}</span><div class="t10-x"><strong>${esc(x.k)}</strong><small>${esc(x.c)} · ${t?(x.v/t*100).toFixed(1):0}% del total</small><div class="hbt"><div class="hb${tipo==='i'?' ing':''}" style="width:${Math.max(0,x.v)/m*100}%;transition-delay:${i*40}ms"></div></div></div>
+       <span class="amt-c">₡ ${fmt0(x.v)}${d!=null&&isFinite(d)?`<small class="dl ${good?'up':'dn'}" style="display:block">${d>=0?'▲':'▼'} ${Math.abs(d).toFixed(0)}%</small>`:''}</span></div>`}).join('')}</div>`:'<p class="empty">Sin datos en el período.</p>'};
+  $('d-ti').innerHTML=topDe(A.ing,'i');$('d-c4').innerHTML=topDe(A.gas,'g');
+  pintarAnalisis();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>['d-c1','d-c2','d-c3','d-c4','d-ti'].forEach(i=>$(i)?.classList.add('on'))));
+  document.querySelectorAll('#d-c1 [data-tip]').forEach(g=>{g.onmousemove=e=>{const t=$('tip');t.textContent=g.dataset.tip;t.style.left=Math.min(e.clientX+12,innerWidth-380)+'px';t.style.top=e.clientY-34+'px';t.style.opacity=1};g.onmouseleave=()=>$('tip').style.opacity=0});
+  pintarER();
+}
+/* ---------- Análisis automático (reglas sobre los datos del período, sin IA) ---------- */
+function pintarAnalisis(){
+  const el=$('d-ana');if(!el)return;const P=periodo();
+  const head=`<div class="ana-h"><div><h3><span class="ana-ic">✦</span> Análisis del período</h3><p>${esc(P.lbl)} · ${esc(ES.dep||'Todos los departamentos')}</p></div><button class="btn ${ES.ana?'':'primary'}" onclick="ES.ana=1;pintarAnalisis()">${ES.ana?'Actualizar':'Generar análisis'}</button></div>`;
+  if(!ES.ana){el.innerHTML=head+`<p class="muted" style="margin:0">Genera un resumen con los datos más importantes, alertas, posibles registros faltantes y oportunidades de mejora del período.</p>`;return}
+  const r=rango(),rp=P.prev?rangoDe(...P.prev):null,A=agrupar({dep:ES.dep}),B=agrupar({});
+  const ti=sumR(A.porMes.map(x=>x.i),r),tg=sumR(A.porMes.map(x=>x.g),r),ut=ti-tg,mg=ti?ut/ti*100:0;
+  const pi=rp?sumR(A.porMes.map(x=>x.i),rp):null,pg=rp?sumR(A.porMes.map(x=>x.g),rp):null,pu=rp?pi-pg:null;
+  const pct=(a,b)=>b?((a-b)/Math.abs(b)*100):null,f0=v=>'₡'+fmt0(v),flecha=v=>v>=0?'subió':'bajó';
+  const D=[],AL=[],FA=[],OP=[];
+  /* Destacados */
+  D.push(`La utilidad antes de impuestos fue de <b class="${ut<0?'neg':'pos'}">${f0(ut)}</b>, con un margen de <b>${mg.toFixed(1)}%</b>${rp?` (${pct(ut,pu)!=null?`${flecha(ut-pu)} ${f0(Math.abs(ut-pu))} contra ${esc(P.prevLbl)}`:''})`:''}.`);
+  if(r.length>1){const ms=r.map(k=>({k,u:A.porMes[k].i-A.porMes[k].g})).sort((a,b)=>b.u-a.u),mj=ms[0],pe=ms[ms.length-1];
+    D.push(`El mejor mes fue <b>${MESES[mj.k]}</b> (${f0(mj.u)}) y el más débil <b>${MESES[pe.k]}</b> (<span class="${pe.u<0?'neg':''}">${f0(pe.u)}</span>).`)}
+  if(!ES.dep){const ds=DEPTOS.map(d=>{const i=sumR(B.porDep[d].map(x=>x.i),r),g=sumR(B.porDep[d].map(x=>x.g),r);return{d,u:i-g,m:i?(i-g)/i*100:null}}).sort((a,b)=>b.u-a.u);
+    D.push(`<b>${ds[0].d}</b> es el departamento más rentable (${f0(ds[0].u)}${ds[0].m!=null?`, margen ${ds[0].m.toFixed(0)}%`:''}); <b>${ds[ds.length-1].d}</b> el de menor resultado (${f0(ds[ds.length-1].u)}).`)}
+  else{const tot=sumR(B.porMes.map(x=>x.i),r);if(tot)D.push(`${esc(ES.dep)} generó el <b>${(ti/tot*100).toFixed(1)}%</b> de los ingresos totales del período.`)}
+  const fuentes=Object.values(A.ing).flatMap(o=>Object.entries(o.subs)).map(([k,v])=>({k,v:sumR(v,r)})).sort((a,b)=>b.v-a.v);
+  if(fuentes[0]&&ti)D.push(`La principal fuente de ingreso es <b>${esc(fuentes[0].k)}</b>, con el <b>${(fuentes[0].v/ti*100).toFixed(1)}%</b> de los ingresos.`);
+  /* Alertas */
+  const perd=r.filter(k=>A.porMes[k].i-A.porMes[k].g<0);
+  if(perd.length)AL.push(`${perd.length===1?'Hubo pérdida en':'Hubo pérdida en '+perd.length+' meses:'} <b>${perd.map(k=>MESES[k]).join(', ')}</b>.`);
+  const subsG=Object.entries(A.gas).flatMap(([c,o])=>Object.entries(o.subs).map(([k,v])=>({k,c,v,act:sumR(v,r),ant:rp?sumR(v,rp):0})));
+  if(rp){subsG.filter(x=>x.ant>0&&x.act-x.ant>250000&&(x.act-x.ant)/x.ant>0.15).sort((a,b)=>(b.act-b.ant)-(a.act-a.ant)).slice(0,3)
+    .forEach(x=>AL.push(`<b>${esc(x.k)}</b> (${esc(x.c)}) subió <b>${pct(x.act,x.ant).toFixed(0)}%</b> contra ${esc(P.prevLbl)}: de ${f0(x.ant)} a ${f0(x.act)}.`))}
+  const ul=ES.hasta-1;if(ul>=2){subsG.map(x=>{const prev=x.v.slice(0,ul).filter((_,i)=>i>=0),cnt=prev.filter(v=>v>0).length,avg=cnt?prev.reduce((s2,v)=>s2+v,0)/cnt:0;return{...x,avg,cnt,u:x.v[ul]}})
+    .filter(x=>x.cnt>=2&&x.u>x.avg*1.5&&x.u-x.avg>300000).sort((a,b)=>(b.u-b.avg)-(a.u-a.avg)).slice(0,3)
+    .forEach(x=>AL.push(`En <b>${MESES[ul]}</b>, <b>${esc(x.k)}</b> fue de ${f0(x.u)}, <b>${(x.u/x.avg).toFixed(1)} veces</b> su promedio mensual (${f0(x.avg)}). Vale la pena revisar si es un gasto extraordinario.`))}
+  if(!ES.dep)DEPTOS.forEach(d=>{const i=sumR(B.porDep[d].map(x=>x.i),r),g=sumR(B.porDep[d].map(x=>x.g),r);if(i>0&&g>i)AL.push(`<b>${d}</b> tuvo gastos mayores a sus ingresos (margen ${((i-g)/i*100).toFixed(0)}%).`)});
+  /* Posibles registros faltantes: cuentas que se registraron los 3 meses anteriores pero no en el último mes del período */
+  if(ul>=3){const ctas={};ES.mov.forEach(x=>{const c=CTA(x.cta);if(!c||(ES.dep&&c.dep!==ES.dep))return;(ctas[x.cta]=ctas[x.cta]||new Set()).add(x.mes-1)});
+    const falt=Object.entries(ctas).filter(([,ms])=>[ul-1,ul-2,ul-3].every(k=>ms.has(k))&&!ms.has(ul)).map(([c])=>CTA(c));
+    falt.slice(0,8).forEach(c=>FA.push(`<b>${esc(c.sub)}</b> · ${esc(c.nombre)} <span class="muted">(${esc(c.dep)})</span> se registró ${MESES[ul-3].toLowerCase()}, ${MESES[ul-2].toLowerCase()} y ${MESES[ul-1].toLowerCase()}, pero no tiene movimiento en <b>${MESES[ul].toLowerCase()}</b>.`));
+    if(falt.length>8)FA.push(`Y ${falt.length-8} cuentas más con el mismo caso.`)}
+  /* Oportunidades */
+  const tops=subsG.map(x=>({k:x.k,v:x.act})).sort((a,b)=>b.v-a.v).slice(0,3),t3=tops.reduce((s2,x)=>s2+x.v,0);
+  if(tg&&tops.length){const ah=t3*0.05;OP.push(`Los 3 gastos más grandes (${tops.map(x=>esc(x.k)).join(', ')}) suman el <b>${(t3/tg*100).toFixed(0)}%</b> del gasto. Reducirlos un 5% ahorraría <b>${f0(ah)}</b>${ti?` y subiría el margen ${(ah/ti*100).toFixed(1)} puntos`:''}.`)}
+  if(fuentes[0]&&ti&&fuentes[0].v/ti>0.5)OP.push(`Más de la mitad de los ingresos depende de <b>${esc(fuentes[0].k)}</b>. Diversificar fuentes reduciría el riesgo si ese ingreso baja.`);
+  if(rp){subsG.filter(x=>x.ant>0&&x.ant-x.act>200000).sort((a,b)=>(b.ant-b.act)-(a.ant-a.act)).slice(0,2)
+    .forEach(x=>OP.push(`<b>${esc(x.k)}</b> bajó ${f0(x.ant-x.act)} contra ${esc(P.prevLbl)}. Si es por una mejora, vale la pena mantenerla.`))}
+  const sec=(t,ic,cls,l,vacio)=>`<div class="ana-s ${cls}"><h4><span>${ic}</span>${t}</h4>${l.length?`<ul>${l.map(x=>`<li>${x}</li>`).join('')}</ul>`:`<p class="muted small" style="margin:0">${vacio}</p>`}</div>`;
+  el.innerHTML=head+`<div class="ana-g">${sec('Datos destacados','★','a-d',D,'')}${sec('Alertas','!','a-a',AL,'Sin alertas en el período.')}${sec('Posibles registros faltantes','?','a-f',FA,ul>=3?'No se encontraron cuentas que falten en el último mes.':'Se necesitan al menos 4 meses de datos.')}${sec('Oportunidades de mejora','↗','a-o',OP,'Sin sugerencias para este período.')}</div>
+   <p class="small muted" style="margin:12px 0 0">Análisis automático calculado con reglas sobre los datos cargados. No usa inteligencia artificial, así que los números siempre son exactos; las interpretaciones son sugerencias para revisar.</p>`;
+}
+/* Estado de resultados con el mismo formato de tu hoja */
+function bloqueDep(dep,r){const A=agrupar({dep});
+  const lin=[],ti=Array(12).fill(0),tg=Array(12).fill(0);
+  Object.entries(A.ing).forEach(([c,o])=>{o.tot.forEach((v,k)=>ti[k]+=v);Object.entries(o.subs).forEach(([s,v])=>lin.push({t:'ing',n:s,v}))});
+  const gcats=Object.entries(A.gas).sort((a,b)=>sumR(b[1].tot,r)-sumR(a[1].tot,r)).map(([c,o])=>{o.tot.forEach((v,k)=>tg[k]+=v);return{c,tot:o.tot,subs:Object.entries(o.subs).sort((a,b)=>sumR(b[1],r)-sumR(a[1],r))}});
+  return{lin,ti,tg,gcats,ut:ti.map((v,k)=>v-tg[k])}}
+function pintarER(){
+  const r=rango(),th=`<tr><th>Concepto</th>${r.map(k=>`<th class="r">${MESES[k].slice(0,3)}</th>`).join('')}<th class="r">Acumulado</th></tr>`;
+  const cel=(arr,cls='')=>r.map(k=>`<td class="r ${cls}${arr[k]<0?' neg':''}">${fmtN(arr[k])}</td>`).join('')+`<td class="r acu ${cls}${sumR(arr,r)<0?' neg':''}">${fmtN(sumR(arr,r))}</td>`;
+  const bloque=(dep,titulo)=>{const b=bloqueDep(dep,r),key=dep;let h=`<tr class="er-dep"><td colspan="${r.length+2}">${esc(titulo)}</td></tr>`;
+    b.lin.forEach(l=>h+=`<tr><td class="ind">${esc(l.n)}</td>${cel(l.v)}</tr>`);
+    h+=`<tr class="er-tot"><td>Total de ingresos</td>${cel(b.ti)}</tr>`;
+    b.gcats.forEach(g=>{const id=key+'|'+g.c,op=!!ES.abiertas[id];
+      h+=`<tr class="er-cat" onclick="ES.abiertas[${js(id)}]=!ES.abiertas[${js(id)}];pintarER()"><td><span class="car${op?' op':''}">▸</span>${esc(g.c)}</td>${cel(g.tot)}</tr>`;
+      if(op)g.subs.forEach(([s,v])=>h+=`<tr class="er-sub"><td class="ind2">${esc(s)}</td>${cel(v)}</tr>`)});
+    h+=`<tr class="er-tot"><td>Total de gastos</td>${cel(b.tg)}</tr><tr class="er-ut"><td>Utilidad ${esc(dep)}</td>${cel(b.ut)}</tr>`;return{h,b}};
+  let html=`<thead>${th}</thead><tbody>`;
+  if(ES.dep)html+=bloque(ES.dep,ES.dep).h;
+  else{const R={};DEPTOS.forEach(d=>{const x=bloque(d,d);html+=x.h;R[d]=x.b});
+    const op=R['Beneficios'].ut.map((v,k)=>v+R['Ventas Corporativas'].ut[k]),ai=op.map((v,k)=>v+R['Administrativo'].ut[k]),imp=ai.map(v=>v*IMPUESTO),up=ai.map((v,k)=>v-imp[k]);
+    let acc=0;const acu=Array(12).fill(0);r.forEach(k=>{acc+=up[k];acu[k]=acc});
+    html+=`<tr class="er-dep"><td colspan="${r.length+2}">Resultado consolidado</td></tr>
+     <tr class="er-tot"><td>Utilidad bruta operativa <small class="muted">(Beneficios + Ventas)</small></td>${cel(op)}</tr>
+     <tr><td class="ind">Utilidad administración</td>${cel(R['Administrativo'].ut)}</tr>
+     <tr class="er-tot"><td>Utilidad antes de impuestos</td>${cel(ai)}</tr>
+     <tr><td class="ind">Impuesto sobre la renta (${IMPUESTO*100}%)</td>${cel(imp)}</tr>
+     <tr class="er-ut big"><td>Utilidad del período</td>${cel(up)}</tr>
+     <tr class="er-acu"><td>Utilidad acumulada</td>${r.map(k=>`<td class="r${acu[k]<0?' neg':''}">${fmtN(acu[k])}</td>`).join('')}<td class="r acu">—</td></tr>`}
+  $('d-er').innerHTML=html+'</tbody>';
+}
+/* =====================================================================
+   CARGAR DATOS (Jonathan)
+   ===================================================================== */
+const sigMes=()=>Math.min(12,Math.max(...mesesConDatos())+1);
+function tCarga(){
+  const md=mesesConDatos(),nx=sigMes(),ms=[...new Set([...md,nx])].sort((a,b)=>a-b),m=ES.mes;
+  const mv=ES.mov.filter(x=>x.mes===m),ti=mv.filter(x=>CTA(x.cta)?.tipo==='I').reduce((s,x)=>s+x.monto,0),tg=mv.filter(x=>CTA(x.cta)?.tipo==='G').reduce((s,x)=>s+x.monto,0);
+  return `<div class="mes-row" role="tablist" aria-label="Mes">${ms.map(k=>{const n=ES.mov.filter(x=>x.mes===k).length;return `<button role="tab" aria-selected="${m===k}" class="mes-b${n?'':' nuevo'}" onclick="ES.mes=${k};ES.q='';ES.pg=1;renderEst()"><strong>${MESES[k-1].slice(0,3)}</strong><small>${n?fmt0(n)+' mov.':'nuevo'}</small></button>`}).join('')}</div>
+  <div class="carga-h"><div><h2 style="margin:0">${MESES[m-1]} <select class="anio-sel" aria-label="Año" onchange="setAnio(+this.value);renderEst()">${aniosEst(true).map(y=>`<option${ES.anio===y?' selected':''}>${y}</option>`).join('')}</select></h2><p class="small muted" style="margin:2px 0 0">${plural(mv.length,'movimiento','movimientos')} · Ingresos ₡ ${fmtN(ti)} · Gastos ₡ ${fmtN(tg)} · Utilidad ₡ ${fmtN(ti-tg)}</p></div>
+   <div class="dep-acts"><button class="btn" onclick="dCopiar()">Copiar del mes anterior</button><button class="btn" onclick="dPegar()">Pegar desde Excel</button><button class="btn" onclick="dImpEst()">Importar Excel</button></div></div>
+  <div class="quick" id="quick">
+   <div class="q-f q-cta"><label class="lbl-s" for="q-c">Cuenta</label><div class="combo" id="qcb"><input id="q-c" autocomplete="off" placeholder="Código o nombre de la cuenta" oninput="qFiltro()" onfocus="if(this.value&&!qCta)qFiltro()" onkeydown="qTecla(event)"><div class="combo-list" id="q-l" role="listbox"></div></div><div class="q-info" id="q-i"></div></div>
+   <div class="q-f q-m"><label class="lbl-s" for="q-m">Monto</label><div class="money"><span>₡</span><input id="q-m" inputmode="decimal" placeholder="0.00" onkeydown="if(event.key==='Enter'){event.preventDefault();$('q-d').focus()}" onblur="const v=parseMe(this.value);if(v!=null)this.value=fmtN(v)"></div></div>
+   <div class="q-f q-d"><label class="lbl-s" for="q-d">Descripción</label><input id="q-d" placeholder="Ej.: Salarios septiembre" onkeydown="if(event.key==='Enter'){event.preventDefault();qAgregar()}"></div>
+   <div class="q-f q-b"><button class="btn primary" onclick="qAgregar()">Agregar <kbd>Enter</kbd></button><label class="chk small"><input type="checkbox" id="q-keep"> Mantener cuenta</label></div>
+  </div>
+  <p class="small muted" style="margin:6px 0 18px">Escribe la cuenta, Enter, el monto, Enter, la descripción y Enter para guardar. Para ingresos y gastos escribe el monto en positivo; usa negativo solo para reversiones.</p>
+  <div class="bar"><input class="search" placeholder="Buscar en ${MESES[m-1].toLowerCase()} por cuenta, descripción o categoría" value="${esc(ES.q)}" oninput="ES.q=this.value;ES.pg=1;filasMes()"></div>
+  <div class="tbl"><table class="mv-t"><thead><tr><th>Cuenta</th><th>Categoría · Subcategoría</th><th>Depto.</th><th>Descripción</th><th class="r">Monto</th><th></th></tr></thead><tbody id="mv-f"></tbody></table></div><div class="pager" id="mv-p"></div>`;
+}
+function filasMes(){
+  const q=sinAc(ES.q),ps=50;
+  const r=ES.mov.filter(x=>x.mes===ES.mes).map(x=>({x,c:CTA(x.cta)})).filter(({x,c})=>!q||sinAc([x.cta,c?.nombre,c?.cat,c?.sub,c?.dep,x.desc].join(' ')).includes(q)).sort((a,b)=>b.x.id-a.x.id);
+  const pags=Math.max(1,Math.ceil(r.length/ps));ES.pg=Math.min(ES.pg,pags);const vis=r.slice((ES.pg-1)*ps,ES.pg*ps);
+  $('mv-f').innerHTML=vis.length?vis.map(({x,c})=>`<tr id="mv-${x.id}" class="${x.nuevo?'nuevo':''}"><td><span class="mono small">${esc(x.cta)}</span><p>${esc(c?.nombre||'Cuenta no está en el catálogo')}</p></td>
+   <td><span class="tipo-b ${c?.tipo==='I'?'i':'g'}">${c?.tipo==='I'?'Ingreso':'Gasto'}</span> ${esc(c?.cat||'')}<p>${esc(c?.sub||'')}</p></td><td class="small">${esc(c?.dep||'')}</td>
+   <td>${esc(x.desc)}</td><td class="r amt-c${x.monto<0?' neg':''}">${fmtN(x.monto)}</td>
+   <td><div class="acts"><button class="lnk" onclick="dMov(${x.id})">Editar</button><button class="lnk red" onclick="borrarMov(this,${x.id})">Eliminar</button></div></td></tr>`).join('')
+   :`<tr><td colspan="6"><p class="empty">${ES.mov.some(x=>x.mes===ES.mes)?'No hay movimientos que coincidan.':'Todavía no hay movimientos en este mes. Agrégalos arriba, pégalos desde Excel o cópialos del mes anterior.'}</p></td></tr>`;
+  $('mv-p').innerHTML=`<span class="small muted">Mostrando ${r.length?(ES.pg-1)*ps+1:0}–${Math.min(ES.pg*ps,r.length)} de ${r.length}</span>${pags>1?`<div class="pg"><button ${ES.pg===1?'disabled':''} onclick="ES.pg--;filasMes()" aria-label="Anterior">‹</button><span class="small muted" style="padding:0 8px">${ES.pg} / ${pags}</span><button ${ES.pg===pags?'disabled':''} onclick="ES.pg++;filasMes()" aria-label="Siguiente">›</button></div>`:''}`;
+}
+/* Captura rápida */
+let qCta=null;
+function qFiltro(){const q=sinAc($('q-c').value),l=ES.cat.filter(c=>!q||sinAc(c.cta+' '+c.nombre+' '+c.sub+' '+c.dep).includes(q)).slice(0,40);
+  $('q-l').innerHTML=l.map((c,i)=>`<button type="button" role="option" data-c="${esc(c.cta)}" class="${i===0?'hl':''}" onmousedown="event.preventDefault();qElegir(${js(c.cta)})"><span class="mono small">${esc(c.cta)}</span> ${esc(c.nombre)}<small>${c.tipo==='I'?'Ingreso':'Gasto'} · ${esc(c.sub)} · ${esc(c.dep)}</small></button>`).join('')||'<p class="small muted" style="padding:8px 10px;margin:0">No hay cuentas con ese texto. Agrégala en el Catálogo.</p>';
+  $('qcb').classList.add('open');if(qCta&&$('q-c').value!==qCta.cta+' · '+qCta.nombre){qCta=null;$('q-i').innerHTML=''}}
+function qTecla(e){const bs=[...document.querySelectorAll('#q-l button')];let k=bs.findIndex(b=>b.classList.contains('hl'));
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!bs.length)return;bs[k]?.classList.remove('hl');k=e.key==='ArrowDown'?Math.min(bs.length-1,k+1):Math.max(0,k-1);bs[k].classList.add('hl');bs[k].scrollIntoView({block:'nearest'})}
+  else if(e.key==='Enter'){e.preventDefault();if(qCta&&!$('qcb').classList.contains('open'))return $('q-m').focus();if(bs[k])qElegir(bs[k].dataset.c)}
+  else if(e.key==='Escape')$('qcb').classList.remove('open')}
+document.addEventListener('click',e=>{const c=$('qcb');if(c&&!c.contains(e.target))c.classList.remove('open')});
+function qElegir(cta){const c=CTA(cta);qCta=c;$('q-c').value=c.cta+' · '+c.nombre;$('qcb').classList.remove('open');
+  $('q-i').innerHTML=`<span class="tipo-b ${c.tipo==='I'?'i':'g'}">${c.tipo==='I'?'Ingreso':'Gasto'}</span> ${esc(c.cat)} › ${esc(c.sub)} · <strong>${esc(c.dep)}</strong>`;$('q-m').focus();$('q-m').select()}
+function resumenMes(){const mv=ES.mov.filter(x=>x.mes===ES.mes),ti=mv.filter(x=>CTA(x.cta)?.tipo==='I').reduce((s,x)=>s+x.monto,0),tg=mv.filter(x=>CTA(x.cta)?.tipo==='G').reduce((s,x)=>s+x.monto,0);
+  return `${plural(mv.length,'movimiento','movimientos')} · Ingresos ₡ ${fmtN(ti)} · Gastos ₡ ${fmtN(tg)} · Utilidad ₡ ${fmtN(ti-tg)}`}
+/* Editar y eliminar */
+function dMov(id){const x=ES.mov.find(y=>y.id===id),c=CTA(x.cta);
+  abrir(`<header><div><h2>Editar movimiento</h2><p>${MESES[x.mes-1]} ${ES.anio}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <label class="f"><span>Cuenta</span><select id="e-c">${ES.cat.map(k=>`<option value="${esc(k.cta)}"${k.cta===x.cta?' selected':''}>${esc(k.cta)} · ${esc(k.nombre)} (${esc(k.dep)})</option>`).join('')}</select></label>
+   <div class="two"><label class="f"><span>Mes</span><select id="e-m">${MESES.map((n,i)=>`<option value="${i+1}"${x.mes===i+1?' selected':''}>${n}</option>`).join('')}</select></label><label class="f"><span>Monto (₡)</span><input id="e-v" value="${fmtN(x.monto)}" inputmode="decimal"></label></div>
+   <label class="f"><span>Descripción</span><input id="e-d" value="${esc(x.desc)}"></label></div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gMov(${id})">Guardar</button></footer>`)}
+/* Pegar desde Excel: columnas Cuenta | Monto | Descripción */
+function dPegar(){
+  abrir(`<header><div><h2>Pegar desde Excel</h2><p>Para ${MESES[ES.mes-1]} ${ES.anio}. Copia en Excel las columnas <strong>Cuenta, Monto y Descripción</strong> y pégalas aquí.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><textarea id="p-t" rows="8" placeholder="4.070.010.010.1.001	11358429.91	Salarios septiembre" oninput="leerPegado()" style="font-family:monospace;font-size:13px"></textarea><div id="p-r"></div></div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" id="p-go" disabled onclick="aplicarPegado()">Agregar</button></footer>`);$('drawer').classList.add('wide');setTimeout(()=>$('p-t').focus(),150)}
+let _peg=[];
+function leerPegado(){
+  const ls=$('p-t').value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);_peg=[];const err=[];
+  ls.forEach((l,i)=>{const p=l.split('\t').length>1?l.split('\t'):l.split(/;|\s{2,}/);const cta=(p[0]||'').trim(),c=CTA(cta),m=parseMe(p[1]);
+    if(i===0&&!c&&m==null)return;
+    if(!c){err.push(`Fila ${i+1}: la cuenta "${esc(cta)}" no está en el catálogo`);return}
+    if(m==null){err.push(`Fila ${i+1}: monto inválido`);return}
+    _peg.push({c,m,d:(p.slice(2).join(' ')||'').trim()})});
+  const ti=_peg.filter(x=>x.c.tipo==='I').reduce((s,x)=>s+x.m,0),tg=_peg.filter(x=>x.c.tipo==='G').reduce((s,x)=>s+x.m,0);
+  $('p-r').innerHTML=(_peg.length?`<div class="info" style="margin-top:12px"><strong>${plural(_peg.length,'movimiento listo','movimientos listos')}</strong> · Ingresos ₡ ${fmtN(ti)} · Gastos ₡ ${fmtN(tg)}</div>
+   <div class="tbl" style="max-height:260px;overflow:auto"><table class="mv-t"><tbody>${_peg.slice(0,100).map(x=>`<tr><td class="mono small">${esc(x.c.cta)}</td><td>${esc(x.c.sub)}<p>${esc(x.c.dep)}</p></td><td>${esc(x.d)}</td><td class="r">${fmtN(x.m)}</td></tr>`).join('')}</tbody></table></div>`:'')+
+   (err.length?`<div class="err" style="display:block;margin-top:10px">${err.slice(0,10).join('<br>')}${err.length>10?'<br>…':''}</div>`:'');
+  $('p-go').disabled=!_peg.length;$('p-go').textContent=_peg.length?'Agregar '+_peg.length:'Agregar'}
+/* Copiar del mes anterior (gastos fijos como alquiler, outsourcing, monitoreo) */
+function dCopiar(){const pm=ES.mes-1,prev=ES.mov.filter(x=>x.mes===pm);
+  if(!prev.length)return toast('El mes anterior no tiene movimientos para copiar.');
+  /* sugeridos: lo que se repite igual en los últimos meses */
+  const rep=x=>ES.mov.filter(y=>y.mes===pm-1&&y.cta===x.cta&&Math.abs(y.monto-x.monto)<0.01).length>0;
+  const l=prev.map(x=>({x,c:CTA(x.cta),s:rep(x)})).sort((a,b)=>(b.s-a.s)||a.c.sub.localeCompare(b.c.sub));
+  abrir(`<header><div><h2>Copiar del mes anterior</h2><p>De ${MESES[pm-1]} a ${MESES[ES.mes-1]}. Marcados: los que se repitieron con el mismo monto los últimos dos meses.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="bar" style="margin-bottom:8px"><input class="search" placeholder="Filtrar" oninput="const q=sinAc(this.value);document.querySelectorAll('#cp-l li').forEach(li=>li.hidden=!sinAc(li.textContent).includes(q))"><span><button class="lnk" onclick="document.querySelectorAll('#cp-l input').forEach(i=>{if(!i.closest('li').hidden)i.checked=true});cpTot()">Todos</button> · <button class="lnk" onclick="document.querySelectorAll('#cp-l input').forEach(i=>i.checked=false);cpTot()">Ninguno</button></span></div>
+  <ul class="pick" id="cp-l">${l.map(({x,c,s})=>`<li><label><input type="checkbox" value="${x.id}"${s?' checked':''} onchange="cpTot()"><span><strong>${esc(c.sub)}</strong> · ${esc(x.desc||c.nombre)}<small>${esc(c.dep)} · ₡ ${fmtN(x.monto)}${s?' · se repite':''}</small></span></label></li>`).join('')}</ul></div>
+  <footer><span class="small muted" id="cp-t" style="margin-right:auto"></span><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="aplicarCopia()">Copiar marcados</button></footer>`);$('drawer').classList.add('wide');cpTot()}
+function cpTot(){const ids=[...document.querySelectorAll('#cp-l input:checked')].map(i=>+i.value),t=ES.mov.filter(x=>ids.includes(x.id)).reduce((s,x)=>s+x.monto,0);$('cp-t').textContent=plural(ids.length,'marcado','marcados')+' · ₡ '+fmtN(t)}
+/* =====================================================================
+   CATÁLOGO DE CUENTAS
+   ===================================================================== */
+function tCatE(){return `<div class="bar"><input class="search" id="ct-q" placeholder="Buscar por código, nombre, categoría o departamento" oninput="filasCat()"><button class="btn primary" onclick="dCta()">Agregar cuenta</button></div>
+  <p class="small muted" style="margin:-4px 0 14px">Cada cuenta contable ya trae su categoría, subcategoría y departamento; al cargar datos solo hay que escoger la cuenta.</p>
+  <div class="tbl"><table class="mv-t"><thead><tr><th>Cuenta contable</th><th>Tipo</th><th>Categoría · Subcategoría</th><th>Departamento</th><th class="r">Mov. ${ES.anio}</th><th></th></tr></thead><tbody id="ct-f"></tbody></table></div>`}
+function filasCat(){const q=sinAc($('ct-q')?.value);
+  $('ct-f').innerHTML=ES.cat.filter(c=>!q||sinAc([c.cta,c.nombre,c.cat,c.sub,c.dep].join(' ')).includes(q)).map(c=>`<tr><td><span class="mono small">${esc(c.cta)}</span><p>${esc(c.nombre)}</p></td><td><span class="tipo-b ${c.tipo==='I'?'i':'g'}">${c.tipo==='I'?'Ingreso':'Gasto'}</span></td><td>${esc(c.cat)}<p>${esc(c.sub)}</p></td><td>${esc(c.dep)}</td><td class="r">${ES.mov.filter(x=>x.cta===c.cta).length}</td><td><div class="acts"><button class="lnk" onclick="dCta(${c.id})">Editar</button></div></td></tr>`).join('')}
+function dCta(id){const c=id?ES.cat.find(x=>x.id===id):null,cats=[...new Set(ES.cat.map(x=>x.cat))].sort(),subs=[...new Set(ES.cat.map(x=>x.sub))].sort();
+  abrir(`<header><div><h2>${c?'Editar cuenta':'Agregar cuenta'}</h2><p>Si la categoría empieza con "Ingresos", la cuenta cuenta como ingreso.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <label class="f"><span>Cuenta contable</span><input id="c-c" class="mono" value="${esc(c?.cta||'')}" placeholder="4.070.010.010.1.001"${c?' readonly':''}></label>
+   <label class="f"><span>Nombre</span><input id="c-n" value="${esc(c?.nombre||'')}"></label>
+   <label class="f"><span>Categoría</span><input id="c-ca" list="l-ca" value="${esc(c?.cat||'')}"><datalist id="l-ca">${cats.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+   <label class="f"><span>Subcategoría</span><input id="c-s" list="l-s" value="${esc(c?.sub||'')}"><datalist id="l-s">${subs.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+   <label class="f"><span>Departamento</span><select id="c-d">${DEPTOS.map(d=>`<option${c?.dep===d?' selected':''}>${d}</option>`).join('')}</select></label></div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gCta(${id||'null'})">Guardar</button></footer>`)}
+
+/* =====================================================================
    INICIO: menú principal para quien tiene acceso a varios módulos
    Para agregar un módulo nuevo: sumarlo a MODULOS con su id, textos, ícono, colores y datos
    ===================================================================== */
 const ICO_MOD={
   ing:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>',
+  est:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
   home:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   act:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
   bol:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2V3z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'};
-const multiMod=()=>[G.mods?.act||G.aud,G.mods?.bol,G.mods?.ing].filter(Boolean).length>1;
+const multiMod=()=>[G.mods?.act||G.aud,G.mods?.bol,G.mods?.ing,G.mods?.est].filter(Boolean).length>1;
 const mesActual=()=>hoy().slice(0,7);
 const MODULOS=[
   {id:'act',nombre:'Activos y equipos',desc:'Inventario, actas de entrega, revisión anual y depreciación',c1:'#0D6174',c2:'#3FA3A8',
@@ -1668,7 +2207,13 @@ const MODULOS=[
    datos:()=>{const f=IV.fin||finIni(),d=datosIng(f),u=S.ing.envios[0];
      return{stats:[['Período',periodoIng(f)],['Principal',d.tot?d.orden[0].a+' · '+d.orden[0].pct.toFixed(2)+'%':'—'],['Último envío',u?fCorta(u.f):'Nunca']],
        alerta:d.faltan?`${plural(d.faltan,'monto pendiente','montos pendientes')}`:'',
-       links:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]}}}
+       links:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]}}},
+  {id:'est',nombre:'Estados por departamento',desc:'Ingresos, gastos y utilidad por departamento, con análisis del período',c1:'#5B4BB5',c2:'#9C8FE0',
+   ok:()=>G.mods?.est,
+   datos:()=>{const links=[['Dashboard',"ES.sub='dash'"],['Cargar datos',"ES.sub='carga'"],['Catálogo',"ES.sub='cat'"]];
+     if(!ES.cargado)return{stats:[['Cargando datos…','']],links};
+     const y=ES.anio,mv=ES.movAll.filter(x=>x.anio===y),ti=mv.filter(x=>CTA(x.cta)?.tipo==='I').reduce((s2,x)=>s2+x.monto,0),tg=mv.filter(x=>CTA(x.cta)?.tipo==='G').reduce((s2,x)=>s2+x.monto,0),ul=mv.length?Math.max(...mv.map(x=>x.mes)):0;
+     return{stats:[['Utilidad '+y,compactE(ti-tg)],['Margen',ti?((ti-tg)/ti*100).toFixed(1)+'%':'—'],['Último mes cargado',ul?MESES[ul-1]:'Ninguno']],links}}}
 ];
 function saludo(){const h=new Date().getHours(),n=(G.me?.displayName||'').split(' ')[0];return (h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches')+(n?', '+n:'')}
 function irA(id,accion){if(accion){try{new Function(accion)()}catch(e){}}M=id;V.view='list';render();scrollTo(0,0)}
@@ -1681,6 +2226,8 @@ function renderHome(){
     if(pn)pend.push(['p-warn',`${plural(pn,'activo cumplió','activos cumplieron')} año y ${pn===1?'necesita':'necesitan'} revisión de estado`,'act',"V.tab='rev'"]);
     if(sd)pend.push(['p-info',`${plural(sd,'activo no tiene','activos no tienen')} precio o factor de depreciación`,'act',"V.tab='dep';V.dep&&(V.dep.est='sin')"]);
     if(pa)pend.push(['p-info',`${plural(pa,'mouse, teclado o adaptador está','mouse, teclados o adaptadores están')} por asignar`,'act',"V.tab='eq';V.eqsub='per';V.pf=Object.assign(V.pf||{tipo:''},{est:'pend'})"])}
+  if(G.mods?.est&&ES.cargado){const d=new Date(),pm=d.getMonth()===0?12:d.getMonth(),py=d.getMonth()===0?d.getFullYear()-1:d.getFullYear();
+    if(!ES.movAll.some(x=>x.anio===py&&x.mes===pm))pend.push(['p-warn',`No se han cargado los movimientos de ${MESES[pm-1].toLowerCase()} en Estados por departamento`,'est',"ES.sub='carga';setAnio("+py+");ES.mes="+pm])}
   if(G.mods?.ing){const f=IV.fin||finIni(),d=datosIng(f),env=S.ing.envios.some(e=>e.per===periodoIng(f));
     if(d.faltan)pend.push(['p-warn',`Faltan ${plural(d.faltan,'monto','montos')} de aseguradoras para ${periodoIng(f)}`,'ing',"IV.tab='ing'"]);
     else if(!env&&d.tot)pend.push(['p-info',`El reporte de aseguradoras de ${periodoIng(f)} está listo pero no se ha enviado a comercial`,'ing',"IV.tab='ing'"])}
@@ -2051,7 +2598,7 @@ const tarjetaTxt=t=>`${t.banco} · ${MON[t.mon].s} ${MON[t.mon].n} · •••�
 /* ---------- Encabezado del módulo ---------- */
 /* Navegación de arriba: solo para quien tiene varios módulos */
 function modSwitch(){if(!multiMod())return '';
-  const it=[['home','Inicio',ICO_MOD.home],...MODULOS.filter(m=>m.ok()).map(m=>[m.id,m.id==='act'?'Activos':m.id==='bol'?'Boletas':m.id==='ing'?'Ingresos':m.nombre,''])];
+  const it=[['home','Inicio',ICO_MOD.home],...MODULOS.filter(m=>m.ok()).map(m=>[m.id,m.id==='act'?'Activos':m.id==='bol'?'Boletas':m.id==='ing'?'Ingresos':m.id==='est'?'Estados':m.nombre,''])];
   return `<nav class="modsw" aria-label="Módulos">${it.map(([k,l,ic])=>`<button aria-pressed="${M===k||(k==='act'&&M==='aud')}" onclick="irMod('${k}')">${ic}${l}</button>`).join('')}</nav>`}
 function irMod(m){if(m!=='home'&&G.mods&&!G.mods[m]&&!(m==='act'&&G.aud))return;if(m==='ing'&&M!=='ing')IV.tab='ing';if(m===M&&V.view!=='acta'&&m!=='home')return;M=m;V.view='list';render();scrollTo(0,0)}
 function renderB(){
