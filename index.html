@@ -593,6 +593,32 @@ tr.nuevo td{animation:flash 1.6s ease}
 @media (max-width:960px){#est-body .charts{grid-template-columns:1fr}.quick{grid-template-columns:1fr 1fr}.q-cta,.q-d{grid-column:1/-1}.top10{grid-template-columns:1fr}}
 
 .anio-sel{width:auto;display:inline-block;border:0;background:var(--sunk);font:inherit;font-weight:700;padding:0 22px 0 6px;border-radius:8px;cursor:pointer}
+.modsw{align-items:center}
+.modsw .cur{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mdd{position:relative;display:flex}
+.mdd-b{appearance:none;border:0;background:none;padding:6px 9px!important;border-radius:7px;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.mdd-b:hover,.mdd.open .mdd-b{background:#fff;color:var(--brand);box-shadow:0 1px 2px rgba(20,40,50,.12)}
+.mdd-b .chev{transition:transform .25s cubic-bezier(.3,.9,.3,1)}
+.mdd.open .mdd-b .chev{transform:rotate(180deg)}
+.mdd-pop{position:absolute;right:0;top:calc(100% + 10px);width:330px;background:#fff;border:1px solid var(--line-strong);border-radius:14px;box-shadow:0 18px 40px rgba(20,40,50,.16);padding:6px;z-index:45;
+  opacity:0;transform:translateY(-6px) scale(.97);transform-origin:top right;pointer-events:none;transition:opacity .18s ease,transform .22s cubic-bezier(.2,.9,.3,1.2)}
+.mdd.open .mdd-pop{opacity:1;transform:none;pointer-events:auto}
+.mdd-t{margin:4px 10px 6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mdd-pop button{appearance:none;display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:9px 10px;cursor:pointer;color:var(--ink);font:inherit}
+.mdd-pop button:hover,.mdd-pop button:focus-visible{background:var(--sunk)}
+.mdd-pop button.on{background:var(--brand-soft)}
+.mdd-ic{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--m1),var(--m2))}
+.mdd-ic svg{width:18px;height:18px}
+.mdd-x{flex:1;min-width:0}.mdd-x strong{display:block;font-size:14px}.mdd-x small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mdd-ok{color:var(--brand);font-weight:700}
+.mdd-pop button{opacity:0;transform:translateY(-4px);transition:opacity .2s ease,transform .2s ease,background .15s}
+.mdd.open .mdd-pop button{opacity:1;transform:none}
+.mdd.open .mdd-pop button:nth-of-type(2){transition-delay:30ms}.mdd.open .mdd-pop button:nth-of-type(3){transition-delay:60ms}.mdd.open .mdd-pop button:nth-of-type(4){transition-delay:90ms}.mdd.open .mdd-pop button:nth-of-type(5){transition-delay:120ms}
+@media (max-width:860px){.mdd-pop{right:auto;left:0;transform-origin:top left;width:min(330px,calc(100vw - 32px))}}
+.ben-w{align-self:center}
+.ben-chip{display:inline-block;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+.ben-chip.ok{color:var(--ok);background:var(--ok-soft);border-color:#BFE0CB}
+.ben-chip.err{color:var(--danger);background:var(--danger-soft);border-color:#F2C4C7}
 </style>
 </head>
 <body>
@@ -620,7 +646,7 @@ const CONFIG={
   sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
   lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',perifericos:'ActivosPerifericos',
          imontos:'IngresosMontos',iconfig:'IngresosConfig',ienvios:'IngresosEnvios',
-         ecta:'EstadosCuentas',emov:'EstadosMovimientos',
+         ecta:'EstadosCuentas',emov:'EstadosMovimientos',eben:'EstadosBeneficios',
          bpagos:'BoletasPagos',bbenef:'BoletasBeneficiarios',baut:'BoletasAutorizan',bemp:'BoletasEmpresas'},
   diasAviso:30                                       // días antes del aniversario en que aparece en Revisión
 };
@@ -655,6 +681,7 @@ const SCHEMA={
   imontos:[{name:'Mes',text:{}},{name:'Monto',number:{}}],
   ecta:[{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'Departamento',text:{}}],
   emov:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}}],
+  eben:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}},{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'OrigenId',number:{}}],
   iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}},{name:'Texto',text:{allowMultipleLines:true,textType:'plain'}}],
   ienvios:[{name:'Periodo',text:{}},{name:'Mes',text:{}},{name:'Destinatarios',text:{allowMultipleLines:true,textType:'plain'}},{name:'EnviadoPor',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Datos',text:{allowMultipleLines:true,textType:'plain'}}],
   perifericos:[{name:'Tipo',text:{}},{name:'Numero',number:{}},{name:'FechaCompra',dateTime:{format:'dateOnly'}},{name:'ResponsableId',number:{}},{name:'Ubicacion',text:{}},{name:'Marca',text:{}},{name:'Observaciones',text:{}},{name:'FechaDano',dateTime:{format:'dateOnly'}},{name:'MotivoDano',text:{}}],
@@ -798,7 +825,8 @@ async function connect(){
   /* Auditoría: sin acceso completo a Activos, pero con lectura de equipos y categorías → solo reportes de depreciación */
   G.aud=!G.mods.act&&!!G.listIds.equipos&&!!G.listIds.categorias&&!G.listIds.historial;
   /* Módulos disponibles para esta persona: con uno solo entra directo; con varios, al menú de Inicio */
-  const disp=[G.mods.act?'act':G.aud?'aud':null,G.mods.bol?'bol':null,G.mods.ing?'ing':null,G.mods.est?'est':null].filter(Boolean);
+  G.estBen=!G.mods.est&&!!G.listIds.eben&&!G.listIds.emov;
+  const disp=[G.mods.act?'act':G.aud?'aud':null,G.mods.bol?'bol':null,G.mods.ing?'ing':null,G.mods.est||G.estBen?'est':null].filter(Boolean);
   if(!disp.length)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de ningún módulo de Contaduría.');
   M=disp.length>1?'home':disp[0];
   /* Revisión de columnas: solo cuando cambia la estructura (se recuerda en este navegador) y todas a la vez */
@@ -818,7 +846,7 @@ async function connect(){
 }
 /* Huella de la estructura de las listas: si cambia, se vuelven a revisar las columnas */
 /* A qué módulo pertenece cada lista */
-const modDe=k=>k==='ecta'||k==='emov'?'est':k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
+const modDe=k=>k==='ecta'||k==='emov'||k==='eben'?'est':k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
 const SCHEMA_VER=(()=>{const t=JSON.stringify(SCHEMA)+JSON.stringify(CONFIG.lists);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return String(h)})();
 /* Pantalla de carga con el paso actual */
 function paso(t){const el=$('paso');if(el)el.textContent=t}
@@ -911,7 +939,7 @@ async function boot(){
   render();
   if(G.avisos.length)toast(G.avisos.join(' '));
   /* Estados se carga aparte (muchos movimientos) para no atrasar la entrada */
-  if(G.mods.est&&!ES.cargado)cargarEst().then(()=>{if(M==='home')render()}).catch(e=>console.warn('Estados',e));
+  if((G.mods.est||G.estBen)&&!ES.cargado)cargarEst().then(()=>{if(M==='home')render()}).catch(e=>console.warn('Estados',e));
 }
 
 /* ---------- Vista principal ---------- */
@@ -1762,6 +1790,7 @@ function indexarCat(){ES.catMap={};ES.cat.forEach(c=>ES.catMap[c.cta]=c)}
 function setAnio(y){ES.anio=y;ES.mov=ES.movAll.filter(x=>x.anio===y);const ult=Math.max(...mesesConDatos());
   ES.per={t:ES.per?.t||'año',m:ult,q:Math.ceil(ult/3),s:ult>6?2:1,de:1,a:ult};ES.mes=ES.mov.length?ult:(y===+hoy().slice(0,4)?+hoy().slice(5,7):1);ES.ana=null}
 async function cargarEst(){
+  if(G.estBen)return cargarEstBen();
   const [cs,ms]=await Promise.all([allItems('ecta'),allItems('emov')]);
   ES.cat=cs.map(i=>{const f=i.fields;return{id:+i.id,cta:(f.Title||'').trim(),nombre:f.Nombre||'',cat:f.Categoria||'',sub:f.Subcategoria||'',dep:f.Departamento||'',tipo:tipoDeCat(f.Categoria)}}).filter(c=>c.cta).sort((a,b)=>a.cta.localeCompare(b.cta));
   indexarCat();
@@ -1769,8 +1798,9 @@ async function cargarEst(){
   /* arranca en el año más reciente con datos */
   const ys=[...new Set(ES.movAll.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);
   ES.cargado=true;
+  setTimeout(syncBen,800);
 }
-function trasCambioEst(){ES.mov=ES.movAll.filter(x=>x.anio===ES.anio);ES.ana=null}
+function trasCambioEst(){ES.mov=ES.movAll.filter(x=>x.anio===ES.anio);ES.ana=null;syncBen()}
 
 /* ---------- Guardar movimientos ---------- */
 async function qAgregar(){const m=parseMe($('q-m').value),d=$('q-d').value.trim();
@@ -1812,7 +1842,7 @@ async function gCta(id){const v=k=>$(k).value.trim(),o={cta:v('c-c'),nombre:v('c
   const f={Title:o.cta,Nombre:o.nombre,Categoria:o.cat,Subcategoria:o.sub,Departamento:o.dep};cerrar();
   try{if(id){await setItem('ecta',id,f);Object.assign(ES.cat.find(x=>x.id===id),o,{tipo:tipoDeCat(o.cat)})}
     else{const r=await addItem('ecta',f);ES.cat.push({id:+r.id,...o,tipo:tipoDeCat(o.cat)})}
-    indexarCat();ES.ana=null;renderEst();toast('Cuenta guardada')}catch(e){console.error(e);toast('No se pudo guardar: '+(e.message||e))}}
+    indexarCat();ES.ana=null;renderEst();toast('Cuenta guardada');syncBen()}catch(e){console.error(e);toast('No se pudo guardar: '+(e.message||e))}}
 
 /* ---------- Estado de resultados a Excel ---------- */
 async function excelER(){try{if(!window.XLSX){toast('Preparando Excel…');await cargarScript(XLSX_URL)}}catch(e){return toast('No se pudo cargar el generador de Excel.')}
@@ -1862,6 +1892,49 @@ async function importarEst(){const I=V.imp;if(!I||busy)return;I.corriendo=true;$
   catch(e){console.error(e);I.corriendo=false;$('i-f').disabled=false;res.innerHTML=`<div class="err" style="display:block">No se pudo importar: ${esc(e.message||e)}</div>`}}
 
 
+/* =====================================================================
+   COPIA DE BENEFICIOS: lista EstadosBeneficios con solo los movimientos de Beneficios
+   (con la cuenta, categoría y subcategoría ya incluidas). Quien solo tiene permiso en esa
+   lista ve únicamente el dashboard de Beneficios; también la puede leer una futura página de Beneficios.
+   La página la mantiene al día sola: después de cada cambio compara y corrige lo que falte.
+   ===================================================================== */
+const DEP_BEN='Beneficios';
+const BEN={items:{},cargado:false,estado:'',corriendo:false,pend:false};
+const esBen=cta=>CTA(cta)?.dep===DEP_BEN;
+const benCampos=x=>{const c=CTA(x.cta);return{Title:x.cta,Anio:x.anio,Mes:x.mes,Monto:x.monto,Descripcion:x.desc||'',Nombre:c?.nombre||'',Categoria:c?.cat||'',Subcategoria:c?.sub||'',OrigenId:x.id}};
+const benIgual=(a,b)=>['Title','Anio','Mes','Monto','Descripcion','Nombre','Categoria','Subcategoria'].every(k=>String(a[k]??'')===String(b[k]??''));
+async function syncBen(){
+  if(!G.listIds.eben||!ES.cargado||ES.soloBen)return;
+  if(BEN.corriendo){BEN.pend=true;return}
+  BEN.corriendo=true;estadoBen('Sincronizando…');
+  try{
+    if(!BEN.cargado){BEN.items={};(await allItems('eben')).forEach(i=>{const f=i.fields,o=+f.OrigenId;if(!o)return;if(BEN.items[o])BEN.items[o+'_dup'+i.id]={id:+i.id,f,dup:true};else BEN.items[o]={id:+i.id,f}});BEN.cargado=true}
+    const quiere={};ES.movAll.filter(x=>esBen(x.cta)).forEach(x=>quiere[x.id]=benCampos(x));
+    const ops=[],tras=[];
+    for(const [o,f] of Object.entries(quiere)){const m=BEN.items[o];
+      if(!m){ops.push({method:'POST',url:`${LP('eben')}/items`,body:{fields:f}});tras.push(r=>{if(r.status<300)BEN.items[o]={id:+r.body.id,f}})}
+      else if(!benIgual(m.f,f)){ops.push({method:'PATCH',url:`${LP('eben')}/items/${m.id}/fields`,body:f});tras.push(r=>{if(r.status<300)m.f={...m.f,...f}})}}
+    for(const [k,m] of Object.entries(BEN.items))if(m.dup||!quiere[k]){ops.push({method:'DELETE',url:`${LP('eben')}/items/${m.id}`});tras.push(r=>{if(r.status<300||r.status===404)delete BEN.items[k]})}
+    if(ops.length){const r=await batch(ops);r.forEach((x,i)=>x&&tras[i](x));const f=r.filter(x=>!x||(x.status>=300&&x.status!==404)).length;if(f)throw new Error(f+' cambios no se pudieron copiar')}
+    estadoBen('ok');
+  }catch(e){console.error('Beneficios',e);estadoBen('error')}
+  finally{BEN.corriendo=false;if(BEN.pend){BEN.pend=false;syncBen()}}
+}
+function estadoBen(t){BEN.estado=t;const el=$('ben-st');if(el)el.innerHTML=chipBen()}
+function chipBen(){if(!G.listIds.eben)return '';const n=Object.keys(BEN.items).length;
+  return BEN.estado==='error'?`<span class="ben-chip err">Copia de Beneficios con errores · <button class="lnk" onclick="BEN.cargado=false;syncBen()">Reintentar</button></span>`
+   :BEN.estado==='ok'?`<span class="ben-chip ok">✓ Copia de Beneficios al día · ${fmt0(n)} movimientos</span>`
+   :`<span class="ben-chip">Actualizando copia de Beneficios…</span>`}
+
+/* ---------- Solo lectura: quien solo tiene la lista EstadosBeneficios ---------- */
+async function cargarEstBen(){
+  const it=await allItems('eben'),cats={};
+  ES.movAll=it.map(i=>{const f=i.fields,c=(f.Title||'').trim();if(c&&!cats[c])cats[c]={id:+i.id,cta:c,nombre:f.Nombre||'',cat:f.Categoria||'',sub:f.Subcategoria||'',dep:DEP_BEN,tipo:tipoDeCat(f.Categoria)};
+    return{id:+i.id,cta:c,anio:+f.Anio||0,mes:+f.Mes||0,monto:+f.Monto||0,desc:f.Descripcion||''}}).filter(x=>x.cta&&x.anio&&x.mes>=1&&x.mes<=12);
+  ES.cat=Object.values(cats);indexarCat();ES.soloBen=true;ES.dep=DEP_BEN;ES.sub='dash';
+  const ys=[...new Set(ES.movAll.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);ES.cargado=true;
+}
+
 /* ---------- Pantallas de Estados ---------- */
 const DEPTOS=['Beneficios','Ventas Corporativas','Administrativo'];
 const IMPUESTO=0.30;   /* impuesto sobre la renta usado en tu estado de resultados */
@@ -1897,9 +1970,10 @@ const ICO={dash:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" str
   cat:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'};
 function renderEst(){
   if(!ES.cargado){$('app').innerHTML='<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando estados…</p></div></div>';cargarEst().then(()=>{if(M==='est')renderEst()}).catch(e=>{console.error(e);$('app').innerHTML=`<div class="gate"><h1>No se pudieron cargar los estados</h1><p>${esc(e.message||e)}</p><button class="btn" onclick="ES.cargado=false;renderEst()">Intentar de nuevo</button></div>`});return}
+  if(ES.soloBen)ES.sub='dash';
   const it=[['dash','Dashboard','Resultados por departamento'],['carga','Cargar datos','Movimientos de cada mes'],['cat','Catálogo de cuentas',plural(ES.cat.length,'cuenta','cuentas')]];
-  $('app').innerHTML=`<div class="head"><div><h1>Estados por departamento</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.anio}.</p></div></div>
-  <nav class="adm-nav horiz" aria-label="Secciones">${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
+  $('app').innerHTML=`<div class="head"><div><h1>${ES.soloBen?'Estados · Beneficios':'Estados por departamento'}</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.soloBen?'Beneficios en ':''}${ES.anio}.</p></div>${ES.soloBen?'':'<div id="ben-st" class="ben-w">'+chipBen()+'</div>'}</div>
+  <nav class="adm-nav horiz" aria-label="Secciones" ${ES.soloBen?'hidden':''}>${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
   <div class="fade" id="est-body">${{dash:tDash,carga:tCarga,cat:tCatE}[ES.sub]()}</div>`;
   if(ES.sub==='dash'){refreshDash();requestAnimationFrame(moverInd)}
   if(ES.sub==='carga')filasMes();
@@ -1923,7 +1997,7 @@ function selPer(){const md=mesesConDatos(),p=ES.per,ult=Math.max(...md),o=(v,l,o
   return `<span class="per-pill pop">${ic}${c}</span>`}
 function tDash(){periodo();
   return `<div class="est-fil2">
-   <div class="seg dep-seg" role="radiogroup" aria-label="Departamento" id="dep-seg">${[['','Todos'],...DEPTOS.map(d=>[d,d])].map(([v,l])=>`<button role="radio" aria-checked="${ES.dep===v}" data-v="${esc(v)}" title="${esc(l)}" onclick="setDep(${js(v)})">${l==='Ventas Corporativas'?'Ventas Corp.':l}</button>`).join('')}</div>
+   ${ES.soloBen?`<span class="pill Sinrev" style="font-size:13px;padding:6px 12px">Departamento: <strong>${DEP_BEN}</strong> · solo lectura</span>`:''}<div class="seg dep-seg" role="radiogroup" aria-label="Departamento" id="dep-seg" ${ES.soloBen?'hidden':''}>${[['','Todos'],...DEPTOS.map(d=>[d,d])].map(([v,l])=>`<button role="radio" aria-checked="${ES.dep===v}" data-v="${esc(v)}" title="${esc(l)}" onclick="setDep(${js(v)})">${l==='Ventas Corporativas'?'Ventas Corp.':l}</button>`).join('')}</div>
    <div class="per-box"><div class="seg seg-sl" role="radiogroup" aria-label="Tipo de período" id="tipo-seg" style="margin:0"><span class="seg-ind" aria-hidden="true"></span>${TIPOS_PERIODO.map(([k,l])=>`<button role="radio" aria-checked="${ES.per.t===k}" data-k="${k}" onclick="setTipo('${k}')">${l}</button>`).join('')}</div>
     <div class="per-w" id="per-w">${selPer()}</div></div>
   </div>
@@ -2019,7 +2093,7 @@ function pintarAnalisis(){
     D.push(`El mejor mes fue <b>${MESES[mj.k]}</b> (${f0(mj.u)}) y el más débil <b>${MESES[pe.k]}</b> (<span class="${pe.u<0?'neg':''}">${f0(pe.u)}</span>).`)}
   if(!ES.dep){const ds=DEPTOS.map(d=>{const i=sumR(B.porDep[d].map(x=>x.i),r),g=sumR(B.porDep[d].map(x=>x.g),r);return{d,u:i-g,m:i?(i-g)/i*100:null}}).sort((a,b)=>b.u-a.u);
     D.push(`<b>${ds[0].d}</b> es el departamento más rentable (${f0(ds[0].u)}${ds[0].m!=null?`, margen ${ds[0].m.toFixed(0)}%`:''}); <b>${ds[ds.length-1].d}</b> el de menor resultado (${f0(ds[ds.length-1].u)}).`)}
-  else{const tot=sumR(B.porMes.map(x=>x.i),r);if(tot)D.push(`${esc(ES.dep)} generó el <b>${(ti/tot*100).toFixed(1)}%</b> de los ingresos totales del período.`)}
+  else if(!ES.soloBen){const tot=sumR(B.porMes.map(x=>x.i),r);if(tot)D.push(`${esc(ES.dep)} generó el <b>${(ti/tot*100).toFixed(1)}%</b> de los ingresos totales del período.`)}
   const fuentes=Object.values(A.ing).flatMap(o=>Object.entries(o.subs)).map(([k,v])=>({k,v:sumR(v,r)})).sort((a,b)=>b.v-a.v);
   if(fuentes[0]&&ti)D.push(`La principal fuente de ingreso es <b>${esc(fuentes[0].k)}</b>, con el <b>${(fuentes[0].v/ti*100).toFixed(1)}%</b> de los ingresos.`);
   /* Alertas */
@@ -2187,7 +2261,7 @@ const ICO_MOD={
   home:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   act:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>',
   bol:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2V3z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>'};
-const multiMod=()=>[G.mods?.act||G.aud,G.mods?.bol,G.mods?.ing,G.mods?.est].filter(Boolean).length>1;
+const multiMod=()=>[G.mods?.act||G.aud,G.mods?.bol,G.mods?.ing,G.mods?.est||G.estBen].filter(Boolean).length>1;
 const mesActual=()=>hoy().slice(0,7);
 const MODULOS=[
   {id:'act',nombre:'Activos y equipos',desc:'Inventario, actas de entrega, revisión anual y depreciación',c1:'#0D6174',c2:'#3FA3A8',
@@ -2209,8 +2283,8 @@ const MODULOS=[
        alerta:d.faltan?`${plural(d.faltan,'monto pendiente','montos pendientes')}`:'',
        links:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]}}},
   {id:'est',nombre:'Estados por departamento',desc:'Ingresos, gastos y utilidad por departamento, con análisis del período',c1:'#5B4BB5',c2:'#9C8FE0',
-   ok:()=>G.mods?.est,
-   datos:()=>{const links=[['Dashboard',"ES.sub='dash'"],['Cargar datos',"ES.sub='carga'"],['Catálogo',"ES.sub='cat'"]];
+   ok:()=>G.mods?.est||G.estBen,
+   datos:()=>{const links=G.estBen?[]:[['Dashboard',"ES.sub='dash'"],['Cargar datos',"ES.sub='carga'"],['Catálogo',"ES.sub='cat'"]];
      if(!ES.cargado)return{stats:[['Cargando datos…','']],links};
      const y=ES.anio,mv=ES.movAll.filter(x=>x.anio===y),ti=mv.filter(x=>CTA(x.cta)?.tipo==='I').reduce((s2,x)=>s2+x.monto,0),tg=mv.filter(x=>CTA(x.cta)?.tipo==='G').reduce((s2,x)=>s2+x.monto,0),ul=mv.length?Math.max(...mv.map(x=>x.mes)):0;
      return{stats:[['Utilidad '+y,compactE(ti-tg)],['Margen',ti?((ti-tg)/ti*100).toFixed(1)+'%':'—'],['Último mes cargado',ul?MESES[ul-1]:'Ninguno']],links}}}
@@ -2597,10 +2671,20 @@ const tarjetaTxt=t=>`${t.banco} · ${MON[t.mon].s} ${MON[t.mon].n} · •••�
 
 /* ---------- Encabezado del módulo ---------- */
 /* Navegación de arriba: solo para quien tiene varios módulos */
+const corto=id=>({act:'Activos',bol:'Boletas',ing:'Ingresos',est:'Estados'})[id]||id;
+const ICO_CHEV='<svg class="chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+/* Navegación de arriba: Inicio, el módulo actual y una flechita que despliega los demás */
 function modSwitch(){if(!multiMod())return '';
-  const it=[['home','Inicio',ICO_MOD.home],...MODULOS.filter(m=>m.ok()).map(m=>[m.id,m.id==='act'?'Activos':m.id==='bol'?'Boletas':m.id==='ing'?'Ingresos':m.id==='est'?'Estados':m.nombre,''])];
-  return `<nav class="modsw" aria-label="Módulos">${it.map(([k,l,ic])=>`<button aria-pressed="${M===k||(k==='act'&&M==='aud')}" onclick="irMod('${k}')">${ic}${l}</button>`).join('')}</nav>`}
-function irMod(m){if(m!=='home'&&G.mods&&!G.mods[m]&&!(m==='act'&&G.aud))return;if(m==='ing'&&M!=='ing')IV.tab='ing';if(m===M&&V.view!=='acta'&&m!=='home')return;M=m;V.view='list';render();scrollTo(0,0)}
+  const mods=MODULOS.filter(m=>m.ok()),cur=mods.find(m=>m.id===M||(m.id==='act'&&M==='aud'));
+  return `<nav class="modsw" aria-label="Módulos"><button aria-pressed="${M==='home'}" onclick="irMod('home')">${ICO_MOD.home}Inicio</button>
+   ${cur?`<button aria-pressed="true" class="cur" onclick="toggleMdd(event)">${corto(cur.id)}</button>`:''}
+   <div class="mdd" id="mdd"><button class="mdd-b" aria-haspopup="true" aria-expanded="false" aria-label="Ver todos los módulos" title="Módulos" onclick="toggleMdd(event)">${ICO_CHEV}</button>
+    <div class="mdd-pop" role="menu" aria-label="Módulos"><p class="mdd-t">Módulos</p>${mods.map(m=>`<button role="menuitem" class="${cur&&cur.id===m.id?'on':''}" style="--m1:${m.c1};--m2:${m.c2}" onclick="cerrarMdd();irMod('${m.id}')"><span class="mdd-ic">${ICO_MOD[m.id]}</span><span class="mdd-x"><strong>${esc(m.nombre)}</strong><small>${esc(m.desc)}</small></span>${cur&&cur.id===m.id?'<span class="mdd-ok" aria-label="Actual">✓</span>':''}</button>`).join('')}</div></div></nav>`}
+function toggleMdd(e){e.stopPropagation();const d=$('mdd');if(!d)return;const o=!d.classList.contains('open');d.classList.toggle('open',o);d.querySelector('.mdd-b').setAttribute('aria-expanded',o);if(o)d.querySelector('.mdd-pop button')?.focus()}
+function cerrarMdd(){const d=$('mdd');if(d){d.classList.remove('open');d.querySelector('.mdd-b')?.setAttribute('aria-expanded','false')}}
+document.addEventListener('click',e=>{const d=$('mdd');if(d&&!d.contains(e.target))cerrarMdd()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarMdd()});
+function irMod(m){if(m!=='home'&&G.mods&&!G.mods[m]&&!(m==='act'&&G.aud)&&!(m==='est'&&G.estBen))return;if(m==='ing'&&M!=='ing')IV.tab='ing';if(m===M&&V.view!=='acta'&&m!=='home')return;M=m;V.view='list';render();scrollTo(0,0)}
 function renderB(){
   $('app').innerHTML=`<div class="head"><h1>Boletas de pago</h1></div>
   <div class="tabs" role="tablist">${[['nueva','Nueva boleta'],['hist','Historial'],['ben','Beneficiarios'],['aut','Autorizan'],['emp','Empresas']].map(([k,l])=>`<button class="tab" role="tab" aria-selected="${B.tab===k}" onclick="B.tab='${k}';renderB()">${l}</button>`).join('')}</div>
