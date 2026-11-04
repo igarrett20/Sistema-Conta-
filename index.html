@@ -619,6 +619,9 @@ tr.nuevo td{animation:flash 1.6s ease}
 .ben-chip{display:inline-block;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
 .ben-chip.ok{color:var(--ok);background:var(--ok-soft);border-color:#BFE0CB}
 .ben-chip.err{color:var(--danger);background:var(--danger-soft);border-color:#F2C4C7}
+.sk{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#EEF2F4 25%,#F7F9FA 50%,#EEF2F4 75%);background-size:200% 100%;animation:shimmer 1.2s ease-in-out infinite}
+@keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+.spin.sm{display:inline-block;width:14px;height:14px;border-width:2px;vertical-align:-2px;margin-right:6px}
 </style>
 </head>
 <body>
@@ -768,9 +771,11 @@ async function gx(method,path,body,scopes){
   return j;
 }
 const LP=k=>`/sites/${G.siteId}/lists/${G.listIds[k]}`;
-async function allItems(list){
-  let url=`${LP(list)}/items?$expand=fields&$top=999`,out=[];
-  while(url){const j=await gx('GET',url);out=out.concat(j.value);url=j['@odata.nextLink']||null}
+async function allItems(list,completo){
+  const cols=['Title',...(SCHEMA[list]||[]).map(c=>c.name)].join(',');
+  let url=completo?`${LP(list)}/items?$expand=fields&$top=999`:`${LP(list)}/items?$select=id,createdDateTime,createdBy&$expand=fields($select=${cols})&$top=999`,out=[];
+  try{while(url){const j=await gx('GET',url);out=out.concat(j.value);url=j['@odata.nextLink']||null}}
+  catch(e){if(!completo&&e.status===400)return allItems(list,true);throw e}   /* por si alguna columna todavía no existe */
   return out;
 }
 const addItem=(list,fields)=>gx('POST',`${LP(list)}/items`,{fields});
@@ -865,16 +870,11 @@ async function alMenu(id,name,tk){
   if(await go('application/json;odata=verbose',{__metadata:{type:'SP.List'},OnQuickLaunch:true}))return;
   aviso();
 }
-async function loadAll(){
-  const [pe,eq,hi,ub,bp,bb,ba,be,ca,pf,im,ic,ie]=await Promise.all(['personal','equipos','historial','ubicaciones','bpagos','bbenef','baut','bemp','categorias','perifericos','imontos','iconfig','ienvios'].map(k=>G.listIds[k]?allItems(k):[]));
+/* ---------- Carga por módulo: cada uno trae sus listas en segundo plano ---------- */
+const LOADERS={
+ act:async()=>{const [pe,eq,hi,ub,ca,pf]=await Promise.all(['personal','equipos','historial','ubicaciones','categorias','perifericos'].map(k=>G.listIds[k]?allItems(k):[]));
   S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
-  /* Ingresos aseguradoras */
-  S.ing.aseg=ic.filter(i=>lc(i.fields.Tipo)==='aseguradora'&&i.fields.Title).map(i=>({id:+i.id,nombre:i.fields.Title.trim(),orden:+i.fields.Orden||0})).sort((a,b)=>a.orden-b.orden||a.nombre.localeCompare(b.nombre));
-  S.ing.textos={};ic.filter(i=>lc(i.fields.Tipo)==='texto').forEach(i=>S.ing.textos[i.fields.Title]={id:+i.id,v:i.fields.Texto||''});
-  S.ing.dest=ic.filter(i=>lc(i.fields.Tipo)==='destinatario'&&i.fields.Correo).map(i=>({id:+i.id,n:(i.fields.Title||'').trim(),e:i.fields.Correo.trim().toLowerCase()})).sort((a,b)=>a.n.localeCompare(b.n));
-  S.ing.montos={};S.ing.ids={};im.forEach(i=>{const f=i.fields,k=(f.Title||'').trim()+'|'+(f.Mes||'');if(f.Monto==null||f.Monto==='')return;S.ing.montos[k]={id:+i.id,v:+f.Monto};S.ing.ids[k]=+i.id});
-  S.ing.envios=ie.map(i=>{const f=i.fields,dd=J(f.Datos,{});return{f:rd(f.Fecha),per:f.Periodo||'',por:f.EnviadoPor||'',dest:f.Destinatarios||'',orden:dd.orden||[],msg:dd.msg||'',t:Date.parse(i.createdDateTime)||0}}).sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
   S.per=pf.map(i=>{const f=i.fields;return{id:+i.id,cod:f.Title||'',tipo:f.Tipo||'',num:+f.Numero||0,fc:rd(f.FechaCompra),asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),marca:f.Marca||'',obs:f.Observaciones||'',dano:rd(f.FechaDano),motivo:f.MotivoDano||''}}).filter(x=>x.tipo&&x.fc);
   S.cats=ca.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cg:(i.fields.CuentaGasto||'').trim(),cc:(i.fields.CuentaDepAcum||'').trim()})).filter(c=>c.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
@@ -891,6 +891,8 @@ async function loadAll(){
   /* Equipos borrados con la versión anterior (ya no están en la lista): se reconstruyen desde el historial */
   const yaEsta=new Set(S.todos.map(x=>x.cod));S.fant=[];
   S.hist.forEach(h=>{if(h.a.startsWith('Eliminado')&&!yaEsta.has(h.cod)){yaEsta.add(h.cod);S.fant.push({cod:h.cod,eq:'',cat:'',serie:'',del:true,ghost:true,delF:h.f,delM:h.a.replace(/^Eliminado:?\s*/,''),de:h.de||''})}});
+},
+ bol:async()=>{const [bp,bb,ba,be]=await Promise.all(['bpagos','bbenef','baut','bemp'].map(k=>G.listIds[k]?allItems(k):[]));
   /* Boletas */
   S.benef=bb.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cuenta:fmtIban(i.fields.Cuenta||'')})).filter(b=>b.nombre);
   S.aut=ba.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(a=>a.nombre);
@@ -901,8 +903,24 @@ async function loadAll(){
     cta:f.CuentaDebito||'',banco:f.Banco||'',mon:MON[f.Moneda]?f.Moneda:'CRC',monto:+f.Monto||0,concepto:f.Concepto||'',hecho:f.HechoPor||'',aut:f.Autoriza||'',snap:J(f.EmpresaDatos,null),
     lineas:(J(f.Pagos,null)||[{benef:f.Beneficiario||'',cuentaB:f.CuentaBeneficiario||'',monto:+f.Monto||0,concepto:f.Concepto||''}]).map(l=>({benef:l.benef||'',cuentaB:fmtIban(l.cuentaB||''),monto:+l.monto||0,concepto:l.concepto||''}))}}).filter(b=>EMPRESAS[b.emp]);
   S.pagos.forEach(b=>{if(b.mov!=='Tarjeta de crédito')b.cta=fmtIban(b.cta)});
-  S.pagos.forEach(b=>{b.benef=b.lineas[0].benef;b.cuentaB=b.lineas[0].cuentaB});
+  S.pagos.forEach(b=>{b.benef=b.lineas[0].benef;b.cuentaB=b.lineas[0].cuentaB});},
+ ing:async()=>{const [im,ic,ie]=await Promise.all(['imontos','iconfig','ienvios'].map(k=>G.listIds[k]?allItems(k):[]));
+  /* Ingresos aseguradoras */
+  S.ing.aseg=ic.filter(i=>lc(i.fields.Tipo)==='aseguradora'&&i.fields.Title).map(i=>({id:+i.id,nombre:i.fields.Title.trim(),orden:+i.fields.Orden||0})).sort((a,b)=>a.orden-b.orden||a.nombre.localeCompare(b.nombre));
+  S.ing.textos={};ic.filter(i=>lc(i.fields.Tipo)==='texto').forEach(i=>S.ing.textos[i.fields.Title]={id:+i.id,v:i.fields.Texto||''});
+  S.ing.dest=ic.filter(i=>lc(i.fields.Tipo)==='destinatario'&&i.fields.Correo).map(i=>({id:+i.id,n:(i.fields.Title||'').trim(),e:i.fields.Correo.trim().toLowerCase()})).sort((a,b)=>a.n.localeCompare(b.n));
+  S.ing.montos={};S.ing.ids={};im.forEach(i=>{const f=i.fields,k=(f.Title||'').trim()+'|'+(f.Mes||'');if(f.Monto==null||f.Monto==='')return;S.ing.montos[k]={id:+i.id,v:+f.Monto};S.ing.ids[k]=+i.id});
+  S.ing.envios=ie.map(i=>{const f=i.fields,dd=J(f.Datos,{});return{f:rd(f.Fecha),per:f.Periodo||'',por:f.EnviadoPor||'',dest:f.Destinatarios||'',orden:dd.orden||[],msg:dd.msg||'',t:Date.parse(i.createdDateTime)||0}}).sort((a,b)=>b.f.localeCompare(a.f)||b.t-a.t);
 }
+};
+const CARGA={act:{ok:false,p:null,err:null},bol:{ok:false,p:null,err:null},ing:{ok:false,p:null,err:null}};
+const modDatos=m=>m==='aud'?'act':m;
+const modDisponible=k=>k==='act'?(G.mods?.act||G.aud):!!G.mods?.[k];
+function cargarMod(m){const k=modDatos(m),c=CARGA[k];if(!c||c.ok)return Promise.resolve();
+  if(!c.p)c.p=LOADERS[k]().then(()=>{c.ok=true;c.err=null;c.p=null}).catch(e=>{c.p=null;c.err=e;throw e});return c.p}
+/* Después de guardar: recarga solo el módulo en el que estás (o los ya cargados, si estás en el Inicio) */
+async function loadAll(){const k=modDatos(M),ks=CARGA[k]?[k]:Object.keys(CARGA).filter(x=>CARGA[x].ok);
+  await Promise.all(ks.map(x=>LOADERS[x]().then(()=>{CARGA[x].ok=true})))}
 /* Guarda en SharePoint, recarga y vuelve a pintar */
 async function act(fn,okMsg,after){
   if(busy)return false;busy=true;document.body.classList.add('busy');
@@ -931,7 +949,7 @@ async function boot(){
     screen('<h1>Esta página necesita una conexión segura</h1><p>Ábrela con una dirección que empiece con <strong>https://</strong>.</p>');return}
   try{await initAuth()}catch(e){console.error(e);screen(`<h1>No se pudo iniciar sesión</h1><p>${esc(e.message)}</p>`);return}
   if(!G.account){screen('<h1>Activos y equipos</h1><p>Entra con tu cuenta de trabajo de Microsoft, la misma de Outlook y Teams. El acceso es solo para contaduría.</p><button class="btn primary" onclick="login()">Iniciar sesión</button>');return}
-  try{await connect();showUser();await loadAll()}
+  try{await connect();showUser();arrancarCargas()}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
       ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero no tiene permiso en este sistema. Si deberías tener acceso, pide que te den permiso en las listas de SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
@@ -944,7 +962,17 @@ async function boot(){
 
 /* ---------- Vista principal ---------- */
 let M='act';
-function render(){if(M==='est'){renderEst();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
+/* Inicia la carga de cada módulo en segundo plano; el Inicio se va llenando solo */
+let _homeT=null;
+function arrancarCargas(){Object.keys(CARGA).filter(modDisponible).forEach(k=>cargarMod(k).then(()=>{if(M==='home'){clearTimeout(_homeT);_homeT=setTimeout(render,60)}}).catch(e=>{console.error('Carga '+k,e);if(e.message!=='redirect'&&M==='home')render()}))}
+/* Si el módulo todavía no terminó de cargar, muestra un indicador solo de ese módulo */
+function esperarMod(){const k=modDatos(M),c=CARGA[k];if(!c||c.ok)return false;
+  const nombre={act:'activos',bol:'boletas',ing:'ingresos'}[k];
+  if(c.err&&!c.p){$('app').innerHTML=`<div class="gate"><h1>No se pudieron cargar los ${nombre}</h1><p>${esc(c.err.message||c.err)}</p><button class="btn" onclick="CARGA['${k}'].err=null;render()">Intentar de nuevo</button></div>`;return true}
+  $('app').innerHTML=`<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando ${nombre}…</p></div></div>`;
+  const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();
+  cargarMod(k).then(()=>{if(modDatos(M)===k)render()}).catch(()=>{if(modDatos(M)===k)render()});return true}
+function render(){if(M!=='home'&&M!=='est'&&esperarMod())return;if(M==='est'){renderEst();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
 function renderA(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
   const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
@@ -2296,27 +2324,27 @@ function renderHome(){
   const fecha=`${DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)}, ${d.getDate()} de ${MESES[d.getMonth()].toLowerCase()} de ${d.getFullYear()}`;
   /* Pendientes de todos los módulos */
   const pend=[];
-  if(G.mods?.act){const pn=pendientes().length,sd=calcDep().filas.filter(r=>r.d.sin&&!r.x.del).length,pa=S.per.filter(x=>estPer(x)==='pend').length;
+  if(G.mods?.act&&CARGA.act.ok){const pn=pendientes().length,sd=calcDep().filas.filter(r=>r.d.sin&&!r.x.del).length,pa=S.per.filter(x=>estPer(x)==='pend').length;
     if(pn)pend.push(['p-warn',`${plural(pn,'activo cumplió','activos cumplieron')} año y ${pn===1?'necesita':'necesitan'} revisión de estado`,'act',"V.tab='rev'"]);
     if(sd)pend.push(['p-info',`${plural(sd,'activo no tiene','activos no tienen')} precio o factor de depreciación`,'act',"V.tab='dep';V.dep&&(V.dep.est='sin')"]);
     if(pa)pend.push(['p-info',`${plural(pa,'mouse, teclado o adaptador está','mouse, teclados o adaptadores están')} por asignar`,'act',"V.tab='eq';V.eqsub='per';V.pf=Object.assign(V.pf||{tipo:''},{est:'pend'})"])}
   if(G.mods?.est&&ES.cargado){const d=new Date(),pm=d.getMonth()===0?12:d.getMonth(),py=d.getMonth()===0?d.getFullYear()-1:d.getFullYear();
     if(!ES.movAll.some(x=>x.anio===py&&x.mes===pm))pend.push(['p-warn',`No se han cargado los movimientos de ${MESES[pm-1].toLowerCase()} en Estados por departamento`,'est',"ES.sub='carga';setAnio("+py+");ES.mes="+pm])}
-  if(G.mods?.ing){const f=IV.fin||finIni(),d=datosIng(f),env=S.ing.envios.some(e=>e.per===periodoIng(f));
+  if(G.mods?.ing&&CARGA.ing.ok){const f=IV.fin||finIni(),d=datosIng(f),env=S.ing.envios.some(e=>e.per===periodoIng(f));
     if(d.faltan)pend.push(['p-warn',`Faltan ${plural(d.faltan,'monto','montos')} de aseguradoras para ${periodoIng(f)}`,'ing',"IV.tab='ing'"]);
     else if(!env&&d.tot)pend.push(['p-info',`El reporte de aseguradoras de ${periodoIng(f)} está listo pero no se ha enviado a comercial`,'ing',"IV.tab='ing'"])}
-  if(G.mods?.bol){const sc=S.benef.filter(b=>!b.cuenta).length;if(sc)pend.push(['p-info',`${plural(sc,'beneficiario no tiene','beneficiarios no tienen')} cuenta registrada`,'bol',"B.tab='ben'"])}
+  if(G.mods?.bol&&CARGA.bol.ok){const sc=S.benef.filter(b=>!b.cuenta).length;if(sc)pend.push(['p-info',`${plural(sc,'beneficiario no tiene','beneficiarios no tienen')} cuenta registrada`,'bol',"B.tab='ben'"])}
   $('app').innerHTML=`<div class="home fade">
    <div class="home-h"><div><p class="home-f">${fecha}</p><h1>${esc(saludo())}</h1><p class="muted" style="margin:4px 0 0">Elige un módulo para empezar.</p></div></div>
-   <div class="mods">${ms.map((m,i)=>{const x=m.datos();return `<article class="mod" style="--m1:${m.c1};--m2:${m.c2};animation-delay:${i*70}ms">
+   <div class="mods">${ms.map((m,i)=>{const k=modDatos(m.id),listo=!CARGA[k]||CARGA[k].ok,x=listo?m.datos():{stats:[['',''],['',''],['','']],links:m.datos.length===0?[]:[],cargando:true};return `<article class="mod" style="--m1:${m.c1};--m2:${m.c2};animation-delay:${i*70}ms">
      <button class="mod-main" onclick="irA('${m.id}')" aria-label="Abrir ${esc(m.nombre)}">
       <div class="mod-top"><span class="mod-ic">${ICO_MOD[m.id]}</span>${x.alerta?`<span class="mod-al">${esc(x.alerta)}</span>`:''}</div>
       <h2>${esc(m.nombre)}</h2><p>${esc(m.desc)}</p>
-      <div class="mod-st">${x.stats.map(([l,v])=>`<div><strong>${esc(String(v))}</strong><span>${esc(l)}</span></div>`).join('')}</div>
+      <div class="mod-st">${x.cargando?[70,55,62].map(w=>`<div><span class="sk" style="width:${w}%;height:18px"></span><span class="sk" style="width:${w+15}%;margin-top:6px"></span></div>`).join(''):x.stats.map(([l,v])=>`<div><strong>${esc(String(v))}</strong><span>${esc(l)}</span></div>`).join('')}</div>
       <span class="mod-go">Abrir <span aria-hidden="true">→</span></span></button>
      ${x.links.length?`<div class="mod-lk">${x.links.map(([l,a])=>`<button onclick="irA('${m.id}',${js(a)})">${esc(l)}</button>`).join('')}</div>`:''}
     </article>`}).join('')}</div>
-   <section class="home-p"><h2>Pendientes</h2>${pend.length?`<ul>${pend.map(([t,txt,mod,a])=>`<li class="${t}"><span class="dot"></span><span>${txt}</span><button class="lnk" onclick="irA('${mod}',${js(a)})">Ver</button></li>`).join('')}</ul>`:'<p class="empty" style="padding:6px 0">Todo al día. No hay pendientes.</p>'}</section>
+   <section class="home-p"><h2>Pendientes</h2>${pend.length?`<ul>${pend.map(([t,txt,mod,a])=>`<li class="${t}"><span class="dot"></span><span>${txt}</span><button class="lnk" onclick="irA('${mod}',${js(a)})">Ver</button></li>`).join('')}</ul>`:(Object.keys(CARGA).some(k=>modDisponible(k)&&!CARGA[k].ok)||((G.mods?.est||G.estBen)&&!ES.cargado)?'<p class="muted" style="padding:6px 0;margin:0"><span class="spin sm" aria-hidden="true"></span> Revisando pendientes…</p>':'<p class="empty" style="padding:6px 0">Todo al día. No hay pendientes.</p>')}</section>
   </div>`;
 }
 
