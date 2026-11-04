@@ -629,6 +629,9 @@ tr.nuevo td{animation:flash 1.6s ease}
 table.ret-t{font-size:13px}table.ret-t td.r,table.ret-t th.r{text-align:right;white-space:nowrap}
 table.ret-t td.ret-d{max-width:260px;color:var(--ink)}
 table.ret-t tr.ghost td{opacity:.6}
+.mod-st.swap{animation:swapIn .35s ease both}
+@keyframes swapIn{from{opacity:.25}to{opacity:1}}
+.mod-lk:empty{display:none}
 </style>
 </head>
 <body>
@@ -964,14 +967,14 @@ async function boot(){
   render();
   if(G.avisos.length)toast(G.avisos.join(' '));
   /* Estados se carga aparte (muchos movimientos) para no atrasar la entrada */
-  if((G.mods.est||G.estBen)&&!ES.cargado)cargarEst().then(()=>{if(M==='home')render()}).catch(e=>console.warn('Estados',e));
+  if((G.mods.est||G.estBen)&&!ES.cargado)cargarEst().then(()=>{if(M==='home')actualizarHome()}).catch(e=>console.warn('Estados',e));
 }
 
 /* ---------- Vista principal ---------- */
 let M='act';
 /* Inicia la carga de cada módulo en segundo plano; el Inicio se va llenando solo */
 let _homeT=null;
-function arrancarCargas(){Object.keys(CARGA).filter(modDisponible).forEach(k=>cargarMod(k).then(()=>{if(M==='home'){clearTimeout(_homeT);_homeT=setTimeout(render,60)}}).catch(e=>{console.error('Carga '+k,e);if(e.message!=='redirect'&&M==='home')render()}))}
+function arrancarCargas(){Object.keys(CARGA).filter(modDisponible).forEach(k=>cargarMod(k).then(()=>{if(M==='home'){clearTimeout(_homeT);_homeT=setTimeout(actualizarHome,40)}}).catch(e=>{console.error('Carga '+k,e);if(e.message!=='redirect'&&M==='home')actualizarHome()}))}
 /* Si el módulo todavía no terminó de cargar, muestra un indicador solo de ese módulo */
 function esperarMod(){const k=modDatos(M),c=CARGA[k];if(!c||c.ok)return false;
   const nombre={act:'activos',bol:'boletas',ing:'ingresos'}[k];
@@ -2317,10 +2320,12 @@ const MODULOS=[
 ];
 function saludo(){const h=new Date().getHours(),n=(G.me?.displayName||'').split(' ')[0];return (h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches')+(n?', '+n:'')}
 function irA(id,accion){if(accion){try{new Function(accion)()}catch(e){}}M=id;V.view='list';render();scrollTo(0,0)}
-function renderHome(){
-  const ms=MODULOS.filter(m=>m.ok()),d=new Date();
-  const fecha=`${DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)}, ${d.getDate()} de ${MESES[d.getMonth()].toLowerCase()} de ${d.getFullYear()}`;
-  /* Pendientes de todos los módulos */
+/* El Inicio se dibuja una sola vez; cuando llegan los datos de cada módulo solo se actualizan sus números (sin parpadeos) */
+const modListo=m=>{if(m.id==='est')return ES.cargado;const k=modDatos(m.id);return !CARGA[k]||CARGA[k].ok};
+function htmlStats(m){if(!modListo(m))return [70,55,62].map(w=>`<div><span class="sk" style="width:${w}%;height:18px"></span><span class="sk" style="width:${w+15}%;margin-top:6px"></span></div>`).join('');
+  return m.datos().stats.map(([l,v])=>`<div><strong>${esc(String(v))}</strong><span>${esc(l)}</span></div>`).join('')}
+function htmlAlerta(m){const x=modListo(m)?m.datos():{};return x.alerta?`<span class="mod-al">${esc(x.alerta)}</span>`:''}
+function htmlPend(){
   const pend=[];
   if(G.mods?.act&&CARGA.act.ok){const pn=pendientes().length,sd=calcDep().filas.filter(r=>r.d.sin&&!r.x.del).length,pa=S.per.filter(x=>estPer(x)==='pend').length;
     if(pn)pend.push(['p-warn',`${plural(pn,'activo cumplió','activos cumplieron')} año y ${pn===1?'necesita':'necesitan'} revisión de estado`,'act',"V.tab='rev'"]);
@@ -2332,18 +2337,38 @@ function renderHome(){
     if(d.faltan)pend.push(['p-warn',`Faltan ${plural(d.faltan,'monto','montos')} de aseguradoras para ${periodoIng(f)}`,'ing',"IV.tab='ing'"]);
     else if(!env&&d.tot)pend.push(['p-info',`El reporte de aseguradoras de ${periodoIng(f)} está listo pero no se ha enviado a comercial`,'ing',"IV.tab='ing'"])}
   if(G.mods?.bol&&CARGA.bol.ok){const sc=S.benef.filter(b=>!b.cuenta).length;if(sc)pend.push(['p-info',`${plural(sc,'beneficiario no tiene','beneficiarios no tienen')} cuenta registrada`,'bol',"B.tab='ben'"])}
-  $('app').innerHTML=`<div class="home fade">
+  const cargando=MODULOS.some(m=>m.ok()&&!modListo(m));
+  return (pend.length?`<ul>${pend.map(([t,txt,mod,a])=>`<li class="${t}"><span class="dot"></span><span>${txt}</span><button class="lnk" onclick="irA('${mod}',${js(a)})">Ver</button></li>`).join('')}</ul>`:'')
+    +(cargando?'<p class="muted" style="padding:6px 0;margin:0"><span class="spin sm" aria-hidden="true"></span> Revisando pendientes…</p>':pend.length?'':'<p class="empty" style="padding:6px 0">Todo al día. No hay pendientes.</p>')}
+function renderHome(){
+  const ms=MODULOS.filter(m=>m.ok()),d=new Date();
+  const fecha=`${DIAS[d.getDay()][0].toUpperCase()+DIAS[d.getDay()].slice(1)}, ${d.getDate()} de ${MESES[d.getMonth()].toLowerCase()} de ${d.getFullYear()}`;
+  $('app').innerHTML=`<div class="home fade" id="home">
    <div class="home-h"><div><p class="home-f">${fecha}</p><h1>${esc(saludo())}</h1><p class="muted" style="margin:4px 0 0">Elige un módulo para empezar.</p></div></div>
-   <div class="mods">${ms.map((m,i)=>{const k=modDatos(m.id),listo=!CARGA[k]||CARGA[k].ok,x=listo?m.datos():{stats:[['',''],['',''],['','']],links:m.datos.length===0?[]:[],cargando:true};return `<article class="mod" style="--m1:${m.c1};--m2:${m.c2};animation-delay:${i*70}ms">
+   <div class="mods">${ms.map((m,i)=>{const links=m.datos.length===0&&!modListo(m)?[]:(modListo(m)?m.datos().links:[]);return `<article class="mod" style="--m1:${m.c1};--m2:${m.c2};animation-delay:${i*70}ms">
      <button class="mod-main" onclick="irA('${m.id}')" aria-label="Abrir ${esc(m.nombre)}">
-      <div class="mod-top"><span class="mod-ic">${ICO_MOD[m.id]}</span>${x.alerta?`<span class="mod-al">${esc(x.alerta)}</span>`:''}</div>
+      <div class="mod-top"><span class="mod-ic">${ICO_MOD[m.id]}</span><span id="al-${m.id}">${htmlAlerta(m)}</span></div>
       <h2>${esc(m.nombre)}</h2><p>${esc(m.desc)}</p>
-      <div class="mod-st">${x.cargando?[70,55,62].map(w=>`<div><span class="sk" style="width:${w}%;height:18px"></span><span class="sk" style="width:${w+15}%;margin-top:6px"></span></div>`).join(''):x.stats.map(([l,v])=>`<div><strong>${esc(String(v))}</strong><span>${esc(l)}</span></div>`).join('')}</div>
+      <div class="mod-st" id="st-${m.id}" data-listo="${modListo(m)}">${htmlStats(m)}</div>
       <span class="mod-go">Abrir <span aria-hidden="true">→</span></span></button>
-     ${x.links.length?`<div class="mod-lk">${x.links.map(([l,a])=>`<button onclick="irA('${m.id}',${js(a)})">${esc(l)}</button>`).join('')}</div>`:''}
+     <div class="mod-lk" id="lk-${m.id}">${linksMod(m)}</div>
     </article>`}).join('')}</div>
-   <section class="home-p"><h2>Pendientes</h2>${pend.length?`<ul>${pend.map(([t,txt,mod,a])=>`<li class="${t}"><span class="dot"></span><span>${txt}</span><button class="lnk" onclick="irA('${mod}',${js(a)})">Ver</button></li>`).join('')}</ul>`:(Object.keys(CARGA).some(k=>modDisponible(k)&&!CARGA[k].ok)||((G.mods?.est||G.estBen)&&!ES.cargado)?'<p class="muted" style="padding:6px 0;margin:0"><span class="spin sm" aria-hidden="true"></span> Revisando pendientes…</p>':'<p class="empty" style="padding:6px 0">Todo al día. No hay pendientes.</p>')}</section>
+   <section class="home-p"><h2>Pendientes</h2><div id="home-pend">${htmlPend()}</div></section>
   </div>`;
+}
+/* Los accesos directos no dependen de los datos, salvo en Estados (solo lectura no tiene accesos) */
+function linksMod(m){let l=[];try{l=m.id==='est'||modListo(m)?m.datos().links:linksFijos[m.id]||[]}catch(e){l=linksFijos[m.id]||[]}
+  return l.map(([t,a])=>`<button onclick="irA('${m.id}',${js(a)})">${esc(t)}</button>`).join('')}
+const linksFijos={act:[['Equipos',"V.tab='eq';V.eqsub='gen'"],['Revisión',"V.tab='rev'"],['Depreciación',"V.tab='dep'"]],bol:[['Nueva boleta',"B.tab='nueva'"],['Historial',"B.tab='hist'"],['Beneficiarios',"B.tab='ben'"]],
+  ing:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]};
+/* Actualiza en su lugar solo lo que cambió */
+function actualizarHome(){
+  if(M!=='home'||!$('home'))return;
+  MODULOS.filter(m=>m.ok()).forEach(m=>{const st=$('st-'+m.id);if(!st)return;const listo=String(modListo(m));
+    if(st.dataset.listo!==listo||listo==='true'){const h=htmlStats(m);if(st.innerHTML!==h){st.innerHTML=h;if(st.dataset.listo!==listo){st.classList.remove('swap');void st.offsetWidth;st.classList.add('swap')}}st.dataset.listo=listo}
+    const al=$('al-'+m.id),ha=htmlAlerta(m);if(al&&al.innerHTML!==ha)al.innerHTML=ha;
+    const lk=$('lk-'+m.id),hl=linksMod(m);if(lk&&lk.innerHTML!==hl)lk.innerHTML=hl});
+  const p=$('home-pend'),hp=htmlPend();if(p&&p.innerHTML!==hp){p.innerHTML=hp}
 }
 
 /* =====================================================================
