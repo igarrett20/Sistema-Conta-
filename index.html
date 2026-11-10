@@ -1839,9 +1839,14 @@ async function cargarEst(){
   ES.movAll=ms.map(i=>{const f=i.fields;return{id:+i.id,cta:(f.Title||'').trim(),anio:+f.Anio||0,mes:+f.Mes||0,monto:+f.Monto||0,desc:f.Descripcion||''}}).filter(x=>x.cta&&x.anio&&x.mes>=1&&x.mes<=12);
   /* arranca en el año más reciente con datos */
   const ys=[...new Set(ES.movAll.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);
+  ES.lectura=!(await puedeEscribir('emov'));
   ES.cargado=true;
-  setTimeout(syncBen,800);
+  if(!ES.lectura)setTimeout(syncBen,800);
 }
+/* ¿La cuenta puede agregar elementos en la lista? (permisos efectivos de SharePoint). Si no se puede saber, se asume que sí. */
+async function puedeEscribir(key){try{const tk=await spToken();if(!tk||!G.listIds[key])return true;
+  const r=await fetch(`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web/lists(guid'${G.listIds[key]}')/EffectiveBasePermissions`,{headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata'}});
+  if(!r.ok)return true;const j=await r.json();return (Number(j.Low)&2)!==0}catch(e){console.warn('Permisos',e);return true}}
 function trasCambioEst(){ES.mov=ES.movAll.filter(x=>x.anio===ES.anio);ES.ana=null;syncBen()}
 
 /* ---------- Guardar movimientos ---------- */
@@ -1946,7 +1951,7 @@ let copCorriendo=false,copPend=false;
 const benCampos=x=>{const c=CTA(x.cta);return{Title:x.cta,Anio:x.anio,Mes:x.mes,Monto:x.monto,Descripcion:x.desc||'',Nombre:c?.nombre||'',Categoria:c?.cat||'',Subcategoria:c?.sub||'',OrigenId:x.id}};
 const benIgual=(a,b)=>['Title','Anio','Mes','Monto','Descripcion','Nombre','Categoria','Subcategoria'].every(k=>String(a[k]??'')===String(b[k]??''));
 async function syncBen(){
-  if(!ES.cargado||ES.soloBen||!COPIAS.some(c=>G.listIds[c.k]))return;
+  if(!ES.cargado||ES.soloBen||ES.lectura||!COPIAS.some(c=>G.listIds[c.k]))return;
   if(copCorriendo){copPend=true;return}
   copCorriendo=true;
   try{for(const c of COPIAS)if(G.listIds[c.k])await syncCopia(c)}
@@ -2016,10 +2021,10 @@ const ICO={dash:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" str
   cat:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>'};
 function renderEst(){
   if(!ES.cargado){$('app').innerHTML='<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando estados…</p></div></div>';cargarEst().then(()=>{if(M==='est')renderEst()}).catch(e=>{console.error(e);$('app').innerHTML=`<div class="gate"><h1>No se pudieron cargar los estados</h1><p>${esc(e.message||e)}</p><button class="btn" onclick="ES.cargado=false;renderEst()">Intentar de nuevo</button></div>`});return}
-  if(ES.soloBen)ES.sub='dash';
+  const soloVer=ES.soloBen||ES.lectura;if(soloVer)ES.sub='dash';
   const it=[['dash','Dashboard','Resultados por departamento'],['carga','Cargar datos','Movimientos de cada mes'],['cat','Catálogo de cuentas',plural(ES.cat.length,'cuenta','cuentas')]];
-  $('app').innerHTML=`<div class="head"><div><h1>${ES.soloBen?'Estados · '+esc(ES.deps.join(' y ')):'Estados por departamento'}</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.soloBen?esc(ES.deps.join(' y '))+' en ':''}${ES.anio}.</p></div>${ES.soloBen?'':'<div id="ben-st" class="ben-w">'+chipBen()+'</div>'}</div>
-  <nav class="adm-nav horiz" aria-label="Secciones" ${ES.soloBen?'hidden':''}>${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
+  $('app').innerHTML=`<div class="head"><div><h1>${ES.soloBen?'Estados · '+esc(ES.deps.join(' y ')):'Estados por departamento'}</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.soloBen?esc(ES.deps.join(' y '))+' en ':''}${ES.anio}.</p></div>${ES.soloBen?'':ES.lectura?'<div class="ben-w"><span class="ben-chip">Solo lectura</span></div>':'<div id="ben-st" class="ben-w">'+chipBen()+'</div>'}</div>
+  <nav class="adm-nav horiz" aria-label="Secciones" ${soloVer?'hidden':''}>${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
   <div class="fade" id="est-body">${{dash:tDash,carga:tCarga,cat:tCatE}[ES.sub]()}</div>`;
   if(ES.sub==='dash'){refreshDash();requestAnimationFrame(moverInd)}
   if(ES.sub==='carga')filasMes();
@@ -2330,7 +2335,7 @@ const MODULOS=[
        links:[['Llenar montos',"IV.tab='ing'"],['Enviar a comercial',"IV.tab='ing';setTimeout(()=>verCorreoIng(true),50)"],['Envíos',"IV.tab='env'"]]}}},
   {id:'est',nombre:'Estados por departamento',desc:'Ingresos, gastos y utilidad por departamento, con análisis del período',c1:'#5B4BB5',c2:'#9C8FE0',
    ok:()=>G.mods?.est||G.estBen,
-   datos:()=>{const links=G.estBen?[]:[['Dashboard',"ES.sub='dash'"],['Cargar datos',"ES.sub='carga'"],['Catálogo',"ES.sub='cat'"]];
+   datos:()=>{const links=G.estBen||ES.lectura?[]:[['Dashboard',"ES.sub='dash'"],['Cargar datos',"ES.sub='carga'"],['Catálogo',"ES.sub='cat'"]];
      if(!ES.cargado)return{stats:[['Cargando datos…','']],links};
      const y=ES.anio,mv=ES.movAll.filter(x=>x.anio===y),ti=mv.filter(x=>CTA(x.cta)?.tipo==='I').reduce((s2,x)=>s2+x.monto,0),tg=mv.filter(x=>CTA(x.cta)?.tipo==='G').reduce((s2,x)=>s2+x.monto,0),ul=mv.length?Math.max(...mv.map(x=>x.mes)):0;
      return{stats:[['Utilidad '+y,compactE(ti-tg)],['Margen',ti?((ti-tg)/ti*100).toFixed(1)+'%':'—'],['Último mes cargado',ul?MESES[ul-1]:'Ninguno']],links}}}
