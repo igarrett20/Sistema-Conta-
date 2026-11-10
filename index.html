@@ -616,7 +616,7 @@ tr.nuevo td{animation:flash 1.6s ease}
 .mdd.open .mdd-pop button{opacity:1;transform:none}
 .mdd.open .mdd-pop button:nth-of-type(2){transition-delay:30ms}.mdd.open .mdd-pop button:nth-of-type(3){transition-delay:60ms}.mdd.open .mdd-pop button:nth-of-type(4){transition-delay:90ms}.mdd.open .mdd-pop button:nth-of-type(5){transition-delay:120ms}
 @media (max-width:860px){.mdd-pop{right:auto;left:0;transform-origin:top left;width:min(330px,calc(100vw - 32px))}}
-.ben-w{align-self:center}
+.ben-w{align-self:center;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 .ben-chip{display:inline-block;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
 .ben-chip.ok{color:var(--ok);background:var(--ok-soft);border-color:#BFE0CB}
 .ben-chip.err{color:var(--danger);background:var(--danger-soft);border-color:#F2C4C7}
@@ -632,6 +632,7 @@ table.ret-t tr.ghost td{opacity:.6}
 .mod-st.swap{animation:swapIn .35s ease both}
 @keyframes swapIn{from{opacity:.25}to{opacity:1}}
 .mod-lk:empty{display:none}
+#home.pre .mod,#home.pre .mod-lk button,#home.pre .home-p button{pointer-events:none}
 </style>
 </head>
 <body>
@@ -659,7 +660,7 @@ const CONFIG={
   sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
   lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',perifericos:'ActivosPerifericos',
          imontos:'IngresosMontos',iconfig:'IngresosConfig',ienvios:'IngresosEnvios',
-         ecta:'EstadosCuentas',emov:'EstadosMovimientos',eben:'EstadosBeneficios',
+         ecta:'EstadosCuentas',emov:'EstadosMovimientos',eben:'EstadosBeneficios',even:'EstadosVentasCorporativas',
          bpagos:'BoletasPagos',bbenef:'BoletasBeneficiarios',baut:'BoletasAutorizan',bemp:'BoletasEmpresas'},
   diasAviso:30                                       // días antes del aniversario en que aparece en Revisión
 };
@@ -695,6 +696,7 @@ const SCHEMA={
   ecta:[{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'Departamento',text:{}}],
   emov:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}}],
   eben:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}},{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'OrigenId',number:{}}],
+  even:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}},{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'OrigenId',number:{}}],
   iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}},{name:'Texto',text:{allowMultipleLines:true,textType:'plain'}}],
   ienvios:[{name:'Periodo',text:{}},{name:'Mes',text:{}},{name:'Destinatarios',text:{allowMultipleLines:true,textType:'plain'}},{name:'EnviadoPor',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Datos',text:{allowMultipleLines:true,textType:'plain'}}],
   perifericos:[{name:'Tipo',text:{}},{name:'Numero',number:{}},{name:'FechaCompra',dateTime:{format:'dateOnly'}},{name:'ResponsableId',number:{}},{name:'Ubicacion',text:{}},{name:'Marca',text:{}},{name:'Observaciones',text:{}},{name:'FechaDano',dateTime:{format:'dateOnly'}},{name:'MotivoDano',text:{}}],
@@ -711,7 +713,8 @@ const AUTORIZAN_INICIALES=['Tim Garrett'];
 /* ---------- Estado ---------- */
 let S={ing:{aseg:[],dest:[],montos:{},ids:{},envios:[]},per:[],cats:[],personas:[],equipos:[],todos:[],fant:[],hist:[],ubic:[],pagos:[],benef:[],aut:[],empData:{}};
 const V={tab:'pe',q:'',cat:'',view:'list',acta:null,cb:null,imp:null};
-const G={pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
+const G={conn:null,_connRes:null,pca:null,account:null,me:null,siteId:null,listIds:{},avisos:[]};
+G.conn=new Promise(r=>G._connRes=r);
 let busy=false;
 
 /* ---------- Helpers ---------- */
@@ -764,7 +767,8 @@ async function initAuth(){
   G.account=res?.account||G.pca.getAllAccounts()[0]||null;
 }
 const login=()=>G.pca.loginRedirect({scopes:SCOPES,prompt:'select_account'});
-const logout=()=>G.pca.logoutRedirect({account:G.account,postLogoutRedirectUri:location.origin+location.pathname});
+function logout(){try{localStorage.removeItem('contaduria:sesion')}catch(e){}_logout0()}
+const _logout0=()=>G.pca.logoutRedirect({account:G.account,postLogoutRedirectUri:location.origin+location.pathname});
 async function token(scopes=SCOPES){
   try{return (await G.pca.acquireTokenSilent({scopes,account:G.account})).accessToken}
   catch(e){await G.pca.acquireTokenRedirect({scopes,account:G.account});throw new Error('redirect')}
@@ -840,7 +844,7 @@ async function connect(){
   /* Auditoría: sin acceso completo a Activos, pero con lectura de equipos y categorías → solo reportes de depreciación */
   G.aud=!G.mods.act&&!!G.listIds.equipos&&!!G.listIds.categorias&&!G.listIds.historial;
   /* Módulos disponibles para esta persona: con uno solo entra directo; con varios, al menú de Inicio */
-  G.estBen=!G.mods.est&&!!G.listIds.eben&&!G.listIds.emov;
+  G.estBen=!G.mods.est&&COPIAS.some(c=>G.listIds[c.k])&&!G.listIds.emov;
   const disp=[G.mods.act?'act':G.aud?'aud':null,G.mods.bol?'bol':null,G.mods.ing?'ing':null,G.mods.est||G.estBen?'est':null].filter(Boolean);
   if(!disp.length)throw new GraphError(403,'Tu cuenta no tiene permiso en las listas de ningún módulo de Contaduría.');
   M=disp.length>1?'home':disp[0];
@@ -861,7 +865,7 @@ async function connect(){
 }
 /* Huella de la estructura de las listas: si cambia, se vuelven a revisar las columnas */
 /* A qué módulo pertenece cada lista */
-const modDe=k=>k==='ecta'||k==='emov'||k==='eben'?'est':k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
+const modDe=k=>k==='ecta'||k==='emov'||k==='eben'||k==='even'?'est':k.startsWith('b')?'bol':k.startsWith('i')?'ing':'act';
 const SCHEMA_VER=(()=>{const t=JSON.stringify(SCHEMA)+JSON.stringify(CONFIG.lists);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return String(h)})();
 /* Pantalla de carga con el paso actual */
 function paso(t){const el=$('paso');if(el)el.textContent=t}
@@ -927,7 +931,7 @@ const CARGA={act:{ok:false,p:null,err:null},bol:{ok:false,p:null,err:null},ing:{
 const modDatos=m=>m==='aud'?'act':m;
 const modDisponible=k=>k==='act'?(G.mods?.act||G.aud):!!G.mods?.[k];
 function cargarMod(m){const k=modDatos(m),c=CARGA[k];if(!c||c.ok)return Promise.resolve();
-  if(!c.p)c.p=LOADERS[k]().then(()=>{c.ok=true;c.err=null;c.p=null}).catch(e=>{c.p=null;c.err=e;throw e});return c.p}
+  if(!c.p)c.p=G.conn.then(()=>LOADERS[k]()).then(()=>{c.ok=true;c.err=null;c.p=null}).catch(e=>{c.p=null;c.err=e;throw e});return c.p}
 /* Después de guardar: recarga solo el módulo en el que estás (o los ya cargados, si estás en el Inicio) */
 async function loadAll(){const k=modDatos(M),ks=CARGA[k]?[k]:Object.keys(CARGA).filter(x=>CARGA[x].ok);
   await Promise.all(ks.map(x=>LOADERS[x]().then(()=>{CARGA[x].ok=true})))}
@@ -953,18 +957,27 @@ async function mover(cods,dest,f){
 function screen(html){$('app').innerHTML=`<div class="gate">${html}</div>`}
 function showUser(){$('whoami').innerHTML=G.me?`<span>${esc(G.me.displayName||'')}</span><span class="avatar">${esc(ini(G.me.displayName||'?'))}</span><button class="btn sm" onclick="logout()">Salir</button>`:''}
 async function boot(){
-  screen('<div class="loader"><span class="spin" aria-hidden="true"></span><p id="paso" class="muted">Cargando…</p></div>');
+  /* Si ya entraste antes desde este navegador, el Inicio aparece de una vez (con los números cargando) mientras se conecta */
+  const mem=J((()=>{try{return localStorage.getItem('contaduria:sesion')}catch(e){return null}})(),null);let previo=!!(mem&&mem.M==='home'&&mem.mods);
+  if(previo){G.mods=mem.mods;G.aud=mem.aud;G.estBen=mem.estBen;G.me={displayName:mem.nombre};M='home';showUser();renderHome();$('home')?.classList.add('pre');const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
+  else screen('<div class="loader"><span class="spin" aria-hidden="true"></span><p id="paso" class="muted">Cargando…</p></div>');
   if(!window.isSecureContext||!window.crypto?.subtle){
     if(location.protocol==='http:'&&location.hostname!=='localhost'){location.replace('https://'+location.host+location.pathname+location.search);return}
     screen('<h1>Esta página necesita una conexión segura</h1><p>Ábrela con una dirección que empiece con <strong>https://</strong>.</p>');return}
   try{await initAuth()}catch(e){console.error(e);screen(`<h1>No se pudo iniciar sesión</h1><p>${esc(e.message)}</p>`);return}
-  if(!G.account){screen('<h1>Activos y equipos</h1><p>Entra con tu cuenta de trabajo de Microsoft, la misma de Outlook y Teams. El acceso es solo para contaduría.</p><button class="btn primary" onclick="login()">Iniciar sesión</button>');return}
-  try{await connect();showUser();arrancarCargas()}
+  if(!G.account){$('whoami').innerHTML='';$('modslot').innerHTML='';screen('<h1>Contaduría</h1><p>Entra con tu cuenta de trabajo de Microsoft, la misma de Outlook y Teams.</p><button class="btn primary" onclick="login()">Iniciar sesión</button>');return}
+  /* Si ya entraste antes desde este navegador, el Inicio aparece de una vez (con los números cargando) mientras se conecta */
+  /* si la sesión recordada era de otra cuenta, se descarta lo dibujado */
+  if(previo&&mem.cuenta!==(G.account?.homeAccountId||'')){previo=false;G.me=null;$('whoami').innerHTML='';$('modslot').innerHTML='';screen('<div class="loader"><span class="spin" aria-hidden="true"></span><p id="paso" class="muted">Cargando…</p></div>')}
+  try{await connect();showUser();G._connRes();arrancarCargas();
+    try{localStorage.setItem('contaduria:sesion',JSON.stringify({M,mods:G.mods,aud:!!G.aud,estBen:!!G.estBen,nombre:G.me?.displayName||'',cuenta:G.account?.homeAccountId||''}))}catch(e){}}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
       ?'<h1>No tienes acceso</h1><p>Tu cuenta entró bien, pero no tiene permiso en este sistema. Si deberías tener acceso, pide que te den permiso en las listas de SharePoint.</p><p class="small muted">Detalle técnico: '+esc(e.status+' · '+e.message)+'</p>'
       :`<h1>No se pudieron cargar los datos</h1><p>${esc(e.message)}</p><button class="btn" onclick="location.reload()">Intentar de nuevo</button>`);return}
-  render();
+  /* Si el Inicio ya estaba dibujado con los mismos módulos, solo se activa (sin volver a dibujarlo) */
+  if(previo&&M==='home'&&JSON.stringify(mem.mods)===JSON.stringify(G.mods)&&!!mem.aud===!!G.aud&&!!mem.estBen===!!G.estBen&&$('home')){$('home').classList.remove('pre');actualizarHome()}
+  else render();
   if(G.avisos.length)toast(G.avisos.join(' '));
   /* Estados se carga aparte (muchos movimientos) para no atrasar la entrada */
   if((G.mods.est||G.estBen)&&!ES.cargado)cargarEst().then(()=>{if(M==='home')actualizarHome()}).catch(e=>console.warn('Estados',e));
@@ -1922,45 +1935,49 @@ async function importarEst(){const I=V.imp;if(!I||busy)return;I.corriendo=true;$
 
 
 /* =====================================================================
-   COPIA DE BENEFICIOS: lista EstadosBeneficios con solo los movimientos de Beneficios
-   (con la cuenta, categoría y subcategoría ya incluidas). Quien solo tiene permiso en esa
-   lista ve únicamente el dashboard de Beneficios; también la puede leer una futura página de Beneficios.
-   La página la mantiene al día sola: después de cada cambio compara y corrige lo que falte.
+   COPIAS POR DEPARTAMENTO: listas con solo los movimientos de un departamento
+   (EstadosBeneficios y EstadosVentasCorporativas), con cuenta, categoría y subcategoría ya incluidas.
+   Quien solo tiene permiso en una de esas listas ve únicamente el dashboard de ese departamento.
+   La página las mantiene al día sola: después de cada cambio compara y corrige lo que falte.
    ===================================================================== */
-const DEP_BEN='Beneficios';
-const BEN={items:{},cargado:false,estado:'',corriendo:false,pend:false};
-const esBen=cta=>CTA(cta)?.dep===DEP_BEN;
+const COPIAS=[{k:'eben',dep:'Beneficios'},{k:'even',dep:'Ventas Corporativas'}];
+const COP={};COPIAS.forEach(c=>COP[c.k]={items:{},cargado:false,estado:''});
+let copCorriendo=false,copPend=false;
 const benCampos=x=>{const c=CTA(x.cta);return{Title:x.cta,Anio:x.anio,Mes:x.mes,Monto:x.monto,Descripcion:x.desc||'',Nombre:c?.nombre||'',Categoria:c?.cat||'',Subcategoria:c?.sub||'',OrigenId:x.id}};
 const benIgual=(a,b)=>['Title','Anio','Mes','Monto','Descripcion','Nombre','Categoria','Subcategoria'].every(k=>String(a[k]??'')===String(b[k]??''));
 async function syncBen(){
-  if(!G.listIds.eben||!ES.cargado||ES.soloBen)return;
-  if(BEN.corriendo){BEN.pend=true;return}
-  BEN.corriendo=true;estadoBen('Sincronizando…');
-  try{
-    if(!BEN.cargado){BEN.items={};(await allItems('eben')).forEach(i=>{const f=i.fields,o=+f.OrigenId;if(!o)return;if(BEN.items[o])BEN.items[o+'_dup'+i.id]={id:+i.id,f,dup:true};else BEN.items[o]={id:+i.id,f}});BEN.cargado=true}
-    const quiere={};ES.movAll.filter(x=>esBen(x.cta)).forEach(x=>quiere[x.id]=benCampos(x));
-    const ops=[],tras=[];
-    for(const [o,f] of Object.entries(quiere)){const m=BEN.items[o];
-      if(!m){ops.push({method:'POST',url:`${LP('eben')}/items`,body:{fields:f}});tras.push(r=>{if(r.status<300)BEN.items[o]={id:+r.body.id,f}})}
-      else if(!benIgual(m.f,f)){ops.push({method:'PATCH',url:`${LP('eben')}/items/${m.id}/fields`,body:f});tras.push(r=>{if(r.status<300)m.f={...m.f,...f}})}}
-    for(const [k,m] of Object.entries(BEN.items))if(m.dup||!quiere[k]){ops.push({method:'DELETE',url:`${LP('eben')}/items/${m.id}`});tras.push(r=>{if(r.status<300||r.status===404)delete BEN.items[k]})}
-    if(ops.length){const r=await batch(ops);r.forEach((x,i)=>x&&tras[i](x));const f=r.filter(x=>!x||(x.status>=300&&x.status!==404)).length;if(f)throw new Error(f+' cambios no se pudieron copiar')}
-    estadoBen('ok');
-  }catch(e){console.error('Beneficios',e);estadoBen('error')}
-  finally{BEN.corriendo=false;if(BEN.pend){BEN.pend=false;syncBen()}}
+  if(!ES.cargado||ES.soloBen||!COPIAS.some(c=>G.listIds[c.k]))return;
+  if(copCorriendo){copPend=true;return}
+  copCorriendo=true;
+  try{for(const c of COPIAS)if(G.listIds[c.k])await syncCopia(c)}
+  finally{copCorriendo=false;if(copPend){copPend=false;syncBen()}}
 }
-function estadoBen(t){BEN.estado=t;const el=$('ben-st');if(el)el.innerHTML=chipBen()}
-function chipBen(){if(!G.listIds.eben)return '';const n=Object.keys(BEN.items).length;
-  return BEN.estado==='error'?`<span class="ben-chip err">Copia de Beneficios con errores · <button class="lnk" onclick="BEN.cargado=false;syncBen()">Reintentar</button></span>`
-   :BEN.estado==='ok'?`<span class="ben-chip ok">✓ Copia de Beneficios al día · ${fmt0(n)} movimientos</span>`
-   :`<span class="ben-chip">Actualizando copia de Beneficios…</span>`}
+async function syncCopia({k,dep}){const B=COP[k];estadoCop(k,'');
+  try{
+    if(!B.cargado){B.items={};(await allItems(k)).forEach(i=>{const f=i.fields,o=+f.OrigenId;if(!o)return;if(B.items[o])B.items[o+'_dup'+i.id]={id:+i.id,f,dup:true};else B.items[o]={id:+i.id,f}});B.cargado=true}
+    const quiere={};ES.movAll.filter(x=>CTA(x.cta)?.dep===dep).forEach(x=>quiere[x.id]=benCampos(x));
+    const ops=[],tras=[];
+    for(const [o,f] of Object.entries(quiere)){const m=B.items[o];
+      if(!m){ops.push({method:'POST',url:`${LP(k)}/items`,body:{fields:f}});tras.push(r=>{if(r.status<300)B.items[o]={id:+r.body.id,f}})}
+      else if(!benIgual(m.f,f)){ops.push({method:'PATCH',url:`${LP(k)}/items/${m.id}/fields`,body:f});tras.push(r=>{if(r.status<300)m.f={...m.f,...f}})}}
+    for(const [o,m] of Object.entries(B.items))if(m.dup||!quiere[o]){ops.push({method:'DELETE',url:`${LP(k)}/items/${m.id}`});tras.push(r=>{if(r.status<300||r.status===404)delete B.items[o]})}
+    if(ops.length){const r=await batch(ops);r.forEach((x,i)=>x&&tras[i](x));const f=r.filter(x=>!x||(x.status>=300&&x.status!==404)).length;if(f)throw new Error(f+' cambios no se pudieron copiar')}
+    estadoCop(k,'ok');
+  }catch(e){console.error(dep,e);estadoCop(k,'error')}
+}
+function estadoCop(k,t){COP[k].estado=t;const el=$('ben-st');if(el)el.innerHTML=chipBen()}
+function chipBen(){return COPIAS.filter(c=>G.listIds[c.k]).map(({k,dep})=>{const B=COP[k],n=Object.keys(B.items).length;
+  return B.estado==='error'?`<span class="ben-chip err">Copia de ${dep} con errores · <button class="lnk" onclick="COP['${k}'].cargado=false;syncBen()">Reintentar</button></span>`
+   :B.estado==='ok'?`<span class="ben-chip ok">✓ Copia de ${dep} al día · ${fmt0(n)} movimientos</span>`
+   :`<span class="ben-chip">Actualizando copia de ${dep}…</span>`}).join('')}
 
-/* ---------- Solo lectura: quien solo tiene la lista EstadosBeneficios ---------- */
+/* ---------- Solo lectura: quien solo tiene una lista de copia (Beneficios o Ventas Corporativas) ---------- */
 async function cargarEstBen(){
-  const it=await allItems('eben'),cats={};
-  ES.movAll=it.map(i=>{const f=i.fields,c=(f.Title||'').trim();if(c&&!cats[c])cats[c]={id:+i.id,cta:c,nombre:f.Nombre||'',cat:f.Categoria||'',sub:f.Subcategoria||'',dep:DEP_BEN,tipo:tipoDeCat(f.Categoria)};
-    return{id:+i.id,cta:c,anio:+f.Anio||0,mes:+f.Mes||0,monto:+f.Monto||0,desc:f.Descripcion||''}}).filter(x=>x.cta&&x.anio&&x.mes>=1&&x.mes<=12);
-  ES.cat=Object.values(cats);indexarCat();ES.soloBen=true;ES.dep=DEP_BEN;ES.sub='dash';
+  const mias=COPIAS.filter(c=>G.listIds[c.k]),cats={};ES.movAll=[];
+  for(const {k,dep} of mias){const it=await allItems(k);
+    it.forEach(i=>{const f=i.fields,c=(f.Title||'').trim();if(c&&!cats[c])cats[c]={id:+i.id,cta:c,nombre:f.Nombre||'',cat:f.Categoria||'',sub:f.Subcategoria||'',dep,tipo:tipoDeCat(f.Categoria)};
+      const x={id:+i.id,cta:c,anio:+f.Anio||0,mes:+f.Mes||0,monto:+f.Monto||0,desc:f.Descripcion||''};if(x.cta&&x.anio&&x.mes>=1&&x.mes<=12)ES.movAll.push(x)})}
+  ES.cat=Object.values(cats);indexarCat();ES.soloBen=true;ES.deps=mias.map(c=>c.dep);ES.dep=ES.deps[0];ES.sub='dash';
   const ys=[...new Set(ES.movAll.map(x=>x.anio))];setAnio(ys.length&&!ys.includes(ES.anio)?Math.max(...ys):ES.anio);ES.cargado=true;
 }
 
@@ -2001,7 +2018,7 @@ function renderEst(){
   if(!ES.cargado){$('app').innerHTML='<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando estados…</p></div></div>';cargarEst().then(()=>{if(M==='est')renderEst()}).catch(e=>{console.error(e);$('app').innerHTML=`<div class="gate"><h1>No se pudieron cargar los estados</h1><p>${esc(e.message||e)}</p><button class="btn" onclick="ES.cargado=false;renderEst()">Intentar de nuevo</button></div>`});return}
   if(ES.soloBen)ES.sub='dash';
   const it=[['dash','Dashboard','Resultados por departamento'],['carga','Cargar datos','Movimientos de cada mes'],['cat','Catálogo de cuentas',plural(ES.cat.length,'cuenta','cuentas')]];
-  $('app').innerHTML=`<div class="head"><div><h1>${ES.soloBen?'Estados · Beneficios':'Estados por departamento'}</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.soloBen?'Beneficios en ':''}${ES.anio}.</p></div>${ES.soloBen?'':'<div id="ben-st" class="ben-w">'+chipBen()+'</div>'}</div>
+  $('app').innerHTML=`<div class="head"><div><h1>${ES.soloBen?'Estados · '+esc(ES.deps.join(' y ')):'Estados por departamento'}</h1><p class="muted" style="margin:4px 0 0">Ingresos, gastos y resultados de ${ES.soloBen?esc(ES.deps.join(' y '))+' en ':''}${ES.anio}.</p></div>${ES.soloBen?'':'<div id="ben-st" class="ben-w">'+chipBen()+'</div>'}</div>
   <nav class="adm-nav horiz" aria-label="Secciones" ${ES.soloBen?'hidden':''}>${it.map(([k,l,d])=>`<button aria-current="${ES.sub===k?'page':'false'}" onclick="ES.sub='${k}';renderEst()"><span class="adm-ic">${ICO[k]}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span></button>`).join('')}</nav>
   <div class="fade" id="est-body">${{dash:tDash,carga:tCarga,cat:tCatE}[ES.sub]()}</div>`;
   if(ES.sub==='dash'){refreshDash();requestAnimationFrame(moverInd)}
@@ -2026,7 +2043,7 @@ function selPer(){const md=mesesConDatos(),p=ES.per,ult=Math.max(...md),o=(v,l,o
   return `<span class="per-pill pop">${ic}${c}</span>`}
 function tDash(){periodo();
   return `<div class="est-fil2">
-   ${ES.soloBen?`<span class="pill Sinrev" style="font-size:13px;padding:6px 12px">Departamento: <strong>${DEP_BEN}</strong> · solo lectura</span>`:''}<div class="seg dep-seg" role="radiogroup" aria-label="Departamento" id="dep-seg" ${ES.soloBen?'hidden':''}>${[['','Todos'],...DEPTOS.map(d=>[d,d])].map(([v,l])=>`<button role="radio" aria-checked="${ES.dep===v}" data-v="${esc(v)}" title="${esc(l)}" onclick="setDep(${js(v)})">${l==='Ventas Corporativas'?'Ventas Corp.':l}</button>`).join('')}</div>
+   ${ES.soloBen&&ES.deps.length<2?`<span class="pill Sinrev" style="font-size:13px;padding:6px 12px">Departamento: <strong>${esc(ES.dep)}</strong> · solo lectura</span>`:''}<div class="seg dep-seg" role="radiogroup" aria-label="Departamento" id="dep-seg" ${ES.soloBen&&ES.deps.length<2?'hidden':''}>${(ES.soloBen?ES.deps.map(d=>[d,d]):[['','Todos'],...DEPTOS.map(d=>[d,d])]).map(([v,l])=>`<button role="radio" aria-checked="${ES.dep===v}" data-v="${esc(v)}" title="${esc(l)}" onclick="setDep(${js(v)})">${l==='Ventas Corporativas'?'Ventas Corp.':l}</button>`).join('')}</div>
    <div class="per-box"><div class="seg seg-sl" role="radiogroup" aria-label="Tipo de período" id="tipo-seg" style="margin:0"><span class="seg-ind" aria-hidden="true"></span>${TIPOS_PERIODO.map(([k,l])=>`<button role="radio" aria-checked="${ES.per.t===k}" data-k="${k}" onclick="setTipo('${k}')">${l}</button>`).join('')}</div>
     <div class="per-w" id="per-w">${selPer()}</div></div>
   </div>
