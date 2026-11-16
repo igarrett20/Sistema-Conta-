@@ -1005,7 +1005,10 @@ async function boot(){
    Lee los permisos de cada lista con la API de SharePoint (se necesita Control total en el sitio).
    ===================================================================== */
 const ACC={datos:null,cargando:false,err:'',q:''};
-async function esAdminSitio(){try{const tk=await spToken();if(!tk)return null;
+/* Leer permisos exige el permiso delegado AllSites.FullControl de SharePoint (AllSites.Manage no alcanza) */
+const SP_FULL=()=>[`https://${CONFIG.siteHost}/AllSites.FullControl`];
+async function spTokenFull(){try{return (await G.pca.acquireTokenSilent({scopes:SP_FULL(),account:G.account})).accessToken}catch(e){console.warn('Sin permiso AllSites.FullControl',e);return null}}
+async function esAdminSitio(){try{const tk=await spTokenFull();if(!tk)return null;
   const r=await fetch(`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web/EffectiveBasePermissions`,{headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata'}});
   if(!r.ok){console.warn('Accesos: SharePoint respondió',r.status);return r.status===403?false:null}const j=await r.json();return (Number(j.Low)&0x2000000)!==0}catch(e){console.warn('Accesos',e);return null}}
 function irAcc(){if(M!=='acc')G.accDe=M;M='acc';V.view='list';render();scrollTo(0,0)}
@@ -1018,12 +1021,12 @@ function nivelAcc(u,m){const ls=Object.keys(CONFIG.lists).filter(k=>modDe(k)===m
   if(lv.some(v=>v>0))return['Incompleto','Usada'];
   return null}
 async function cargarAccesos(){
-  ACC.cargando=true;ACC.err='';
+  ACC.cargando=true;ACC.err='';ACC.autorizar=false;
   try{
-    const tk=await spToken();if(!tk){ACC.autorizar=true;throw new Error('Falta autorizar a la página para leer los permisos de SharePoint. Toca Autorizar; la página se recarga y vuelves a entrar a Accesos.')}
+    const tk=await spTokenFull();if(!tk){ACC.autorizar=true;throw new Error('Falta autorizar a la página para leer los permisos de SharePoint. Toca Autorizar; la página se recarga y vuelves a entrar a Accesos.')}
     const base=`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web`;
     const sp=async u=>{const r=await fetch(base+u,{headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata'}});
-      if(!r.ok)throw new GraphError(r.status,r.status===403||r.status===401?'Tu cuenta no puede ver los permisos del sitio. Se necesita Control total en el sitio de SharePoint.':'SharePoint respondió con un error ('+r.status+').');return r.json()};
+      if(!r.ok){if(r.status===401||r.status===403)ACC.autorizar=true;throw new GraphError(r.status,r.status===403||r.status===401?'SharePoint no dejó leer los permisos (código '+r.status+'). Se necesita Control total en el sitio y que la app tenga el permiso AllSites.FullControl. Si ya lo tiene, toca Autorizar.':'SharePoint respondió con un error ('+r.status+').')}return r.json()};
     let gtk=null;try{gtk=(await G.pca.acquireTokenSilent({scopes:['GroupMember.Read.All'],account:G.account})).accessToken}catch(e){}
     const cache={},sinVer=new Set();
     const usuario=m=>({n:m.Title||m.LoginName,e:lc(m.Email||m.UserPrincipalName||'')});
@@ -1059,7 +1062,7 @@ async function cargarAccesos(){
 function renderAcc(){
   const back=`<div class="back"><button class="lnk" onclick="M=G.accDe&&G.accDe!=='acc'?G.accDe:'home';render()">← Volver</button></div>`;
   if(!ACC.datos&&!ACC.err){$('app').innerHTML=back+'<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Revisando los permisos de cada lista…</p></div></div>';if(!ACC.cargando)cargarAccesos();return}
-  if(!ACC.datos){$('app').innerHTML=back+`<div class="gate"><h1>No se pudieron leer los accesos</h1><p>${esc(ACC.err)}</p>${ACC.autorizar?`<button class="btn primary" onclick="G.pca.acquireTokenRedirect({scopes:SP_MANAGE(),account:G.account})">Autorizar</button> `:''}<button class="btn" onclick="ACC.err='';ACC.autorizar=false;renderAcc()">Intentar de nuevo</button></div>`;return}
+  if(!ACC.datos){$('app').innerHTML=back+`<div class="gate"><h1>No se pudieron leer los accesos</h1><p>${esc(ACC.err)}</p>${ACC.autorizar?`<button class="btn primary" onclick="G.pca.acquireTokenRedirect({scopes:SP_FULL(),account:G.account})">Autorizar</button> `:''}<button class="btn" onclick="ACC.err='';ACC.autorizar=false;renderAcc()">Intentar de nuevo</button></div>`;return}
   const D=ACC.datos;
   $('app').innerHTML=`${back}<div class="head"><div><h1>Accesos a Contaduría</h1><p class="muted" style="margin:4px 0 0">Quién puede entrar y a qué módulos, según los permisos de las listas de SharePoint. Solo lo ven los dueños del sitio.</p></div>
    <div class="head-acts"><button class="btn" onclick="ACC.datos=null;ACC.err='';renderAcc()">Actualizar</button></div></div>
