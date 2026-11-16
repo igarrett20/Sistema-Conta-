@@ -121,6 +121,18 @@ td p{margin:2px 0 0;font-size:13px;color:var(--muted)}
 .pick input{width:auto;margin-top:3px;accent-color:var(--brand)}
 .pick small{display:block;color:var(--muted);font-size:12px}
 .sheet{background:var(--sunk);border-radius:12px;padding:24px;overflow-x:auto}
+.llv-l{display:flex;flex-wrap:wrap;gap:6px}.llv{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;background:var(--sunk);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.kpi-b{text-align:left;cursor:pointer;font:inherit;color:inherit}.kpi-b.on{outline:2px solid var(--brand,#0D6174);outline-offset:-2px}
+.paper{position:relative;overflow:hidden}
+.paper .ahead{width:100%;border-collapse:collapse;margin:0 0 6px;table-layout:fixed}
+.paper .ahead td,.paper .ahead th{border:1px solid #bbb;padding:2px 6px;font-size:10.5px;background:#fff;font-weight:400;text-align:center}
+.paper .ahead th{text-align:right;font-weight:700;width:22%}.paper .ahead td:last-child{width:18%;text-align:left}
+.paper .ahead .alogo{width:26%}.paper .ahead .alogo img{width:40px;display:block;margin:0 auto}.paper .ahead .alogo span{font-size:6.5px;font-weight:700;color:#0D6174;letter-spacing:.04em}
+.paper .anum{text-align:right;margin:6px 0 10px}.paper .anum-c{font-size:20px;font-weight:700}.paper .anum-t{font-weight:700;font-size:13px}
+.paper .cbx{display:inline-block;width:15px;height:15px;border:1.5px solid #111;vertical-align:-3px;text-align:center;line-height:13px;font-size:12px;margin-left:3px}
+.paper .apie{text-align:right;margin-top:40px;font-size:11.5px;line-height:1.35;color:#222}.paper .apie strong{color:#1F3864;font-size:13px}
+.paper .borr-t{color:#B91C1C;font-weight:700;font-size:11px;margin:0;text-align:left}
+.paper .marca{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%);font-size:84px;font-weight:800;color:rgba(185,28,28,.15);pointer-events:none;letter-spacing:.06em;white-space:nowrap}
 .paper{background:#fff;width:100%;max-width:680px;min-height:860px;margin:0 auto;padding:48px 52px;box-shadow:0 1px 3px rgba(20,40,50,.12),0 8px 24px rgba(20,40,50,.06);font-family:Arial,Helvetica,sans-serif;color:#111;font-size:12.5px;line-height:1.55}
 .paper h3{text-align:center;font-size:17px;margin:0 0 18px}
 .paper .fecha{text-align:right;margin-bottom:14px}
@@ -658,7 +670,7 @@ const CONFIG={
   tenantId:'6d19a314-7bcf-411f-b9fd-8f6bc92c1e7b',   // Directory (tenant) ID
   siteHost:'aurainnovacionessa.sharepoint.com',
   sitePath:'/sites/ActivosyBoletas',                 // sitio de SharePoint donde están las listas
-  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',perifericos:'ActivosPerifericos',
+  lists:{personal:'ActivosPersonal',equipos:'ActivosEquipos',historial:'ActivosHistorial',ubicaciones:'ActivosUbicaciones',categorias:'ActivosCategorias',perifericos:'ActivosPerifericos',actas:'ActivosActas',
          imontos:'IngresosMontos',iconfig:'IngresosConfig',ienvios:'IngresosEnvios',
          ecta:'EstadosCuentas',emov:'EstadosMovimientos',eben:'EstadosBeneficios',even:'EstadosVentasCorporativas',
          bpagos:'BoletasPagos',bbenef:'BoletasBeneficiarios',baut:'BoletasAutorizan',bemp:'BoletasEmpresas'},
@@ -685,7 +697,7 @@ const SP_MANAGE=()=>[`https://${CONFIG.siteHost}/AllSites.Manage`];   // para po
 
 /* Columnas de cada lista (la página crea solas las listas y columnas que falten) */
 const SCHEMA={
-  personal:[{name:'Cedula',text:{}}],
+  personal:[{name:'Cedula',text:{}},{name:'Llaves',text:{}}],
   equipos:[{name:'Equipo',text:{}},{name:'Categoria',text:{}},{name:'Serie',text:{}},{name:'Condicion',text:{}},{name:'Observaciones',text:{}},{name:'ResponsableId',number:{}},
            {name:'Ubicacion',text:{}},{name:'FechaAdquisicion',dateTime:{format:'dateOnly'}},{name:'ProximaRevision',dateTime:{format:'dateOnly'}},{name:'UltimaRevision',dateTime:{format:'dateOnly'}},
            {name:'Eliminado',boolean:{}},{name:'PrecioCompra',number:{}},{name:'Factor',number:{}},{name:'EliminadoFecha',dateTime:{format:'dateOnly'}},{name:'EliminadoMotivo',text:{}},{name:'UltimoResponsable',text:{}},{name:'ValorRetiro',number:{}}],
@@ -699,6 +711,7 @@ const SCHEMA={
   even:[{name:'Anio',number:{}},{name:'Mes',number:{}},{name:'Monto',number:{}},{name:'Descripcion',text:{}},{name:'Nombre',text:{}},{name:'Categoria',text:{}},{name:'Subcategoria',text:{}},{name:'OrigenId',number:{}}],
   iconfig:[{name:'Tipo',text:{}},{name:'Correo',text:{}},{name:'Orden',number:{}},{name:'Texto',text:{allowMultipleLines:true,textType:'plain'}}],
   ienvios:[{name:'Periodo',text:{}},{name:'Mes',text:{}},{name:'Destinatarios',text:{allowMultipleLines:true,textType:'plain'}},{name:'EnviadoPor',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Datos',text:{allowMultipleLines:true,textType:'plain'}}],
+  actas:[{name:'Numero',number:{}},{name:'Tipo',text:{}},{name:'Estado',text:{}},{name:'PersonaId',number:{}},{name:'Persona',text:{}},{name:'Cedula',text:{}},{name:'Fecha',dateTime:{format:'dateOnly'}},{name:'Por',text:{}},{name:'Detalle',text:{allowMultipleLines:true,textType:'plain'}},{name:'GeneradaPor',text:{}}],
   perifericos:[{name:'Tipo',text:{}},{name:'Numero',number:{}},{name:'FechaCompra',dateTime:{format:'dateOnly'}},{name:'ResponsableId',number:{}},{name:'Ubicacion',text:{}},{name:'Marca',text:{}},{name:'Observaciones',text:{}},{name:'FechaDano',dateTime:{format:'dateOnly'}},{name:'MotivoDano',text:{}}],
   bpagos:[{name:'Numero',number:{}},{name:'Empresa',text:{}},{name:'FechaSolicitud',dateTime:{format:'dateOnly'}},{name:'FechaPago',dateTime:{format:'dateOnly'}},{name:'Beneficiario',text:{}},{name:'CuentaBeneficiario',text:{}},
           {name:'Movimiento',text:{}},{name:'CuentaDebito',text:{}},{name:'Banco',text:{}},{name:'Moneda',text:{}},{name:'Monto',number:{}},{name:'Concepto',text:{allowMultipleLines:true,textType:'plain'}},
@@ -886,10 +899,11 @@ async function alMenu(id,name,tk){
 }
 /* ---------- Carga por módulo: cada uno trae sus listas en segundo plano ---------- */
 const LOADERS={
- act:async()=>{const [pe,eq,hi,ub,ca,pf]=await Promise.all(['personal','equipos','historial','ubicaciones','categorias','perifericos'].map(k=>G.listIds[k]?allItems(k):[]));
-  S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||''}));
+ act:async()=>{const [pe,eq,hi,ub,ca,pf,ac]=await Promise.all(['personal','equipos','historial','ubicaciones','categorias','perifericos','actas'].map(k=>G.listIds[k]?allItems(k):[]));
+  S.personas=pe.map(i=>({id:+i.id,nombre:i.fields.Title||'(sin nombre)',ced:i.fields.Cedula||'',llaves:(i.fields.Llaves||'').split('|').map(x=>x.trim()).filter(Boolean)}));
   S.ubic=ub.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim()})).filter(u=>u.nombre).sort(porNombre);
   S.per=pf.map(i=>{const f=i.fields;return{id:+i.id,cod:f.Title||'',tipo:f.Tipo||'',num:+f.Numero||0,fc:rd(f.FechaCompra),asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),marca:f.Marca||'',obs:f.Observaciones||'',dano:rd(f.FechaDano),motivo:f.MotivoDano||''}}).filter(x=>x.tipo&&x.fc);
+  S.actas=ac.map(i=>{const f=i.fields;return{id:+i.id,num:+f.Numero||0,tipo:f.Tipo==='dev'?'dev':'ent',estado:f.Estado||'Borrador',pid:+f.PersonaId||0,persona:f.Persona||'',ced:f.Cedula||'',f:rd(f.Fecha),por:f.Por||'',det:J(f.Detalle,{}),gen:f.GeneradaPor||'',t:Date.parse(i.createdDateTime)||0}}).sort((a,b)=>(b.num-a.num)||(b.t-a.t));
   S.cats=ca.map(i=>({id:+i.id,nombre:(i.fields.Title||'').trim(),cg:(i.fields.CuentaGasto||'').trim(),cc:(i.fields.CuentaDepAcum||'').trim()})).filter(c=>c.nombre).sort(porNombre);
   S.equipos=eq.map(i=>{const f=i.fields,fadq=rd(f.FechaAdquisicion);return{sid:+i.id,cod:f.Title||'',eq:f.Equipo||'',cat:f.Categoria||'',serie:f.Serie||'N/A',cond:f.Condicion||'Sin revisar',obs:f.Observaciones||'',
     asig:f.ResponsableId?+f.ResponsableId:null,ubic:(f.Ubicacion||'').trim(),fadq,prox:rd(f.ProximaRevision)||proxInicial(fadq),ult:rd(f.UltimaRevision),
@@ -955,7 +969,7 @@ async function mover(cods,dest,f){
 
 /* ---------- Pantallas de inicio ---------- */
 function screen(html){$('app').innerHTML=`<div class="gate">${html}</div>`}
-function showUser(){$('whoami').innerHTML=G.me?`<span>${esc(G.me.displayName||'')}</span><span class="avatar">${esc(ini(G.me.displayName||'?'))}</span><button class="btn sm" onclick="logout()">Salir</button>`:''}
+function showUser(){$('whoami').innerHTML=G.me?`<span>${esc(G.me.displayName||'')}</span><span class="avatar">${esc(ini(G.me.displayName||'?'))}</span>${G.esAdmin?'<button class="btn sm" onclick="irAcc()" title="Quién tiene acceso a Contaduría">Accesos</button>':''}<button class="btn sm" onclick="logout()">Salir</button>`:''}
 async function boot(){
   /* Si ya entraste antes desde este navegador, el Inicio aparece de una vez (con los números cargando) mientras se conecta */
   const mem=J((()=>{try{return localStorage.getItem('contaduria:sesion')}catch(e){return null}})(),null);let previo=!!(mem&&mem.M==='home'&&mem.mods);
@@ -969,7 +983,7 @@ async function boot(){
   /* Si ya entraste antes desde este navegador, el Inicio aparece de una vez (con los números cargando) mientras se conecta */
   /* si la sesión recordada era de otra cuenta, se descarta lo dibujado */
   if(previo&&mem.cuenta!==(G.account?.homeAccountId||'')){previo=false;G.me=null;$('whoami').innerHTML='';$('modslot').innerHTML='';screen('<div class="loader"><span class="spin" aria-hidden="true"></span><p id="paso" class="muted">Cargando…</p></div>')}
-  try{await connect();showUser();G._connRes();arrancarCargas();
+  try{await connect();showUser();G._connRes();arrancarCargas();esAdminSitio().then(v=>{G.esAdmin=v;if(v)showUser()});
     try{localStorage.setItem('contaduria:sesion',JSON.stringify({M,mods:G.mods,aud:!!G.aud,estBen:!!G.estBen,nombre:G.me?.displayName||'',cuenta:G.account?.homeAccountId||''}))}catch(e){}}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
@@ -983,6 +997,80 @@ async function boot(){
   if((G.mods.est||G.estBen)&&!ES.cargado)cargarEst().then(()=>{if(M==='home')actualizarHome()}).catch(e=>console.warn('Estados',e));
 }
 
+/* =====================================================================
+   ACCESOS (solo dueños del sitio): quién entra a Contaduría y a qué módulos.
+   Lee los permisos de cada lista con la API de SharePoint (se necesita Control total en el sitio).
+   ===================================================================== */
+const ACC={datos:null,cargando:false,err:'',q:''};
+async function esAdminSitio(){try{const tk=await spToken();if(!tk)return false;
+  const r=await fetch(`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web/EffectiveBasePermissions`,{headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata'}});
+  if(!r.ok)return false;const j=await r.json();return (Number(j.Low)&0x1000000)!==0}catch(e){return false}}
+function irAcc(){if(M!=='acc')G.accDe=M;M='acc';V.view='list';render();scrollTo(0,0)}
+const ACC_MODS=[{id:'act',n:'Activos y equipos',main:'equipos'},{id:'bol',n:'Boletas de pago',main:'bpagos'},{id:'ing',n:'Ingresos aseguradoras',main:'imontos'},{id:'est',n:'Estados por departamento',main:'emov'}];
+/* Nivel de una persona en un módulo: necesita todas las listas del módulo; Edición si puede agregar en la lista principal */
+function nivelAcc(u,m){const ls=Object.keys(CONFIG.lists).filter(k=>modDe(k)===m.id),lv=ls.map(k=>u.l[k]||0);
+  if(lv.every(v=>v>0))return u.l[m.main]>=2?['Edición','Nueva']:['Solo lectura','Sinrev'];
+  if(m.id==='act'&&u.l.equipos&&u.l.categorias&&!u.l.historial)return['Auditoría','Sinrev'];
+  if(m.id==='est'&&!u.l.emov){const c=COPIAS.filter(c=>u.l[c.k]).map(c=>c.dep);if(c.length)return['Solo '+c.join(' y '),'Sinrev']}
+  if(lv.some(v=>v>0))return['Incompleto','Usada'];
+  return null}
+async function cargarAccesos(){
+  ACC.cargando=true;ACC.err='';
+  try{
+    const tk=await spToken();if(!tk)throw new Error('No se pudo obtener el permiso para leer los accesos de SharePoint. Cierra sesión y vuelve a entrar.');
+    const base=`https://${CONFIG.siteHost}${CONFIG.sitePath}/_api/web`;
+    const sp=async u=>{const r=await fetch(base+u,{headers:{Authorization:'Bearer '+tk,Accept:'application/json;odata=nometadata'}});
+      if(!r.ok)throw new GraphError(r.status,r.status===403||r.status===401?'Tu cuenta no puede ver los permisos del sitio. Se necesita Control total en el sitio de SharePoint.':'SharePoint respondió con un error ('+r.status+').');return r.json()};
+    let gtk=null;try{gtk=(await G.pca.acquireTokenSilent({scopes:['GroupMember.Read.All'],account:G.account})).accessToken}catch(e){}
+    const cache={},sinVer=new Set();
+    const usuario=m=>({n:m.Title||m.LoginName,e:lc(m.Email||m.UserPrincipalName||'')});
+    const sistema=m=>/^SHAREPOINT\\system$/i.test(m.LoginName||'')||/app@sharepoint/i.test(m.LoginName||'')||['System Account','Cuenta del sistema'].includes(m.Title);
+    async function grupoAD(m){const lg=m.LoginName||'';
+      if(/spo-grid-all-users|c:0\(\.s\|true|c:0-\.f\|rolemanager/i.test(lg))return [{n:'Todas las personas de la empresa',e:'*todos',grupo:true}];
+      const g=lg.match(/\|([0-9a-f-]{36})(_o)?$/i);
+      if(gtk&&g){try{let url=`https://graph.microsoft.com/v1.0/groups/${g[1]}/${g[2]?'owners':'transitiveMembers'}/microsoft.graph.user?$select=displayName,mail,userPrincipalName&$top=999`,out=[];
+        while(url){const r=await fetch(url,{headers:{Authorization:'Bearer '+gtk}});if(!r.ok)throw new Error(r.status);const j=await r.json();out=out.concat(j.value);url=j['@odata.nextLink']||null}
+        return out.map(x=>({n:x.displayName,e:lc(x.mail||x.userPrincipalName)}))}catch(e){}}
+      sinVer.add(m.Title);return [{n:m.Title,e:'*g:'+m.Title,grupo:true}]}
+    async function personas(m){const k=m.PrincipalType+':'+m.Id;if(cache[k])return cache[k];let r=[];
+      if(sistema(m))r=[];
+      else if(m.PrincipalType===1)r=[usuario(m)];
+      else if(m.PrincipalType===8){for(const u of (await sp(`/sitegroups(${m.Id})/users`)).value){if(sistema(u))continue;r=r.concat(u.PrincipalType===1?[usuario(u)]:await grupoAD(u))}}
+      else r=await grupoAD(m);
+      return cache[k]=r}
+    const nivel=bs=>{let v=0,adm=false;(bs||[]).forEach(b=>{if(b.Hidden)return;const lo=Number(b.BasePermissions?.Low||0);if(lo&2)v=Math.max(v,2);else if(lo&1)v=Math.max(v,1);if(lo&0x1000000)adm=true});return{v,adm}};
+    const asign=async path=>(await sp(path+'/roleassignments?$expand=Member,RoleDefinitionBindings')).value;
+    const U={},poner=(ps,cb)=>ps.forEach(p=>{const k=p.e||p.n;const u=U[k]||(U[k]={n:p.n,e:p.e,grupo:!!p.grupo,l:{},adm:false});cb(u)});
+    const web=await asign('');
+    for(const a of web){if(nivel(a.RoleDefinitionBindings).adm)poner(await personas(a.Member),u=>u.adm=true)}
+    for(const [key,name] of Object.entries(CONFIG.lists)){
+      const ruta=G.listIds[key]?`/lists(guid'${G.listIds[key]}')`:`/lists/getbytitle('${name}')`;let info;
+      try{info=await sp(ruta+'?$select=HasUniqueRoleAssignments')}catch(e){if(e.status===404)continue;throw e}
+      const as=info.HasUniqueRoleAssignments?await asign(ruta):web;
+      for(const a of as){const{v}=nivel(a.RoleDefinitionBindings);if(!v)continue;poner(await personas(a.Member),u=>u.l[key]=Math.max(u.l[key]||0,v))}
+    }
+    ACC.datos={u:Object.values(U).filter(u=>u.adm||ACC_MODS.some(m=>nivelAcc(u,m))).sort((a,b)=>(a.grupo-b.grupo)||a.n.localeCompare(b.n)),sinVer:[...sinVer],f:new Date()};
+  }catch(e){console.error('Accesos',e);ACC.err=e.message||String(e)}
+  finally{ACC.cargando=false;if(M==='acc')renderAcc()}
+}
+function renderAcc(){
+  const back=`<div class="back"><button class="lnk" onclick="M=G.accDe&&G.accDe!=='acc'?G.accDe:'home';render()">← Volver</button></div>`;
+  if(!ACC.datos&&!ACC.err){$('app').innerHTML=back+'<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Revisando los permisos de cada lista…</p></div></div>';if(!ACC.cargando)cargarAccesos();return}
+  if(!ACC.datos){$('app').innerHTML=back+`<div class="gate"><h1>No se pudieron leer los accesos</h1><p>${esc(ACC.err)}</p><button class="btn" onclick="ACC.err='';renderAcc()">Intentar de nuevo</button></div>`;return}
+  const D=ACC.datos;
+  $('app').innerHTML=`${back}<div class="head"><div><h1>Accesos a Contaduría</h1><p class="muted" style="margin:4px 0 0">Quién puede entrar y a qué módulos, según los permisos de las listas de SharePoint. Solo lo ven los dueños del sitio.</p></div>
+   <div class="head-acts"><button class="btn" onclick="ACC.datos=null;ACC.err='';renderAcc()">Actualizar</button></div></div>
+  ${D.sinVer.length?`<div class="info" style="margin:0 0 12px">No se pudo ver quiénes están dentro de: <strong>${D.sinVer.map(esc).join(', ')}</strong>. Aparecen como grupo.</div>`:''}
+  <div class="bar"><input class="search" placeholder="Buscar por nombre o correo" value="${esc(ACC.q)}" oninput="ACC.q=this.value;filasAcc()"></div>
+  <div class="tbl"><table><thead><tr><th>Persona</th>${ACC_MODS.map(m=>`<th>${m.n}</th>`).join('')}<th>Dueño del sitio</th></tr></thead><tbody id="acc-f"></tbody></table></div>
+  <p class="small muted">Edición: ve y cambia. Solo lectura: solo consulta. Incompleto: tiene permiso en algunas listas del módulo pero no en todas, así que el módulo no le aparece. Revisado el ${fCorta(kOf(D.f))} a las ${D.f.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'})}.</p>`;
+  filasAcc()}
+function filasAcc(){const el=$('acc-f');if(!el||!ACC.datos)return;const q=lc(ACC.q);
+  const l=ACC.datos.u.filter(u=>!q||lc(u.n+' '+u.e).includes(q));
+  el.innerHTML=l.length?l.map(u=>`<tr><td><div class="who"><span class="avatar">${esc(ini(u.n))}</span><div><strong>${esc(u.n)}</strong><p>${u.grupo?'Grupo':esc(u.e)}</p></div></div></td>
+   ${ACC_MODS.map(m=>{const v=nivelAcc(u,m);return `<td>${v?`<span class="pill ${v[1]}">${esc(v[0])}</span>`:'<span class="free">—</span>'}</td>`}).join('')}
+   <td>${u.adm?'<span class="pill Nueva">Sí</span>':''}</td></tr>`).join(''):`<tr><td colspan="${ACC_MODS.length+2}"><p class="empty">Nadie coincide con la búsqueda.</p></td></tr>`}
+
 /* ---------- Vista principal ---------- */
 let M='act';
 /* Inicia la carga de cada módulo en segundo plano; el Inicio se va llenando solo */
@@ -995,7 +1083,7 @@ function esperarMod(){const k=modDatos(M),c=CARGA[k];if(!c||c.ok)return false;
   $('app').innerHTML=`<div class="gate"><div class="loader"><span class="spin" aria-hidden="true"></span><p class="muted">Cargando ${nombre}…</p></div></div>`;
   const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();
   cargarMod(k).then(()=>{if(modDatos(M)===k)render()}).catch(()=>{if(modDatos(M)===k)render()});return true}
-function render(){if(M!=='home'&&M!=='est'&&esperarMod())return;if(M==='est'){renderEst();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
+function render(){if(M==='acc'){renderAcc();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M!=='home'&&M!=='est'&&esperarMod())return;if(M==='est'){renderEst();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='ing'){renderIng();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='home'&&multiMod()){renderHome();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(G.aud&&M!=='bol'){renderAud();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch();return}if(M==='bol'&&V.view!=='acta')renderB();else renderA();const ms=$('modslot');if(ms)ms.innerHTML=modSwitch()}
 function renderA(){
   if(V.view==='acta'){$('app').innerHTML=vActa();prev();return}
   const t=S.equipos.length,a=S.equipos.filter(x=>x.asig).length,u=S.equipos.filter(x=>!x.asig).length,pn=pendientes().length;
@@ -1018,9 +1106,9 @@ function renderA(){
    <div class="stat"><span>En ubicaciones</span><strong>${u}</strong><small>bodega, sala y otros</small></div>
    <div class="stat${pn?' warn':''}"><span>Revisión pendiente</span><strong>${pn}</strong><small>cumplieron año</small></div>
   </div>
-  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('rev','Revisión',pn)}${tb('dep','Depreciación')}${tb('ret','Retirados')}${tb('adm','Administrar')}</div>
-  <div id="tabc">${{pe:tPe,eq:tEqTab,rev:tRev,dep:tDep,ret:tRet,adm:tAdm}[V.tab]()}</div>`;
-  if(V.tab==='eq'){if((V.eqsub||'gen')==='gen'){if(S.todos.length)filas()}else filasPer()}
+  <div class="tabs" role="tablist">${tb('pe','Personal')}${tb('eq','Equipos')}${tb('actas','Actas',S.actas.filter(x=>x.estado==='Borrador').length)}${tb('rev','Revisión',pn)}${tb('dep','Depreciación')}${tb('ret','Retirados')}${tb('adm','Administrar')}</div>
+  <div id="tabc">${{pe:tPe,eq:tEqTab,actas:tActas,rev:tRev,dep:tDep,ret:tRet,adm:tAdm}[V.tab]()}</div>`;
+  if(V.tab==='eq'){const es=V.eqsub||'gen';if(es==='gen'){if(S.todos.length)filas()}else if(es==='llv')filasLlv();else filasPer()}
   if(V.tab==='pe'&&S.personas.length)filasPe();
   if(V.tab==='dep')filasDep();
   if(V.tab==='ret')filasRet();
@@ -1045,7 +1133,7 @@ function filasPe(){
   const filaP=p=>{const m=S.equipos.filter(x=>x.asig===p.id);return `<tr>
    <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)} · ${plural(m.length,'equipo','equipos')}</p></div></div></td>
    <td>${listaEq(m)}</td>
-   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>`}</div></td></tr>`};
+   <td><div class="acts">${m.length?`<button class="lnk" onclick="dCambio('p:${p.id}')">Cambiar responsable</button><button class="lnk" onclick="dDevolver(${p.id})">Devolver</button><button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:`<button class="lnk" onclick="dCambio(null,null,${p.id})">Entregar equipo</button><button class="lnk red" onclick="dBorrarPersona(${p.id})">Eliminar</button>${p.llaves.length||S.per.some(x=>x.asig===p.id&&!x.dano)?`<button class="btn sm" onclick="abrirActa(${p.id})">Generar acta</button>`:''}`}</div></td></tr>`};
   /* Ubicaciones (y equipos sin asignar), mostradas igual que una persona */
   const lugares=S.ubic.map(u=>({nombre:u.nombre,o:'u:'+u.nombre,m:S.equipos.filter(x=>!x.asig&&x.ubic===u.nombre)}));
   const sinA=S.equipos.filter(x=>!x.asig&&!x.ubic);if(sinA.length)lugares.push({nombre:'Sin asignar',o:'n:',m:sinA,sa:true});
@@ -1520,71 +1608,172 @@ const LEGAL_DEV=[
  'La empresa recibe los equipos en la condición indicada en la columna Condición. En caso de detectarse posteriormente algún daño no indicado en este documento, que se demuestre fue ocasionado por negligencia o con conocimiento de causa, se procederá según lo autorizado por el colaborador en el acta de entrega del equipo.',
  'Con la firma de este documento, ambas partes dan fe de la devolución de los equipos aquí detallados.'
 ];
-function abrirActa(pid,sel,f,tipo){V.view='acta';V.acta={pid,sel:sel||null,f:f||hoy(),tipo:tipo||'ent'};render();scrollTo(0,0)}
+/* Formato del acta (encabezado, consecutivo y pie de página) */
+const ACTA_FMT={area:'AREA DE CONTABILIDAD',aprobado:'TIM GARRETT',revision:'10/11/2026',version:'1',prefijo:'ACT-CON-'};
+const EMP_PIE=['AURA INNOVACIONES S.A.','Cédula Jurídica 3-101-923519','San José, 150 metros norte del Hotel Grano de Oro','Tel. 2233-2455'];
+const codActa=n=>n?ACTA_FMT.prefijo+String(n).padStart(3,'0'):'BORRADOR';
+const ORDEN_PER=['Mochila','Adaptador','Mouse','Teclado'];
+/* bid: id de un borrador guardado que se quiere continuar */
+function abrirActa(pid,sel,f,tipo,bid){
+  let marc=null,por=null;
+  if(bid){const b=S.actas.find(x=>x.id===bid);if(!b||!P(b.pid))return toast('Esa persona ya no está registrada; el borrador solo se puede descargar.');pid=b.pid;tipo=b.tipo;f=b.f;por=b.por;marc=b.det.claves||[]}
+  V.view='acta';V.acta={pid,sel:sel||null,f:f||hoy(),tipo:tipo||'ent',bid:bid||null,marc,por};render();scrollTo(0,0)}
+/* Todo lo que puede ir en el acta, en orden: activos con placa, mochilas/adaptadores/mouse/teclados, llaves y control de alarma */
+function itemsActa(a){
+  const p=P(a.pid),dev=a.tipo==='dev',m=a.marc||[],s=a.sel||[];
+  const eqs=S.equipos.filter(x=>dev?(s.includes(x.cod)||m.includes('e:'+x.cod)):(x.asig===a.pid||m.includes('e:'+x.cod)));
+  const pers=S.per.filter(x=>!x.dano&&(x.asig===a.pid||m.includes('p:'+x.id))).sort((x,y)=>ORDEN_PER.indexOf(x.tipo)-ORDEN_PER.indexOf(y.tipo)||x.num-y.num);
+  const ll=LLAVES.filter(l=>p.llaves.includes(l)||m.includes('l:'+l));
+  const r=[...eqs.map(x=>({k:'e:'+x.cod,g:'eq',cod:x.cod,eq:x.eq,cat:x.cat,serie:x.serie,cond:x.cond,obs:x.obs})),
+    ...pers.map(x=>({k:'p:'+x.id,g:'per',id:x.id,cod:x.cod,eq:x.tipo+(x.marca?' '+x.marca:''),cat:x.tipo==='Mochila'?'Mochila':'Periférico',serie:'N/A',cond:'',obs:x.obs})),
+    ...ll.map(l=>({k:'l:'+l,g:'llave',l,cod:'—',eq:l,cat:l==='Control Alarma'?'Control de alarma':'Llave',serie:'N/A',cond:'',obs:''}))];
+  r.forEach(x=>x.on=a.marc?m.includes(x.k):a.sel?(x.g==='eq'&&s.includes(x.cod)):true);
+  return r;
+}
 function vActa(){
   const a=V.acta,p=P(a.pid),dev=a.tipo==='dev';
-  const mis=dev?S.equipos.filter(x=>a.sel.includes(x.cod)):S.equipos.filter(x=>x.asig===a.pid);
   if(!p){V.view='list';return ''}
-  const sinEquipos=dev&&!S.equipos.some(x=>x.asig===a.pid);
+  const it=itemsActa(a),sinEquipos=dev&&!S.equipos.some(x=>x.asig===a.pid);
+  const grupo=(g,t)=>{const l=it.filter(x=>x.g===g);return l.length?`<span class="small" style="font-weight:600;display:block;margin-top:10px">${t}</span><ul class="pick">${l.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${esc(x.k)}"${x.on?' checked':''} onchange="prev()"><span><strong>${esc(x.g==='llave'?x.eq:x.cod)}</strong> ${x.g==='llave'?'':esc(x.eq)}${x.g==='eq'?`<small>Serie ${esc(x.serie)}</small>`:''}</span></label></li>`).join('')}</ul>`:''};
   return `<div class="back"><button class="lnk" onclick="V.view='list';render()">← Volver</button></div>
-  <h1>${dev?'Acta de devolución':'Acta de entrega'}</h1>
+  <h1>${dev?'Acta de devolución':'Acta de entrega'} <span class="pill Usada" style="vertical-align:middle;font-size:12px">Borrador</span></h1>
   <div class="acta">
    <div class="box">
     <h2>${esc(p.nombre)}</h2><p class="small muted" style="margin:0 0 16px">Cédula ${esc(p.ced)}</p>
+    ${a.bid?'<div class="info" style="margin:0 0 12px">Estás continuando un borrador guardado.</div>':''}
     ${fl('Fecha del acta',dateField('a-f',a.f,'prev()'))}
-    ${fl(dev?'Recibido por':'Entregado por',`<input id="a-por" value="${esc(yo())}" oninput="prev()">`)}
-    <span class="small" style="font-weight:600">Equipos incluidos</span>
-    <ul class="pick">${mis.map(x=>`<li><label><input type="checkbox" class="a-chk" value="${esc(x.cod)}"${!a.sel||a.sel.includes(x.cod)?' checked':''} onchange="prev()"><span><strong>${esc(x.cod)}</strong> ${esc(x.eq)}<small>Serie ${esc(x.serie)}</small></span></label></li>`).join('')}</ul>
+    ${fl(dev?'Recibido por':'Entregado por',`<input id="a-por" value="${esc(a.por||yo())}" oninput="prev()">`)}
+    <span class="small" style="font-weight:600">Qué incluye el acta</span>
+    ${grupo('eq','Activos con placa')}${grupo('per','Mochilas, adaptadores, mouse y teclados')}${grupo('llave','Llaves y control de alarma')}
+    ${it.length?'':'<p class="small muted">Esta persona no tiene nada a su nombre.</p>'}
+    ${dev&&it.some(x=>x.g!=='eq')?'<p class="small muted" style="margin:8px 0 0">Al generar el acta de devolución, los artículos y llaves marcados se le quitan a la persona (los artículos pasan a Bodega).</p>':''}
     <div class="err" id="a-err"></div>
-    <button class="btn primary wide" onclick="pdf()">Descargar PDF para firmar</button>
-    <p class="small muted" style="margin:10px 0 0">Se descarga en tamaño carta, listo para imprimir y firmar.</p>
+    <button class="btn wide" onclick="borradorActa()">Guardar y descargar borrador</button>
+    <button class="btn primary wide" style="margin-top:8px" onclick="dGenerarActa()">Aceptar y generar acta</button>
+    <p class="small muted" style="margin:10px 0 0">El borrador dice BORRADOR y no lleva número. Al aceptarlo recibe el consecutivo ${ACTA_FMT.prefijo}### y queda guardado en la pestaña Actas.</p>
     ${sinEquipos?`<div class="info" style="margin:16px 0 0">${esc(p.nombre)} ya no tiene equipos a su nombre. Si ya no labora en la empresa, puedes eliminarlo desde la pestaña Personal.</div>`:''}
    </div>
    <div class="sheet"><div class="paper" id="paper"></div></div>
   </div>`;
 }
-function datos(){const c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);return{dev:V.acta.tipo==='dev',p:P(V.acta.pid),f:fv('a-f'),por:$('a-por').value.trim(),eqs:S.equipos.filter(x=>c.includes(x.cod))}}
+function datos(){const a=V.acta,p=P(a.pid),c=[...document.querySelectorAll('.a-chk:checked')].map(i=>i.value);
+  return{dev:a.tipo==='dev',pid:a.pid,nombre:p.nombre,ced:p.ced,f:fv('a-f'),por:$('a-por').value.trim(),claves:c,filas:itemsActa(a).filter(x=>c.includes(x.k)),num:null,borrador:true}}
+/* Datos de un acta guardada en la lista ActivosActas */
+const datosDe=x=>({dev:x.tipo==='dev',pid:x.pid,nombre:x.persona,ced:x.ced,f:x.f,por:x.por,claves:x.det.claves||[],filas:x.det.filas||[],num:x.estado==='Generada'?x.num:null,borrador:x.estado!=='Generada'});
 const textoActa=d=>d.dev
-  ?{tit:'Acta de devolución de equipo',a:'Se recibe de ',b:' los siguientes equipos:',legal:LEGAL_DEV,izq:['Entregado por: '+d.p.nombre,'Cédula: '+d.p.ced],der:['Recibido por: '+d.por,'']}
-  :{tit:'Acta de entrega de equipo',a:'Se le hace entrega a ',b:' los siguientes equipos:',legal:LEGAL,izq:['Entregado por: '+d.por,''],der:['Recibido por: '+d.p.nombre,'Cédula: '+d.p.ced]};
+  ?{tit:'Acta de devolución de equipo',a:'Se recibe de ',b:' los siguientes equipos:',legal:LEGAL_DEV,izq:['Entregado por: '+d.nombre,'Cédula: '+d.ced],der:['Recibido por: '+d.por,'']}
+  :{tit:'Acta de entrega de equipo',a:'Se le hace entrega a ',b:' los siguientes equipos:',legal:LEGAL,izq:['Entregado por: '+d.por,''],der:['Recibido por: '+d.nombre,'Cédula: '+d.ced]};
 function prev(){
-  if(!$('paper'))return;const d=datos(),t=textoActa(d);$('a-err').textContent='';
-  const firma=l=>`<div>${esc(l[0])}${l[1]?`<small>${esc(l[1])}</small>`:''}</div>`;
-  $('paper').innerHTML=`<div class="phead"><div class="plogo"><img src="${AURA_LOGO}" alt=""><span>${EMPRESA_LOGO}</span></div><h3>${t.tit}</h3><div></div></div>
+  if(!$('paper'))return;const d=datos(),t=textoActa(d),cod=codActa(d.num);$('a-err').textContent='';
+  const firma=l=>`<div>${esc(l[0])}${l[1]?`<small>${esc(l[1])}</small>`:''}</div>`,cb=v=>`<span class="cbx">${v?'✓':''}</span>`;
+  $('paper').classList.toggle('borr',d.borrador);
+  $('paper').innerHTML=`${d.borrador?'<div class="marca" aria-hidden="true">BORRADOR</div>':''}
+  <table class="ahead"><tr><td rowspan="3" class="alogo"><img src="${AURA_LOGO}" alt=""><span>${EMPRESA_LOGO}</span></td><td>AURA INNOVACIONES S.A.</td><th>Código:</th><td><b>${cod}</b></td></tr>
+   <tr><td>Área responsable: ${ACTA_FMT.area}</td><th>Última revisión:</th><td><b>${ACTA_FMT.revision}</b></td></tr>
+   <tr><td>Aprobado por ${ACTA_FMT.aprobado}</td><th>Versión:</th><td><b>${ACTA_FMT.version}</b></td></tr></table>
+  ${d.borrador?'<p class="borr-t">BORRADOR · no válido para firma</p>':''}
+  <div class="anum"><div class="anum-c">${cod}</div><div class="anum-t">Entrega ${cb(!d.dev)}&nbsp;&nbsp; Devolución ${cb(d.dev)}</div></div>
+  <h3>${t.tit}</h3>
   <div class="fecha">Fecha: ${fActa(d.f)}</div>
-  <p>${t.a}<span class="ln">${esc(d.p.nombre)}</span> cédula <span class="ln">${esc(d.p.ced)}</span>${t.b}</p>
+  <p>${t.a}<span class="ln">${esc(d.nombre)}</span> cédula <span class="ln">${esc(d.ced)}</span>${t.b}</p>
   <table><thead><tr><th>Código</th><th>Equipo</th><th>Categoría</th><th>Serie</th><th>Condición</th><th>Observaciones</th></tr></thead>
-  <tbody>${d.eqs.length?d.eqs.map(x=>`<tr><td>${esc(x.cod)}</td><td>${esc(x.eq)}</td><td>${esc(x.cat)}</td><td>${esc(x.serie)}</td><td>${esc(x.cond)}</td><td>${esc(x.obs)}</td></tr>`).join(''):'<tr><td colspan="6" style="color:#888">Selecciona al menos un equipo</td></tr>'}</tbody></table>
+  <tbody>${d.filas.length?d.filas.map(x=>`<tr><td>${esc(x.cod)}</td><td>${esc(x.eq)}</td><td>${esc(x.cat)}</td><td>${esc(x.serie)}</td><td>${esc(x.cond)}</td><td>${esc(x.obs)}</td></tr>`).join(''):'<tr><td colspan="6" style="color:#888">Marca al menos un artículo</td></tr>'}</tbody></table>
   ${t.legal.map(x=>`<p>${esc(x)}</p>`).join('')}
-  <div class="firmas">${firma(t.izq)}${firma(t.der)}</div>`;
+  <div class="firmas">${firma(t.izq)}${firma(t.der)}</div>
+  <div class="apie">${EMP_PIE.map((x,i)=>i?`<div>${esc(x)}</div>`:`<strong>${esc(x)}</strong>`).join('')}</div>`;
 }
-function pdf(){
-  const d=datos(),er=$('a-err'),t=textoActa(d);
-  if(!d.eqs.length)return er.textContent='Selecciona al menos un equipo para el acta.';
-  if(!d.por)return er.textContent=d.dev?'Indica quién recibe el equipo.':'Indica quién entrega el equipo.';
-  if(!window.jspdf)return er.textContent='No se pudo cargar el generador de PDF. Revisa la conexión a internet.';
-  const doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=22,W=171.9,R=L+W;
-  doc.addImage(AURA_LOGO,'PNG',L+5,12,16,16.6);
-  doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.setTextColor(13,97,116);doc.text(EMPRESA_LOGO,L+13,32,{align:'center'});doc.setTextColor(0);
-  doc.setFontSize(15);doc.text(t.tit,107.95,23,{align:'center'});
-  let y=42;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text('Fecha: '+fActa(d.f),R,y,{align:'right'});y+=10;
+function validarActa(d){const er=$('a-err');
+  if(!d.filas.length){er.textContent='Marca al menos un artículo para el acta.';return false}
+  if(!d.f){er.textContent='Escribe una fecha válida (dd/mm/aaaa).';return false}
+  if(!d.por){er.textContent=d.dev?'Indica quién recibe el equipo.':'Indica quién entrega el equipo.';return false}
+  if(!window.jspdf){er.textContent='No se pudo cargar el generador de PDF. Revisa la conexión a internet.';return false}
+  return true}
+const camposActa=(d,extra)=>({Title:d.num?codActa(d.num):'Borrador',Tipo:d.dev?'dev':'ent',PersonaId:d.pid,Persona:d.nombre,Cedula:d.ced,Fecha:wd(d.f),Por:d.por,
+  Detalle:JSON.stringify({claves:d.claves,filas:d.filas.map(({k,g,id,l,cod,eq,cat,serie,cond,obs})=>({k,g,id,l,cod,eq,cat,serie,cond,obs}))}),...extra});
+/* Guarda el borrador (o lo actualiza) y descarga el PDF con la marca BORRADOR */
+function borradorActa(){const d=datos();if(!validarActa(d))return;
+  V.acta.marc=d.claves;V.acta.f=d.f;V.acta.por=d.por;const bid=V.acta.bid;
+  act(async()=>bid?(await setItem('actas',bid,camposActa(d,{Estado:'Borrador'})),bid):+(await addItem('actas',camposActa(d,{Estado:'Borrador',Numero:0}))).id,
+    'Borrador guardado',id=>{V.acta.bid=id;render();pdfActa(d)})}
+function dGenerarActa(){const d=datos();if(!validarActa(d))return;
+  const n=Math.max(0,...S.actas.map(x=>x.num))+1,quita=d.dev?d.filas.filter(x=>x.g!=='eq'):[];
+  abrir(`<header><div><h2>Generar acta</h2></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><p style="margin:0 0 10px">Se generará el acta <strong>${codActa(n)}</strong> de ${d.dev?'devolución':'entrega'} para <strong>${esc(d.nombre)}</strong>, con ${plural(d.filas.length,'artículo','artículos')}.</p>
+   ${quita.length?`<p class="small">También se registrará que devolvió: ${quita.map(x=>esc(x.g==='llave'?x.l:x.cod)).join(', ')}.</p>`:''}
+   <p class="small muted">Una vez generada ya no se puede cambiar. Si algo está mal, haz un acta nueva.</p></div>
+  <footer><button class="btn" onclick="cerrar()">Revisar otra vez</button><button class="btn primary" onclick="cerrar();generarActa()">Generar ${codActa(n)}</button></footer>`)}
+function generarActa(){const d=datos(),bid=V.acta.bid,p=P(d.pid);if(!validarActa(d))return;
+  act(async()=>{
+    /* el número se calcula con la lista recién leída, para no repetir consecutivos */
+    const n=Math.max(0,...(await allItems('actas')).map(i=>+i.fields.Numero||0))+1;d.num=n;d.borrador=false;
+    const f=camposActa(d,{Estado:'Generada',Numero:n,GeneradaPor:yo()});
+    if(bid)await setItem('actas',bid,f);else await addItem('actas',f);
+    if(d.dev){
+      for(const x of d.filas.filter(x=>x.g==='per'))await setItem('perifericos',x.id,{ResponsableId:0,Ubicacion:'Bodega'});
+      const ll=d.filas.filter(x=>x.g==='llave').map(x=>x.l);
+      if(ll.length){await setItem('personal',d.pid,{Llaves:p.llaves.filter(l=>!ll.includes(l)).join('|')});
+        for(const l of ll)await addItem('historial',{Title:l,Fecha:wd(d.f),De:d.nombre,A:'Devuelto',Registro:yo()})}
+    }
+    return n},n=>'Acta '+codActa(n)+' generada',()=>{pdfActa(d);V.view='list';V.tab='actas';V.af='';render();scrollTo(0,0)})}
+/* PDF tamaño carta: encabezado y pie en cada página; el borrador lleva marca de agua */
+function pdfActa(d){
+  if(!window.jspdf)return toast('No se pudo cargar el generador de PDF. Revisa la conexión a internet.');
+  const t=textoActa(d),cod=codActa(d.num),doc=new jspdf.jsPDF({unit:'mm',format:'letter'}),L=22,W=171.9,R=L+W,MAX=246,TOPN=38;
+  /* número y casillas Entrega / Devolución */
+  let y=36;
+  if(d.borrador){doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(185,28,28);doc.text('BORRADOR · no válido para firma',L,y+4);doc.setTextColor(0)}
+  doc.setFont('helvetica','bold');doc.setFontSize(16);doc.text(cod,R,y+4,{align:'right'});
+  const caja=(x,yy,v)=>{doc.setLineWidth(.35);doc.rect(x,yy-3.6,4.2,4.2);if(v){doc.setLineWidth(.6);doc.line(x+.8,yy-1.5,x+1.8,yy-.3);doc.line(x+1.8,yy-.3,x+3.6,yy-3)}doc.setLineWidth(.2)};
+  doc.setFontSize(10.5);const tE='Entrega',tD='Devolución',wE=doc.getTextWidth(tE),wD=doc.getTextWidth(tD);let xx=R-(wE+6+8+wD+6);
+  doc.text(tE,xx,y+11);caja(xx+wE+1.5,y+11,!d.dev);xx+=wE+6+8;doc.text(tD,xx,y+11);caja(xx+wD+1.5,y+11,d.dev);
+  y+=22;doc.setFontSize(15);doc.text(t.tit,107.95,y,{align:'center'});
+  y+=9;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.text('Fecha: '+fActa(d.f),R,y,{align:'right'});y+=9;
   let x=L;const seg=(s,b)=>{doc.setFont('helvetica',b?'bold':'normal');doc.text(s,x,y);const w=doc.getTextWidth(s);if(b)doc.line(x,y+1,x+w,y+1);x+=w};
-  if(doc.getTextWidth(t.a+d.p.nombre+' cédula '+d.p.ced+t.b)<W){seg(t.a);seg(d.p.nombre,1);seg(' cédula ');seg(d.p.ced,1);seg(t.b);y+=9}
-  else{const l=doc.splitTextToSize(t.a+d.p.nombre+', cédula '+d.p.ced+','+t.b,W);doc.text(l,L,y);y+=l.length*5+4}
-  const cw=[17,32,27,33,21,41.9];
+  if(doc.getTextWidth(t.a+d.nombre+' cédula '+d.ced+t.b)<W){seg(t.a);seg(d.nombre,1);seg(' cédula ');seg(d.ced,1);seg(t.b);y+=9}
+  else{const l=doc.splitTextToSize(t.a+d.nombre+', cédula '+d.ced+','+t.b,W);doc.text(l,L,y);y+=l.length*5+4}
+  const cw=[22,34,27,28,20,40.9];
   const fila=(c,h)=>{doc.setFont('helvetica',h?'bold':'normal');doc.setFontSize(9);const ls=c.map((v,i)=>doc.splitTextToSize(String(v||''),cw[i]-3));const hh=Math.max(...ls.map(l=>l.length))*4+3.5;
-    if(y+hh>262){doc.addPage();y=25}let xx=L;
+    if(y+hh>MAX){doc.addPage();y=TOPN}let xx=L;
     ls.forEach((l,i)=>{if(h){doc.setFillColor(232,232,232);doc.rect(xx,y,cw[i],hh,'FD')}else doc.rect(xx,y,cw[i],hh);doc.text(l,xx+1.5,y+4.7);xx+=cw[i]});y+=hh};
-  doc.setLineWidth(.2);fila(['Código','Equipo','Categoría','Serie','Condición','Observaciones'],1);d.eqs.forEach(q=>fila([q.cod,q.eq,q.cat,q.serie,q.cond,q.obs]));y+=9;
+  doc.setLineWidth(.2);fila(['Código','Equipo','Categoría','Serie','Condición','Observaciones'],1);d.filas.forEach(q=>fila([q.cod,q.eq,q.cat,q.serie,q.cond,q.obs]));y+=9;
   doc.setFont('helvetica','normal');doc.setFontSize(9.5);
-  t.legal.forEach(s=>{const l=doc.splitTextToSize(s,W);if(y+l.length*4.4>262){doc.addPage();y=25}doc.text(l,L,y,{align:'justify',maxWidth:W});y+=l.length*4.4+3.5});
-  y+=26;if(y>245){doc.addPage();y=50}
+  t.legal.forEach(s=>{const l=doc.splitTextToSize(s,W);if(y+l.length*4.4>MAX){doc.addPage();y=TOPN}doc.text(l,L,y,{align:'justify',maxWidth:W});y+=l.length*4.4+3.5});
+  y+=24;if(y+12>MAX){doc.addPage();y=TOPN+30}
   doc.line(L,y,L+72,y);doc.line(R-72,y,R,y);doc.setFontSize(10);
   doc.text(t.izq[0],L,y+5);doc.text(t.der[0],R-72,y+5);doc.setTextColor(80);
-  if(t.izq[1])doc.text(t.izq[1],L,y+10);if(t.der[1])doc.text(t.der[1],R-72,y+10);
-  const fn=(d.dev?'Devolucion_':'Acta_')+d.p.nombre.replace(/\s+/g,'_')+'_'+d.f+'.pdf';
-  try{doc.save(fn);toast('PDF descargado: '+fn)}catch(e){er.textContent='No se pudo descargar el PDF.'}
+  if(t.izq[1])doc.text(t.izq[1],L,y+10);if(t.der[1])doc.text(t.der[1],R-72,y+10);doc.setTextColor(0);
+  /* encabezado, pie y marca de agua en todas las páginas */
+  const cols=[44,74,29,24.9],fh=6,y0=12;
+  for(let pg=1;pg<=doc.getNumberOfPages();pg++){doc.setPage(pg);doc.setDrawColor(170);doc.setLineWidth(.2);
+    let cx=L;cols.forEach((w,i)=>{if(i===0)doc.rect(cx,y0,w,fh*3);else for(let r=0;r<3;r++)doc.rect(cx,y0+r*fh,w,fh);cx+=w});
+    doc.addImage(AURA_LOGO,'PNG',L+cols[0]/2-6.5,y0+1.2,12.5,12.9);doc.setFont('helvetica','bold');doc.setFontSize(5.5);doc.setTextColor(13,97,116);doc.text(EMPRESA_LOGO,L+cols[0]/2,y0+16.6,{align:'center'});doc.setTextColor(0);
+    const mid=L+cols[0]+cols[1]/2,lab=L+cols[0]+cols[1]+cols[2]-1.5,val=L+cols[0]+cols[1]+cols[2]+1.5;doc.setFontSize(8.5);
+    [['AURA INNOVACIONES S.A.','Código:',cod],['Área responsable: '+ACTA_FMT.area,'Última revisión:',ACTA_FMT.revision],['Aprobado por '+ACTA_FMT.aprobado,'Versión:',ACTA_FMT.version]].forEach(([c,l,v],r)=>{const yy=y0+r*fh+4.1;
+      doc.setFont('helvetica','normal');doc.text(c,mid,yy,{align:'center'});doc.setFont('helvetica','bold');doc.text(l,lab,yy,{align:'right'});doc.text(v,val,yy)});
+    doc.setDrawColor(0);
+    let py=256;EMP_PIE.forEach((l,i)=>{doc.setFont('helvetica','bold');if(i===0){doc.setFontSize(10);doc.setTextColor(31,56,100)}else{doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(30)}doc.text(l,R,py,{align:'right'});py+=4.3});doc.setTextColor(0);
+    doc.setFontSize(8);doc.setTextColor(120);doc.text(`${cod} · Página ${pg} de ${doc.getNumberOfPages()}`,L,272);doc.setTextColor(0);
+    if(d.borrador){doc.saveGraphicsState();try{doc.setGState(new doc.GState({opacity:.2}))}catch(e){}
+      doc.setFont('helvetica','bold');doc.setFontSize(80);doc.setTextColor(185,28,28);doc.text('BORRADOR',107.95,150,{align:'center'});doc.restoreGraphicsState();doc.setTextColor(0)}}
+  const fn=(d.borrador?'BORRADOR_':cod+'_')+(d.dev?'Devolucion_':'Entrega_')+d.nombre.replace(/\s+/g,'_')+'_'+d.f+'.pdf';
+  try{doc.save(fn);toast('PDF descargado: '+fn)}catch(e){toast('No se pudo descargar el PDF.')}
 }
+
+/* ---------- Pestaña Actas: borradores y actas generadas ---------- */
+function tActas(){
+  const f=V.af??(V.af='');const n=e=>S.actas.filter(x=>!e||x.estado===e).length;
+  if(!S.actas.length)return vacio('Todavía no hay actas','Desde Personal usa <strong>Generar acta</strong>: primero se hace un borrador y, al aceptarlo, recibe su número '+ACTA_FMT.prefijo+'###.','');
+  const l=S.actas.filter(x=>f?x.estado===f:x.estado!=='Descartado');
+  return `<div class="chips">${[['','Vigentes'],['Borrador','Borradores'],['Generada','Generadas'],['Descartado','Descartados']].map(([v,t])=>`<button class="chip" aria-pressed="${f===v}" onclick="V.af='${v}';render()">${t} <b>${v?n(v):S.actas.filter(x=>x.estado!=='Descartado').length}</b></button>`).join('')}</div>
+  <div class="tbl"><table><thead><tr><th>Acta</th><th>Persona</th><th>Fecha</th><th>Hecha por</th><th></th></tr></thead><tbody>
+  ${l.length?l.map(x=>`<tr><td><strong class="mono">${x.estado==='Generada'?codActa(x.num):'—'}</strong><p>${x.tipo==='dev'?'Devolución':'Entrega'} · ${x.estado==='Generada'?'<span class="pill Nueva">Generada</span>':x.estado==='Borrador'?'<span class="pill Usada">Borrador</span>':'<span class="pill Danada">Descartado</span>'}</p></td>
+   <td><strong>${esc(x.persona)}</strong><p>Céd. ${esc(x.ced)} · ${plural((x.det.filas||[]).length,'artículo','artículos')}</p></td>
+   <td style="white-space:nowrap">${fCorta(x.f)}</td><td class="muted">${esc(x.gen||x.por)}</td>
+   <td><div class="acts">${x.estado==='Borrador'?`<button class="btn sm" onclick="abrirActa(null,null,null,null,${x.id})">Continuar</button>`:''}<button class="lnk" onclick="pdfActa(datosDe(S.actas.find(a=>a.id===${x.id})))">${x.estado==='Generada'?'Descargar PDF':'Descargar borrador'}</button>${x.estado==='Borrador'?`<button class="lnk red" onclick="descartarActa(${x.id})">Descartar</button>`:''}</div></td></tr>`).join('')
+  :'<tr><td colspan="5"><p class="empty">No hay actas en este filtro.</p></td></tr>'}</tbody></table></div>`;
+}
+function descartarActa(id){const x=S.actas.find(a=>a.id===id);
+  confirmar('Descartar borrador',`¿Descartar el borrador de acta de <strong>${esc(x.persona)}</strong>? Queda en el filtro Descartados.`,'Descartar',()=>act(()=>setItem('actas',id,{Estado:'Descartado'}),'Borrador descartado'))}
 
 /* ---------- Historial ---------- */
 function tHi(){
@@ -2352,7 +2541,7 @@ function htmlPend(){
   if(G.mods?.act&&CARGA.act.ok){const pn=pendientes().length,sd=calcDep().filas.filter(r=>r.d.sin&&!r.x.del).length,pa=S.per.filter(x=>estPer(x)==='pend').length;
     if(pn)pend.push(['p-warn',`${plural(pn,'activo cumplió','activos cumplieron')} año y ${pn===1?'necesita':'necesitan'} revisión de estado`,'act',"V.tab='rev'"]);
     if(sd)pend.push(['p-info',`${plural(sd,'activo no tiene','activos no tienen')} precio o factor de depreciación`,'act',"V.tab='dep';V.dep&&(V.dep.est='sin')"]);
-    if(pa)pend.push(['p-info',`${plural(pa,'mouse, teclado o adaptador está','mouse, teclados o adaptadores están')} por asignar`,'act',"V.tab='eq';V.eqsub='per';V.pf=Object.assign(V.pf||{tipo:''},{est:'pend'})"])}
+    if(pa)pend.push(['p-info',`${plural(pa,'mouse, teclado, adaptador o mochila está','mouse, teclados, adaptadores o mochilas están')} por asignar`,'act',"V.tab='eq';V.eqsub='per';V.pf=Object.assign(V.pf||{tipo:''},{est:'pend'})"])}
   if(G.mods?.est&&ES.cargado){const d=new Date(),pm=d.getMonth()===0?12:d.getMonth(),py=d.getMonth()===0?d.getFullYear()-1:d.getFullYear();
     if(!ES.movAll.some(x=>x.anio===py&&x.mes===pm))pend.push(['p-warn',`No se han cargado los movimientos de ${MESES[pm-1].toLowerCase()} en Estados por departamento`,'est',"ES.sub='carga';setAnio("+py+");ES.mes="+pm])}
   if(G.mods?.ing&&CARGA.ing.ok){const f=IV.fin||finIni(),d=datosIng(f),env=S.ing.envios.some(e=>e.per===periodoIng(f));
@@ -2394,14 +2583,16 @@ function actualizarHome(){
 }
 
 /* =====================================================================
-   MOUSE Y TECLADO: registro simple para medir cuánto dura cada uno
-   (desde la compra hasta que se reporta dañado). No entra en actas, revisión ni depreciación.
+   MOUSE, TECLADO, ADAPTADORES Y MOCHILAS: registro simple para medir cuánto dura cada uno
+   (desde la compra hasta que se reporta dañado). Entra en las actas, pero no en revisión ni depreciación.
    ===================================================================== */
-const TIPOS_PER=['Mouse','Teclado','Adaptador'];
+const TIPOS_PER=['Mouse','Teclado','Adaptador','Mochila'];
 const ICO_PER={
   Mouse:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></svg>',
   Adaptador:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2v5M15 2v5"/><path d="M6 7h12v4a6 6 0 0 1-12 0V7z"/><path d="M12 17v5"/></svg>',
   Teclado:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
+  Mochila:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5V4a3 3 0 0 1 6 0v1"/><rect x="5" y="5" width="14" height="16" rx="4"/><path d="M9 13h6v4H9z"/></svg>',
+  Llave:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M16 7l3 3M14 9l2 2"/></svg>',
   gen:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>'};
 /* Duración legible entre dos fechas (aaaa-mm-dd) */
 function duracion(a,b){
@@ -2420,16 +2611,16 @@ const sigPer=t=>S.per.filter(x=>x.tipo===t).reduce((m,x)=>Math.max(m,x.num),0)+1
 /* Pestaña Equipos con dos secciones: Equipo general y Mouse, teclado y adaptadores */
 function tEqTab(){
   const sub=V.eqsub||'gen',enUso=S.per.filter(x=>estPer(x)==='uso').length;
-  const it=[['gen','Equipo general','Inventario con código AI',S.equipos.length],['per','Mouse, teclado y adaptadores','Cuánto dura cada uno',enUso]];
-  return `<nav class="adm-nav horiz" aria-label="Tipo de equipo">${it.map(([k,l,d,n])=>`<button aria-current="${sub===k?'page':'false'}" onclick="V.eqsub='${k}';V.q='';render()"><span class="adm-ic">${k==='gen'?ICO_PER.gen:ICO_PER.Mouse}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span><span class="adm-n">${n}</span></button>`).join('')}</nav>
-  <div class="fade">${sub==='per'?tPer():tEq()}</div>`;
+  const it=[['gen','Equipo general','Inventario con código AI',S.equipos.length],['per','Mouse, teclado, adaptadores y mochilas','Cuánto dura cada uno',enUso],['llv','Llaves y controles alarma','Quién tiene cada una',S.personas.filter(p=>p.llaves.length).length]];
+  return `<nav class="adm-nav horiz" aria-label="Tipo de equipo">${it.map(([k,l,d,n])=>`<button aria-current="${sub===k?'page':'false'}" onclick="V.eqsub='${k}';V.q='';render()"><span class="adm-ic">${k==='gen'?ICO_PER.gen:k==='llv'?ICO_PER.Llave:ICO_PER.Mouse}</span><span class="adm-tx"><strong>${l}</strong><small>${d}</small></span><span class="adm-n">${n}</span></button>`).join('')}</nav>
+  <div class="fade">${sub==='per'?tPer():sub==='llv'?tLlv():tEq()}</div>`;
 }
 function tPer(){
   const F=V.pf||(V.pf={tipo:'',est:''});
   const prom=t=>{const l=S.per.filter(x=>x.tipo===t&&x.dano);return l.length?{n:l.length,m:l.reduce((s,x)=>s+mesesEntre(x.fc,x.dano),0)/l.length}:null};
   const kp=t=>{const p=prom(t),u=S.per.filter(x=>x.tipo===t&&estPer(x)==='uso').length,pa=S.per.filter(x=>x.tipo===t&&estPer(x)==='pend').length;return `<div class="kpi"><span class="kpi-t">${ICO_PER[t]} ${t}</span><strong>${p?(p.m<1?Math.round(p.m*30.4)+' días':p.m.toFixed(1)+' meses'):'—'}</strong><small class="muted">${p?'duración promedio · '+plural(p.n,'dañado','dañados'):'sin daños reportados'} · ${u} en uso${pa?' · '+pa+' por asignar':''}</small></div>`};
   return `<div class="kpis">${TIPOS_PER.map(kp).join('')}<div class="kpi main"><span>En uso</span><strong>${S.per.filter(x=>estPer(x)==='uso').length}</strong><small class="muted">${S.per.filter(x=>estPer(x)==='pend').length} por asignar · ${S.per.length} registrados</small></div></div>
-  <div class="bar"><input class="search" placeholder="Buscar por código, persona o marca" value="${esc(V.q)}" oninput="V.q=this.value;filasPer()"><button class="btn primary" onclick="dPer()">Agregar mouse, teclado o adaptador</button></div>
+  <div class="bar"><input class="search" placeholder="Buscar por código, persona o marca" value="${esc(V.q)}" oninput="V.q=this.value;filasPer()"><button class="btn primary" onclick="dPer()">Agregar mouse, teclado, adaptador o mochila</button></div>
   <div class="chips">${[['','Todos'],...TIPOS_PER.map(t=>[t,t])].map(([v,l])=>`<button class="chip" aria-pressed="${F.tipo===v}" onclick="V.pf.tipo='${v}';render()">${l} <b>${S.per.filter(x=>!v||x.tipo===v).length}</b></button>`).join('')}
    <span class="chip-sep"></span>${[['','Todos'],['uso','En uso'],['pend','Por asignar'],['dano','Dañados']].map(([v,l])=>`<button class="chip" aria-pressed="${F.est===v}" onclick="V.pf.est='${v}';render()">${l}</button>`).join('')}</div>
   <div class="tbl"><table><thead><tr><th>Código</th><th>Asignado a</th><th>Compra</th><th>Estado</th><th>Duración</th><th></th></tr></thead><tbody id="per-f"></tbody></table></div>`;
@@ -2445,14 +2636,14 @@ function filasPer(){
    <td>${x.dano?`<span class="pill Danada">Dañado</span><p>El ${fCorta(x.dano)}${x.motivo?' · '+esc(x.motivo):''}</p>`:(estPer(x)==='pend'?'<span class="pill Usada">Por asignar</span>':'<span class="pill Nueva">En uso</span>')}</td>
    <td><strong class="dur${x.dano?'':' viva'}">${duracion(x.fc,x.dano||t)}</strong><p>${x.dano?'duró':'lleva'}</p></td>
    <td><div class="acts">${x.dano?'':`<button class="lnk red" onclick="dDano(${x.id})">Reportar daño</button>`}<button class="lnk" onclick="dPer(${x.id})">Editar</button><button class="lnk red" onclick="borrarPer(${x.id})">Eliminar</button></div></td></tr>`).join('')
-   :`<tr><td colspan="6"><p class="empty">${S.per.length?'No hay registros con estos filtros.':'Todavía no hay mouse, teclados ni adaptadores registrados. Agrega el primero con el botón de arriba.'}</p></td></tr>`;
+   :`<tr><td colspan="6"><p class="empty">${S.per.length?'No hay registros con estos filtros.':'Todavía no hay mouse, teclados, adaptadores ni mochilas registrados. Agrega el primero con el botón de arriba.'}</p></td></tr>`;
 }
 /* Agregar (puede ser mouse y teclado a la vez) o editar */
 function dPer(id,base){
   const x=id?S.per.find(p=>p.id===id):null,b=base||{};
-  abrir(`<header><div><h2>${x?'Editar '+esc(x.cod):'Agregar mouse, teclado o adaptador'}</h2><p>${x?'Corrige los datos del registro.':'Marca todo lo que se compró y se crean juntos.'}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  abrir(`<header><div><h2>${x?'Editar '+esc(x.cod):'Agregar mouse, teclado, adaptador o mochila'}</h2><p>${x?'Corrige los datos del registro.':'Marca todo lo que se compró y se crean juntos.'}</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
   <div class="body"><div class="err" id="err"></div>
-   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${b.tipo?(b.tipo===t?' checked':''):(t!=='Adaptador'?' checked':'')}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t}</strong><small>N° ${sigPer(t)}</small></span></label>`).join('')}</div></div>`}
+   ${x?'':`<div class="f"><span>Qué se compró</span><div class="tipos">${TIPOS_PER.map(t=>`<label class="tipo"><input type="checkbox" class="pt" value="${t}"${b.tipo?(b.tipo===t?' checked':''):(t==='Mouse'||t==='Teclado'?' checked':'')}><span class="adm-ic">${ICO_PER[t]}</span><span><strong>${t}</strong><small>N° ${sigPer(t)}</small></span></label>`).join('')}</div></div>`}
    <div class="two">${fl('Fecha de compra',dateField('pr-f',x?x.fc:hoy()))}${fl('Asignado a',`<select id="pr-d"><option value="">Sin asignar</option>${selResp(x?(x.asig?'p:'+x.asig:x.ubic?'u:'+x.ubic:''):b.dest||'')}</select>`)}</div>
    ${fl('Marca o modelo (opcional)',`<input id="pr-m" value="${esc(x?.marca||'')}" placeholder="Logitech M170">`)}
    ${fl('Observaciones (opcional)',`<input id="pr-o" value="${esc(x?.obs||'')}">`)}
@@ -2466,7 +2657,7 @@ function gPer(id){
   const dest={ResponsableId:d.startsWith('p:')?+d.slice(2):0,Ubicacion:d.startsWith('u:')?d.slice(2):''};
   if(x){let dano=x.dano;if($('pr-dn')){const raw=$('pr-dn').value.trim();dano=raw?fv('pr-dn'):'';if(raw&&!dano)return er.textContent='Escribe una fecha de daño válida (dd/mm/aaaa).';if(dano&&dano<fc)return er.textContent='La fecha del daño no puede ser antes de la compra.'}
     cerrar();return act(()=>setItem('perifericos',id,{FechaCompra:wd(fc),...dest,Marca:m,Observaciones:o,FechaDano:dano?wd(dano):null,MotivoDano:dano?($('pr-mo')?.value.trim()??x.motivo):''}),x.cod+' actualizado')}
-  const tipos=[...document.querySelectorAll('.pt:checked')].map(i=>i.value);if(!tipos.length)return er.textContent='Marca al menos uno: mouse, teclado o adaptador.';
+  const tipos=[...document.querySelectorAll('.pt:checked')].map(i=>i.value);if(!tipos.length)return er.textContent='Marca al menos uno: mouse, teclado, adaptador o mochila.';
   cerrar();
   act(async()=>{const hechos=[];for(const t of tipos){const n=sigPer(t);await addItem('perifericos',{Title:t+' '+n,Tipo:t,Numero:n,FechaCompra:wd(fc),...dest,Marca:m,Observaciones:o});hechos.push(t+' '+n);S.per.push({tipo:t,num:n})}return hechos},
     h=>h.join(' y ')+(h.length>1?' agregados':' agregado'),()=>{V.tab='eq';V.eqsub='per';render()});
@@ -2493,6 +2684,47 @@ function gDano(id){
 }
 function borrarPer(id){const x=S.per.find(p=>p.id===id);
   confirmar('Eliminar registro',`¿Eliminar <strong>${esc(x.cod)}</strong>? Úsalo solo si se registró por error; si se dañó, mejor usa <strong>Reportar daño</strong> para no perder la duración.`,'Eliminar',()=>act(()=>delItem('perifericos',id),x.cod+' eliminado'))}
+
+/* =====================================================================
+   LLAVES Y CONTROLES ALARMA: se guardan en la columna Llaves de ActivosPersonal (separadas por |).
+   Cada entrega o devolución queda en el historial.
+   ===================================================================== */
+const LLAVES=['Llave Parqueo','Llave Parqueo Interno','Llave Recepción','Llave Recepción Interna','Llave Oficina','Control Alarma'];
+function tLlv(){
+  const F=V.lf||(V.lf={k:''}),n=l=>S.personas.filter(p=>p.llaves.includes(l)).length;
+  return `<div class="kpis">${LLAVES.map(l=>`<button type="button" class="kpi kpi-b${F.k===l?' on':''}" onclick="V.lf.k=V.lf.k===${js(l)}?'':${js(l)};render()"><span class="kpi-t">${ICO_PER.Llave} ${esc(l)}</span><strong>${n(l)}</strong><small class="muted">${n(l)===1?'persona la tiene':'personas la tienen'}</small></button>`).join('')}</div>
+  <div class="bar"><input class="search" placeholder="Buscar por nombre o llave" value="${esc(V.q)}" oninput="V.q=this.value;filasLlv()"></div>
+  ${F.k?`<p class="small muted" style="margin:0 0 10px">Mostrando solo quienes tienen <strong>${esc(F.k)}</strong> · <button class="lnk" onclick="V.lf.k='';render()">Ver todos</button></p>`:''}
+  <div class="tbl"><table><thead><tr><th>Colaborador</th><th>Llaves y controles</th><th></th></tr></thead><tbody id="llv-f"></tbody></table></div>`;
+}
+function filasLlv(){
+  if(!$('llv-f'))return;const q=lc(V.q),k=V.lf?.k||'';
+  const ps=[...S.personas].sort((a,b)=>(!a.llaves.length-!b.llaves.length)||porNombre(a,b)).filter(p=>(!k||p.llaves.includes(k))&&(!q||lc([p.nombre,p.ced,...p.llaves].join(' ')).includes(q)));
+  $('llv-f').innerHTML=ps.length?ps.map(p=>`<tr>
+   <td><div class="who"><span class="avatar">${esc(ini(p.nombre))}</span><div><strong>${esc(p.nombre)}</strong><p>Céd. ${esc(p.ced)}</p></div></div></td>
+   <td>${p.llaves.length?`<div class="llv-l">${LLAVES.filter(l=>p.llaves.includes(l)).map(l=>`<span class="llv">${ICO_PER.Llave} ${esc(l)}</span>`).join('')}</div>`:'<span class="free">Sin llaves</span>'}</td>
+   <td><div class="acts"><button class="lnk" onclick="dLlaves(${p.id})">${p.llaves.length?'Editar llaves':'Entregar llaves'}</button></div></td></tr>`).join('')
+   :`<tr><td colspan="3"><p class="empty">${S.personas.length?'Nadie coincide con la búsqueda.':'Primero registra al personal en la pestaña Personal.'}</p></td></tr>`;
+}
+function dLlaves(pid){const p=P(pid);
+  abrir(`<header><div><h2>Llaves de ${esc(p.nombre)}</h2><p>Marca las que tiene. Lo que quites queda en el historial como devuelto.</p></div><button class="x" aria-label="Cerrar" onclick="cerrar()">×</button></header>
+  <div class="body"><div class="err" id="err"></div>
+   <div class="tipos">${LLAVES.map(l=>`<label class="tipo"><input type="checkbox" class="lv" value="${esc(l)}"${p.llaves.includes(l)?' checked':''}><span class="adm-ic">${ICO_PER.Llave}</span><span><strong>${esc(l)}</strong></span></label>`).join('')}</div>
+   ${fl('Fecha',dateField('lv-f',hoy()))}
+  </div>
+  <footer><button class="btn" onclick="cerrar()">Cancelar</button><button class="btn primary" onclick="gLlaves(${pid})">Guardar</button></footer>`)}
+function gLlaves(pid){
+  const p=P(pid),f=fv('lv-f');if(!f)return $('err').textContent='Escribe una fecha válida (dd/mm/aaaa).';
+  const nuevas=[...document.querySelectorAll('.lv:checked')].map(i=>i.value),mas=nuevas.filter(l=>!p.llaves.includes(l)),menos=p.llaves.filter(l=>!nuevas.includes(l));
+  if(!mas.length&&!menos.length){cerrar();return}
+  const guardar=()=>{cerrar();act(async()=>{
+    await setItem('personal',pid,{Llaves:LLAVES.filter(l=>nuevas.includes(l)).join('|')});
+    for(const l of mas)await addItem('historial',{Title:l,Fecha:wd(f),De:'Entregada',A:p.nombre,Registro:yo()});
+    for(const l of menos)await addItem('historial',{Title:l,Fecha:wd(f),De:p.nombre,A:'Devuelto',Registro:yo()});
+  },'Llaves de '+p.nombre+' actualizadas')};
+  if(menos.length)return confirmar('Quitar llaves',`¿Registrar que <strong>${esc(p.nombre)}</strong> devolvió: ${menos.map(esc).join(', ')}? Queda en el historial.`,'Sí, registrar devolución',guardar);
+  guardar();
+}
 
 /* =====================================================================
    DEPRECIACIÓN (línea recta, se corre al último día del mes)
