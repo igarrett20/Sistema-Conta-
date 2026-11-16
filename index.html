@@ -986,7 +986,7 @@ async function boot(){
   /* Si ya entraste antes desde este navegador, el Inicio aparece de una vez (con los números cargando) mientras se conecta */
   /* si la sesión recordada era de otra cuenta, se descarta lo dibujado */
   if(previo&&mem.cuenta!==(G.account?.homeAccountId||'')){previo=false;G.me=null;$('whoami').innerHTML='';$('modslot').innerHTML='';screen('<div class="loader"><span class="spin" aria-hidden="true"></span><p id="paso" class="muted">Cargando…</p></div>')}
-  try{await connect();showUser();G._connRes();arrancarCargas();esAdminSitio().then(v=>{G.esAdmin=v===true||(v===null&&!!G.mods?.act);showUser()});
+  try{await connect();G.esAdmin=!!G.mods?.act;showUser();G._connRes();arrancarCargas();esAdminSitio().then(v=>{console.info('Accesos: dueño del sitio =',v);if(v===true&&!G.esAdmin){G.esAdmin=true;showUser()}});
     try{localStorage.setItem('contaduria:sesion',JSON.stringify({M,mods:G.mods,aud:!!G.aud,estBen:!!G.estBen,nombre:G.me?.displayName||'',cuenta:G.account?.homeAccountId||''}))}catch(e){}}
   catch(e){console.error(e);if(e.message==='redirect')return;showUser();
     screen(e.status===403||e.status===401||e.status===404&&!G.siteId
