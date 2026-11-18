@@ -2837,7 +2837,10 @@ function renderAud(){
     <button class="aud-b" onclick="pdfAsiento()"><span class="adm-ic">${ICO_ADM.hi}</span><span><strong>PDF asiento</strong><small>Asiento contable del mes por categoría</small></span><span class="aud-dl" aria-hidden="true">↓</span></button>
     <button class="aud-b" onclick="pdfDetalle()"><span class="adm-ic">${ICO_ADM.cat}</span><span><strong>PDF detalle</strong><small>Depreciación del mes por categoría y activo</small></span><span class="aud-dl" aria-hidden="true">↓</span></button>
    </div>
-  </div></div>`;
+  </div></div>
+  <h2 style="margin:28px 0 12px">Activos retirados</h2>
+  <div class="fade">${tRet()}</div>`;
+  filasRet();
 }
 
 /* =====================================================================
@@ -2898,7 +2901,7 @@ function filasRet(){
    <td>${r?esc(r):'<span class="free">—</span>'}</td><td style="white-space:nowrap">${x.fadq?fCorta(x.fadq):'—'}</td><td style="white-space:nowrap">${x.delF?fCorta(x.delF):'—'}</td>
    <td class="r">${x.precio!=null&&!x.ghost?fmtN(x.precio):'—'}</td><td class="r"><strong>${v!=null?fmtN(v):'—'}</strong></td>
    <td class="ret-d">${x.delM?esc(x.delM):'<span class="free">Sin descripción</span>'}</td>
-   <td><div class="acts">${x.ghost?'':`<button class="lnk" onclick="dDescRet(${js(x.cod)})">Editar</button><button class="lnk" onclick="restaurarEquipo(${js(x.cod)})">Restaurar</button>`}</div></td></tr>`}).join('')
+   <td><div class="acts">${x.ghost||!G.mods?.act?'':`<button class="lnk" onclick="dDescRet(${js(x.cod)})">Editar</button><button class="lnk" onclick="restaurarEquipo(${js(x.cod)})">Restaurar</button>`}</div></td></tr>`}).join('')
    :'<tr><td colspan="9"><p class="empty">No hay retirados con estos filtros.</p></td></tr>';
 }
 function dDescRet(cod){const x=EA(cod);
